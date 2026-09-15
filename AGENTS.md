@@ -15,6 +15,8 @@ This project is a local research knowledge store used from Codex.
 - For Korean questions about English papers, derive useful English technical terms and search both languages.
 - State whether a result came from a paper or from a saved conversation.
 - Cite the Markdown path, its `source_path` metadata, and the nearest `<!-- page: N -->` marker.
+- Treat parsed Markdown as a discovery index. For equations, tables, figures, and numeric claims, open the original PDF at the identified page and verify the visual source before answering.
+- Do not reconstruct a flattened equation or assign table values to columns unless the original PDF page confirms the notation and alignment.
 - If the repository does not contain supporting material, say so clearly.
 
 ## Conversation memory
