@@ -9,7 +9,9 @@ config.toml
 .research-store/
 papers/*
 !papers/.gitkeep
-knowledge/documents/
-knowledge/conversations/*.md
+knowledge/documents/**
+knowledge/conversations/**
+knowledge/assets/**
 !knowledge/documents/.gitkeep
 !knowledge/conversations/.gitkeep
+!knowledge/assets/.gitkeep

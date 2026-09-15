@@ -1,7 +1,7 @@
 [project]
 name = "research-store"
-version = "0.1.0"
-description = "Read-only PDF to Markdown research store for Codex"
+version = "0.2.0"
+description = "Incremental read-only PDF and conversation research library for Codex"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

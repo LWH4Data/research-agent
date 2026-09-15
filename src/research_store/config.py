@@ -20,6 +20,7 @@ class Config:
     root: Path
     documents: Path
     conversations: Path
+    assets: Path
     state: Path
     temporary: Path
     sources: tuple[Source, ...]
@@ -73,6 +74,7 @@ def load_config(path: Path) -> Config:
         root=base,
         documents=_resolve(base, store["documents"]),
         conversations=_resolve(base, store["conversations"]),
+        assets=_resolve(base, store.get("assets", "knowledge/assets")),
         state=_resolve(base, store["state"]),
         temporary=_resolve(base, store["temporary"]),
         sources=tuple(sources),
@@ -85,6 +87,7 @@ def validate_config(config: Config) -> None:
     writable_paths = (
         config.documents,
         config.conversations,
+        config.assets,
         config.state,
         config.temporary,
     )
@@ -97,4 +100,3 @@ def validate_config(config: Config) -> None:
                     "쓰기 경로가 원본 디렉터리 안에 있습니다: "
                     f"source={source.path}, output={output}"
                 )
-

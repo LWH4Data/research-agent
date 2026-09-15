@@ -1,10 +1,15 @@
 [store]
 documents = "knowledge/documents"
 conversations = "knowledge/conversations"
-state = ".research-store/state.json"
+assets = "knowledge/assets"
+state = ".research-store/library.sqlite"
 temporary = ".research-store/tmp"
 
-# Put PDFs in the local papers directory. External absolute paths also work.
+# Register one or more existing directories. They are always treated as read-only.
 [[sources]]
-id = "papers"
-path = "papers"
+id = "documents"
+path = "~/Documents"
+
+# [[sources]]
+# id = "desktop-research"
+# path = "~/Desktop/Research"
