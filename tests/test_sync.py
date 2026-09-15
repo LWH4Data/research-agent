@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 from research_store.config import load_config
-from research_store.sync import markitdown_converter, sync_library
+from research_store.sync import pdf_converter, sync_library
 
 
 def write_text_pdf(path: Path, text: str) -> None:
@@ -45,14 +45,15 @@ def write_text_pdf(path: Path, text: str) -> None:
 
 
 class SyncLibraryTests(unittest.TestCase):
-    def test_markitdown_converts_a_text_pdf(self) -> None:
+    def test_pypdf_converts_a_text_pdf_with_page_marker(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             pdf = Path(directory) / "paper.pdf"
             write_text_pdf(pdf, "Hello Research")
 
-            converted = markitdown_converter(pdf)
+            converted = pdf_converter(pdf)
 
             self.assertIn("Hello Research", converted)
+            self.assertIn("<!-- page: 1 -->", converted)
 
     def test_sync_is_incremental_and_never_changes_source(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

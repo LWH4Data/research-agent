@@ -64,7 +64,7 @@ uv run research-store status
 - `내가 전에 thermal rollover에 대해 말한 내용을 찾아줘.`
 - `이 내용은 다음에 찾을 수 있도록 연구 메모로 저장해줘.`
 
-현재 PDF 변환은 Microsoft MarkItDown을 사용합니다. 검색 대상은 생성된 Markdown 자체이므로 SQLite나 벡터 인덱스 없이도 Codex가 파일 검색을 사용할 수 있습니다. 문서 수가 커져 검색 지연이나 누락이 확인되면 파생 SQLite FTS 인덱스를 추가할 수 있습니다.
+현재 PDF 변환은 검색용 텍스트의 공백과 페이지 경계를 안정적으로 보존하기 위해 PyPDF를 사용합니다. 각 페이지 앞에는 `<!-- page: N -->` 표시가 추가됩니다. 검색 대상은 생성된 Markdown 자체이므로 SQLite나 벡터 인덱스 없이도 Codex가 파일 검색을 사용할 수 있습니다. 문서 수가 커져 검색 지연이나 누락이 확인되면 파생 SQLite FTS 인덱스를 추가할 수 있습니다.
 
 ## 원본 보호
 

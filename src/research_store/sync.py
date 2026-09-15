@@ -15,6 +15,8 @@ from .config import Config, Source
 
 
 Converter = Callable[[Path], str]
+PARSER_NAME = "pypdf"
+PARSER_VERSION = "pypdf-v1"
 
 
 @dataclass
@@ -64,17 +66,21 @@ def _hash(path: Path) -> str:
     return digest.hexdigest()
 
 
-def markitdown_converter(path: Path) -> str:
+def pdf_converter(path: Path) -> str:
     try:
-        from markitdown import MarkItDown
+        from pypdf import PdfReader
     except ImportError as error:
-        raise RuntimeError("MarkItDown이 없습니다. 먼저 `uv sync`를 실행하세요.") from error
+        raise RuntimeError("PyPDF가 없습니다. 먼저 `uv sync`를 실행하세요.") from error
 
-    result = MarkItDown(enable_plugins=False).convert(str(path))
-    text = getattr(result, "text_content", None)
-    if not isinstance(text, str) or not text.strip():
-        raise RuntimeError("변환 결과가 비어 있습니다")
-    return text.strip() + "\n"
+    reader = PdfReader(str(path))
+    pages: list[str] = []
+    for page_number, page in enumerate(reader.pages, start=1):
+        text = (page.extract_text() or "").strip()
+        if text:
+            pages.append(f"<!-- page: {page_number} -->\n\n{text}")
+    if not pages:
+        raise RuntimeError("추출할 텍스트가 없습니다. 스캔 PDF라면 OCR이 필요합니다")
+    return "\n\n".join(pages) + "\n"
 
 
 def _frontmatter(source: Source, relative: Path, digest: str, modified_ns: int) -> str:
@@ -85,7 +91,8 @@ def _frontmatter(source: Source, relative: Path, digest: str, modified_ns: int) 
         "source_modified_ns": modified_ns,
         "parsed_at": _now(),
         "language": "unknown",
-        "parser": "markitdown",
+        "parser": PARSER_NAME,
+        "parser_version": PARSER_VERSION,
     }
     lines = ["---"]
     for key, value in metadata.items():
@@ -109,7 +116,7 @@ def _copy_for_conversion(pdf: Path, temporary: Path) -> tuple[Path, str]:
     return durable, digest
 
 
-def sync_library(config: Config, converter: Converter = markitdown_converter) -> SyncStats:
+def sync_library(config: Config, converter: Converter = pdf_converter) -> SyncStats:
     state = _load_state(config.state)
     documents: dict[str, Any] = state.setdefault("documents", {})
     stats = SyncStats()
@@ -136,6 +143,7 @@ def sync_library(config: Config, converter: Converter = markitdown_converter) ->
             if (
                 previous.get("size") == file_stat.st_size
                 and previous.get("modified_ns") == file_stat.st_mtime_ns
+                and previous.get("parser_version") == PARSER_VERSION
                 and previous.get("present") is True
                 and output.is_file()
             ):
@@ -145,7 +153,11 @@ def sync_library(config: Config, converter: Converter = markitdown_converter) ->
             copied: Path | None = None
             try:
                 copied, digest = _copy_for_conversion(pdf, config.temporary)
-                if previous.get("sha256") == digest and output.is_file():
+                if (
+                    previous.get("sha256") == digest
+                    and previous.get("parser_version") == PARSER_VERSION
+                    and output.is_file()
+                ):
                     previous.update(
                         size=file_stat.st_size,
                         modified_ns=file_stat.st_mtime_ns,
@@ -165,6 +177,7 @@ def sync_library(config: Config, converter: Converter = markitdown_converter) ->
                     "size": file_stat.st_size,
                     "modified_ns": file_stat.st_mtime_ns,
                     "sha256": digest,
+                    "parser_version": PARSER_VERSION,
                     "present": True,
                     "converted_at": _now(),
                     "error": None,
@@ -209,4 +222,3 @@ def library_status(config: Config) -> dict[str, Any]:
         "failed": sum(1 for item in documents.values() if item.get("error")),
         "last_stats": state.get("last_stats"),
     }
-

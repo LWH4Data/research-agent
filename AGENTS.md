@@ -14,7 +14,7 @@ This project is a local research knowledge store used from Codex.
 - Search `knowledge/documents/` for paper content and `knowledge/conversations/` for the user's prior statements.
 - For Korean questions about English papers, derive useful English technical terms and search both languages.
 - State whether a result came from a paper or from a saved conversation.
-- Cite the Markdown path and its `source_path` metadata. Do not claim a page number unless the parsed document contains page metadata.
+- Cite the Markdown path, its `source_path` metadata, and the nearest `<!-- page: N -->` marker.
 - If the repository does not contain supporting material, say so clearly.
 
 ## Conversation memory
@@ -23,4 +23,3 @@ This project is a local research knowledge store used from Codex.
 - Preserve the user's wording when it matters. Separate the user's statement from Codex's interpretation.
 - Include the date, a short topic heading, and useful search terms.
 - Do not write routine coding or repository-maintenance chat into research memory.
-
