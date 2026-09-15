@@ -4,8 +4,7 @@ conversations = "knowledge/conversations"
 state = ".research-store/state.json"
 temporary = ".research-store/tmp"
 
-# Add one or more existing PDF directories. Use absolute paths.
+# Put PDFs in the local papers directory. External absolute paths also work.
 [[sources]]
 id = "papers"
-path = "/Users/your-name/Documents/research-papers"
-
+path = "papers"

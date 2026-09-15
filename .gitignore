@@ -7,6 +7,8 @@ __pycache__/
 # User-specific paths and generated knowledge
 config.toml
 .research-store/
+papers/*
+!papers/.gitkeep
 knowledge/documents/
 knowledge/conversations/*.md
 !knowledge/documents/.gitkeep

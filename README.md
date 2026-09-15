@@ -9,6 +9,7 @@
 ```text
 research-agent/
 ├── config.toml                  # 사용자 설정, Git 제외
+├── papers/                      # 사용자가 넣는 원본 PDF, Git 제외
 ├── knowledge/
 │   ├── documents/              # 생성된 Markdown, Git 제외
 │   └── conversations/          # Codex가 저장하는 연구 메모, Git 제외
@@ -23,15 +24,15 @@ research-agent/
 cp config.example.toml config.toml
 ```
 
-`config.toml`의 `[[sources]]`에 기존 PDF 디렉터리의 절대 경로를 입력합니다. 여러 디렉터리를 사용하려면 블록을 추가하고 서로 다른 `id`를 지정합니다.
+기본 설정은 프로젝트 안의 `papers/`를 읽습니다. 테스트할 PDF를 여기에 넣으면 됩니다. 기존의 외부 논문 디렉터리를 사용하려면 `path`를 절대 경로로 바꿉니다. 여러 디렉터리를 사용하려면 블록을 추가하고 서로 다른 `id`를 지정합니다.
 
 ```toml
 [[sources]]
-id = "lab-papers"
-path = "/Users/name/Documents/lab-papers"
+id = "papers"
+path = "papers"
 
 [[sources]]
-id = "personal-papers"
+id = "external-papers"
 path = "/Volumes/archive/papers"
 ```
 
@@ -74,4 +75,3 @@ uv run research-store status
 - 서로 다른 원본에 중복된 `id`를 사용하지 않을 것
 
 운영체제 또는 Codex에서도 원본에는 읽기 권한만, 이 프로젝트에는 쓰기 권한만 부여하면 방어가 한 단계 더 강해집니다.
-
