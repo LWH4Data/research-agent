@@ -1,0 +1,13 @@
+.DS_Store
+.venv/
+.uv-cache/
+__pycache__/
+*.py[cod]
+
+# User-specific paths and generated knowledge
+config.toml
+.research-store/
+knowledge/documents/
+knowledge/conversations/*.md
+!knowledge/documents/.gitkeep
+!knowledge/conversations/.gitkeep

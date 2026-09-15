@@ -1,0 +1,11 @@
+[store]
+documents = "knowledge/documents"
+conversations = "knowledge/conversations"
+state = ".research-store/state.json"
+temporary = ".research-store/tmp"
+
+# Add one or more existing PDF directories. Use absolute paths.
+[[sources]]
+id = "papers"
+path = "/Users/your-name/Documents/research-papers"
+
