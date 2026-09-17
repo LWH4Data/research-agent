@@ -24,7 +24,7 @@ from .state import LibraryState, now
 
 
 PARSER_NAME = "pypdf"
-PARSER_VERSION = "pypdf-v3-read-only-store"
+PARSER_VERSION = "pypdf-v4-fonttools-read-only-store"
 
 
 @dataclass(frozen=True)
