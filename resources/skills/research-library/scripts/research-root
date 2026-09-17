@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../../../.." && pwd -P)
+MARKER="$ROOT/.research-agent-root"
+
+if [ -L "$MARKER" ] || [ ! -f "$MARKER" ] || \
+   [ "$(cat "$MARKER")" != "research-agent-owned-root-v1" ]; then
+    echo "오류: research-agent 프로젝트 루트를 확인할 수 없습니다." >&2
+    exit 1
+fi
+
+printf '%s\n' "$ROOT"

@@ -19,7 +19,7 @@ temporary = ".research-store/tmp"
 
 
 def default_config_path(start: Path | None = None) -> Path:
-    return find_project_root(start) / "config.toml"
+    return find_project_root(start) / ".research-store/config.toml"
 
 
 def initialize_config(path: Path) -> Path:

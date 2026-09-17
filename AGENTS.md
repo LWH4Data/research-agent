@@ -23,19 +23,22 @@ This project is a self-contained local research knowledge store used from Codex.
 
 ## Agent routing
 
-- Delegate synchronization, status, saved-conversation creation, and broad
-  retrieval to `library_manager` in `.codex/agents/library-manager.toml`.
+- Delegate source management, synchronization, status, saved-conversation
+  creation, and broad retrieval to `research_library_manager` in
+  `resources/agents/research-library-manager.toml`.
 - Delegate only queued equation, table, figure, and layout pages to
-  `paper_converter` in `.codex/agents/paper-converter.toml`.
+  `research_paper_converter` in
+  `resources/agents/research-paper-converter.toml`.
 - The user never needs to select an agent or model manually.
-- Use the repository skill at `.agents/skills/research-library/SKILL.md`.
+- Use the personal skill registered from
+  `resources/skills/research-library/SKILL.md`.
 
 ## Commands
 
 - `./research-store source-list` lists registered read-only locations.
 - `bash ./add-source.sh` opens the native folder picker from a normal terminal.
 - `./research-store source-add <path>` registers an explicitly supplied folder
-  or PDF. It only changes this project's `config.toml`.
+  or PDF. It only changes this project's `.research-store/config.toml`.
 - `./research-store source-remove <id>` stops scanning a location without
   deleting any file.
 - `./research-store sync` parses new or changed PDFs.
@@ -106,6 +109,8 @@ incomplete scan as an empty successful result.
 
 ## Removal
 
-This project performs no global installation and writes no files into sources.
-To remove it, first remove the project from Codex and then move this project
-folder to Trash. Never include a configured source in a deletion command.
+This project installs only one personal skill link, two custom-agent files, one
+exact launcher rule, and one isolated permission profile outside the project.
+Run `bash ./uninstall.sh` to remove those five owned registrations before moving
+this project folder to Trash. It never writes into sources. Never include a
+configured source in a deletion command.

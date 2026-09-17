@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 import tomllib
 
-from .safety import is_within, require_owned_path, require_project_root
+from .safety import find_project_root, is_within, require_owned_path
 
 
 SOURCE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
@@ -105,7 +105,7 @@ def load_config(path: Path) -> Config:
     requested = path.expanduser()
     if not requested.is_absolute():
         requested = Path.cwd() / requested
-    root = require_project_root(requested.parent)
+    root = find_project_root(requested.parent)
     config_path = require_owned_path(requested, root, label="설정 파일")
     if not config_path.is_file():
         raise ValueError(f"설정 파일을 찾을 수 없습니다: {config_path}")

@@ -20,6 +20,7 @@ from research_store.picker import choose_source, macos_picker_script
 from research_store.safety import PROJECT_MARKER_CONTENT, atomic_text
 from research_store.sources import (
     add_sources,
+    default_config_path,
     initialize_config,
     remove_sources,
     source_rows,
@@ -136,6 +137,18 @@ def document_output(config, document_key: str) -> Path:
 
 
 class SyncLibraryTests(unittest.TestCase):
+    def test_default_config_is_stored_with_agent_data(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = make_project(Path(directory) / "agent")
+
+            config_path = default_config_path(project)
+            initialized = initialize_config(config_path)
+            config = load_config(initialized)
+
+            self.assertEqual(config_path, project / ".research-store/config.toml")
+            self.assertEqual(config.root, project)
+            self.assertTrue(config_path.is_file())
+
     def test_macos_picker_success_cancel_and_failure_are_clean(self) -> None:
         with mock.patch("research_store.picker.sys.platform", "darwin"):
             with mock.patch(

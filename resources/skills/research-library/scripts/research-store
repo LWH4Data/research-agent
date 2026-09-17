@@ -1,0 +1,70 @@
+#!/bin/sh
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../../../.." && pwd -P)
+MARKER="$ROOT/.research-agent-root"
+SANDBOX_HOME="${HOME:?사용자 홈 경로를 확인할 수 없습니다}/.codex/research-library-sandbox"
+SANDBOX_CONFIG="$SANDBOX_HOME/config.toml"
+SANDBOX_OWNER="$SANDBOX_HOME/.research-agent-owner"
+
+if [ -L "$MARKER" ] || [ ! -f "$MARKER" ] || \
+   [ "$(cat "$MARKER")" != "research-agent-owned-root-v1" ]; then
+    echo "오류: research-agent 프로젝트 루트를 확인할 수 없습니다." >&2
+    exit 1
+fi
+
+if [ -L "$SANDBOX_HOME" ] || [ ! -d "$SANDBOX_HOME" ] || \
+   [ "$(CDPATH= cd -- "$SANDBOX_HOME" 2>/dev/null && pwd -P)" != "$SANDBOX_HOME" ]; then
+    echo "오류: Research Library 샌드박스 설정이 안전하지 않습니다. install.sh를 다시 실행하세요." >&2
+    exit 1
+fi
+if [ -L "$SANDBOX_CONFIG" ] || [ ! -f "$SANDBOX_CONFIG" ]; then
+    echo "오류: Research Library 샌드박스 설정이 없습니다. install.sh를 다시 실행하세요." >&2
+    exit 1
+fi
+if [ -L "$SANDBOX_OWNER" ] || [ ! -f "$SANDBOX_OWNER" ]; then
+    echo "오류: Research Library 샌드박스 소유권을 확인할 수 없습니다. install.sh를 다시 실행하세요." >&2
+    exit 1
+fi
+if stat -f '%l' "$SANDBOX_CONFIG" >/dev/null 2>&1; then
+    config_links=$(stat -f '%l' "$SANDBOX_CONFIG")
+else
+    config_links=$(stat -c '%h' "$SANDBOX_CONFIG")
+fi
+[ "$config_links" = "1" ] || {
+    echo "오류: Research Library 샌드박스 설정이 하드 링크입니다." >&2
+    exit 1
+}
+if stat -f '%l' "$SANDBOX_OWNER" >/dev/null 2>&1; then
+    owner_links=$(stat -f '%l' "$SANDBOX_OWNER")
+else
+    owner_links=$(stat -c '%h' "$SANDBOX_OWNER")
+fi
+[ "$owner_links" = "1" ] || {
+    echo "오류: Research Library 샌드박스 소유권 표시가 하드 링크입니다." >&2
+    exit 1
+}
+first_line=$(sed -n '1p' "$SANDBOX_CONFIG")
+second_line=$(sed -n '2p' "$SANDBOX_CONFIG")
+if [ "$first_line" != "# research-agent-registration-v1" ] || \
+   [ "$second_line" != "# research-agent-root: $ROOT" ]; then
+    echo "오류: Research Library 샌드박스 설정의 소유권을 확인할 수 없습니다." >&2
+    exit 1
+fi
+owner_first_line=$(sed -n '1p' "$SANDBOX_OWNER")
+owner_second_line=$(sed -n '2p' "$SANDBOX_OWNER")
+if [ "$owner_first_line" != "# research-agent-registration-v1" ] || \
+   [ "$owner_second_line" != "# research-agent-root: $ROOT" ]; then
+    echo "오류: Research Library 샌드박스 폴더의 소유권을 확인할 수 없습니다." >&2
+    exit 1
+fi
+
+CODEX=$(command -v codex 2>/dev/null || true)
+if [ -z "$CODEX" ] || [ ! -x "$CODEX" ]; then
+    echo "오류: Codex 실행 파일을 찾을 수 없습니다. Codex 앱을 최신 버전으로 업데이트하세요." >&2
+    exit 1
+fi
+
+exec env CODEX_HOME="$SANDBOX_HOME" "$CODEX" sandbox \
+    -P research-store -C "$ROOT" -- "$ROOT/research-store" "$@"

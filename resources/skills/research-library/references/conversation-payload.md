@@ -1,7 +1,8 @@
 # Conversation payload
 
-Construct the UTF-8 JSON object in memory, start `./research-store
-save-conversation`, and send the JSON through the process stdin facility. Then
+Construct the UTF-8 JSON object in memory, start
+the absolute `SKILL_DIR/scripts/research-store save-conversation` path, and send the JSON
+through the process stdin facility. Then
 send a newline, the exact standalone line `__RESEARCH_STORE_STDIN_END__`, and a
 final newline. The command consumes this line and finishes even if the process
 stdin pipe remains open. Ordinary EOF is also accepted for compatibility. The

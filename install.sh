@@ -10,12 +10,17 @@ export PYTHONDONTWRITEBYTECODE=1
 export PYTHONNOUSERSITE=1
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+: "${HOME:?사용자 홈 경로를 확인할 수 없습니다}"
 MARKER="$ROOT/.research-agent-root"
 UV_VERSION="0.12.15"
 TOOLS="$ROOT/.tools"
 PYTHON_DIR="$ROOT/.python"
 VENV="$ROOT/.venv"
+RUNTIME_ROOT="$ROOT/.research-store"
+CONFIG="$RUNTIME_ROOT/config.toml"
+LEGACY_CONFIG="$ROOT/config.toml"
 BOOTSTRAP=""
+FIRST_SETUP=0
 
 fail() {
     echo "오류: $*" >&2
@@ -32,6 +37,10 @@ trap cleanup EXIT HUP INT TERM
 if [ ! -f "$MARKER" ] || [ -L "$MARKER" ] || \
    [ "$(cat "$MARKER")" != "research-agent-owned-root-v1" ]; then
     fail "research-agent 프로젝트 루트를 확인할 수 없습니다."
+fi
+
+if [ ! -e "$CONFIG" ] && [ ! -e "$LEGACY_CONFIG" ]; then
+    FIRST_SETUP=1
 fi
 
 command -v realpath >/dev/null 2>&1 || fail "설치 경로 검사에 필요한 realpath가 없습니다."
@@ -90,6 +99,19 @@ validate_regular_target() {
         [ "$link_count" = "1" ] || fail "$managed_label 파일이 하드 링크입니다."
     fi
 }
+
+safe_directory "$RUNTIME_ROOT" "저장소 데이터"
+if [ -e "$LEGACY_CONFIG" ] || [ -L "$LEGACY_CONFIG" ]; then
+    validate_regular_target "$LEGACY_CONFIG" "이전 설정"
+fi
+validate_regular_target "$CONFIG" "설정"
+if [ -e "$LEGACY_CONFIG" ] && [ -e "$CONFIG" ]; then
+    fail "설정 파일이 이전 위치와 새 위치에 모두 있습니다: $LEGACY_CONFIG, $CONFIG"
+fi
+if [ -e "$LEGACY_CONFIG" ]; then
+    mv -- "$LEGACY_CONFIG" "$CONFIG"
+    echo "기존 설정을 안전한 데이터 폴더로 옮겼습니다: $CONFIG"
+fi
 
 safe_directory "$TOOLS" "도구"
 safe_directory "$PYTHON_DIR" "Python"
@@ -233,12 +255,15 @@ case "$interpreter" in
 esac
 
 "$ROOT/research-store" init >/dev/null
+"$VENV/bin/python" -I -B "$ROOT/scripts/personal_registration.py" \
+    install --root "$ROOT" --home "$HOME"
 
 echo
 echo "research-agent 설치가 완료되었습니다."
 echo "원본에는 파일을 만들거나 수정하지 않습니다."
+echo "개인 스킬과 전용 에이전트 등록을 완료했습니다."
 
-if [ -t 0 ]; then
+if [ "$FIRST_SETUP" = "1" ] && [ -t 0 ]; then
     while :; do
         printf '\nPDF를 찾아볼 폴더를 선택하시겠습니까? [Y/n] '
         IFS= read -r answer
@@ -261,7 +286,7 @@ fi
 echo
 "$ROOT/research-store" source-list --plain
 echo
-echo "Codex 앱에서 다음 폴더를 독립 프로젝트로 여세요:"
-echo "$ROOT"
-echo
+echo "열려 있던 Codex 앱·CLI·IDE를 완전히 종료한 뒤 다시 여세요."
+echo "그다음 @Research Library를 선택하세요."
+echo "CLI·IDE에서는 /skills 또는 \$research-library를 사용하세요."
 echo "위치 추가: bash $ROOT/add-source.sh"

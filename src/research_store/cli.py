@@ -64,7 +64,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--config",
         type=Path,
-        help="설정 파일 경로 (기본값: 프로젝트 루트의 config.toml)",
+        help="설정 파일 경로 (기본값: 프로젝트의 .research-store/config.toml)",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("init", help="프로젝트 내부 로컬 설정 생성")

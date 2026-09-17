@@ -70,7 +70,7 @@ safe_runtime_directory "$XDG_CONFIG" "런타임 설정"
 safe_runtime_directory "$XDG_DATA" "런타임 데이터"
 safe_runtime_directory "$XDG_STATE" "런타임 상태"
 
-unset ENV BASH_ENV PYTHONPATH PYTHONHOME PYTHONPYCACHEPREFIX
+unset ENV BASH_ENV CODEX_HOME PYTHONPATH PYTHONHOME PYTHONPYCACHEPREFIX
 unset PYTHONINSPECT PYTHONSTARTUP PYTHON_HISTORY
 unset SSLKEYLOGFILE QLOGDIR
 export HOME="$RUNTIME_HOME"
@@ -84,4 +84,4 @@ export XDG_STATE_HOME="$XDG_STATE"
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONNOUSERSITE=1
 
-exec "$CLI" --config "$ROOT/config.toml" "$@"
+exec "$CLI" --config "$ROOT/.research-store/config.toml" "$@"

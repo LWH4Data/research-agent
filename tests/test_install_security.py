@@ -31,6 +31,40 @@ def source_snapshot(root: Path) -> dict[str, tuple[object, ...]]:
 
 
 class InstallerSecurityTests(unittest.TestCase):
+    def test_migrates_legacy_config_before_dependency_download(self) -> None:
+        repository = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            project = root / "agent"
+            fake_bin = root / "bin"
+            project.mkdir()
+            fake_bin.mkdir()
+            (project / ".research-agent-root").write_text(
+                PROJECT_MARKER_CONTENT + "\n", encoding="utf-8"
+            )
+            shutil.copy2(repository / "install.sh", project / "install.sh")
+            legacy = project / "config.toml"
+            expected = "[store]\ndocuments = 'knowledge/documents'\n"
+            legacy.write_text(expected, encoding="utf-8")
+            fake_curl = fake_bin / "curl"
+            fake_curl.write_text("#!/bin/sh\nexit 42\n", encoding="utf-8")
+            fake_curl.chmod(0o700)
+            environment = dict(os.environ)
+            environment["PATH"] = str(fake_bin) + os.pathsep + environment["PATH"]
+
+            result = subprocess.run(
+                ["sh", str(project / "install.sh")],
+                stdin=subprocess.DEVNULL,
+                env=environment,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            migrated = project / ".research-store/config.toml"
+            self.assertFalse(legacy.exists())
+            self.assertEqual(migrated.read_text(encoding="utf-8"), expected)
+
     def test_rejects_managed_symlink_through_internal_bridge(self) -> None:
         if not hasattr(os, "link") or not hasattr(os, "symlink"):
             self.skipTest("links are not supported")

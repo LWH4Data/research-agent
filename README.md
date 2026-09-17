@@ -7,40 +7,45 @@
 
 ## 설치
 
-이 GitHub 저장소가 비공개인 동안에는 소유자가 먼저 친구를 Collaborator로
-초대해야 하며, 친구는 초대를 수락하고 터미널에서 GitHub 인증을 한 번
-마쳐야 합니다. 공개 저장소로 전환하면 이 사전 단계가 없어집니다.
-
-GitHub 접근이 준비된 뒤 터미널에 다음 한 줄을 붙여 넣습니다.
+터미널에 다음 한 줄을 붙여 넣습니다.
 
 ```sh
 git clone https://github.com/LWH4Data/research-agent.git "$HOME/research-agent" && bash "$HOME/research-agent/install.sh"
 ```
 
-설치 프로그램은 실행 환경, Python, 라이브러리를 모두
-`~/research-agent` 안에 둡니다. 시스템 Python, 셸 설정, `~/.codex`는
-수정하지 않습니다. 고정된 공식 `uv` 실행 파일을 프로젝트 내부의 무작위
-임시 폴더로 받은 뒤 SHA-256을 확인하고 `.tools/`에 설치합니다. 설치용
-캐시도 프로젝트 내부에 만들고 설치가 끝나면 제거합니다.
+새 Mac에서는 첫 실행 때 Git을 위한 Apple 개발 도구 설치 창이 나타날 수
+있습니다. 설치가 끝나면 같은 명령을 한 번 더 실행하면 됩니다.
 
-설치 도중 Finder 폴더 선택창이 열립니다. PDF를 찾아볼 위치를 하나씩
-선택합니다. 설치 프로그램은 선택한 경로를 `config.toml`에 기록할 뿐,
+설치 프로그램은 실행 환경, Python, 라이브러리, 변환 결과를 모두
+`~/research-agent` 안에 둡니다. 셸 설정이나 시스템 Python은 수정하지
+않습니다. 어느 프로젝트에서든 호출할 수 있도록 개인 스킬 링크 하나를
+`~/.agents/skills`에, 읽기 전용 Luna/Sol 에이전트 등록 파일 두 개를
+`~/.codex/agents`에 만듭니다. 저장 명령 하나만 허용하는 규칙과 격리된
+파일 권한 설정도 `~/.codex`에 등록합니다. 기존의 같은 이름 파일이 있으면
+덮어쓰지 않고 중단합니다. 고정된 공식 `uv` 실행 파일은 SHA-256을 확인한 뒤
+프로젝트 내부에 설치합니다. 별도의 OpenAI API 키나 API 사용료 없이 로그인된
+Codex 구독 세션을 사용합니다.
+
+첫 설치 때만 Finder 폴더 선택창이 열립니다. PDF를 찾아볼 위치를 하나씩
+선택합니다. 설치 프로그램은 선택한 경로를 `.research-store/config.toml`에 기록할 뿐,
 이 단계에서 PDF를 스캔하거나 변환하지 않습니다. 선택을 건너뛰면 마지막에
-`add-source.sh` 안내가 표시됩니다.
+`add-source.sh` 안내가 표시됩니다. 업데이트 때는 등록된 위치를 보존하고
+선택창을 다시 열지 않습니다.
 
-설치가 끝나면 Codex 앱에서 `~/research-agent`를 독립 프로젝트로 열고,
-프로젝트 신뢰 요청을 한 번 승인합니다. 이후에는 다음처럼 말하면 됩니다.
+설치가 끝나면 열려 있던 Codex 앱·CLI·IDE를 완전히 종료한 뒤 다시 엽니다.
+현재 작업 프로젝트를 바꿀 필요 없이 다음처럼 말하면 됩니다.
 
-- `새로 추가된 PDF를 정리해줘.`
-- `DBR cavity와 관련된 내용을 찾아줘.`
-- `이 대화에서 실험 설계 부분만 저장해줘.`
-- `지난번에 내가 굴절률 보정에 관해 뭐라고 했지?`
+- `@Research Library 새로 추가된 PDF를 정리해줘.`
+- `@Research Library DBR cavity와 관련된 내용을 찾아줘.`
+- `@Research Library 이 대화에서 실험 설계 부분만 저장해줘.`
+- `@Research Library 지난번에 내가 굴절률 보정에 관해 뭐라고 했지?`
 
 ### 빠른 호출
 
 Codex 앱에서는 입력창에 `@`를 입력하고 **Research Library**를 선택한 뒤
-질문하면 됩니다. 프로젝트를 한 번 추가한 뒤에는 터미널에서 매번 폴더를
-이동하거나 Codex를 다시 실행할 필요가 없습니다.
+질문하면 됩니다. `research-agent` 프로젝트를 선택하거나 터미널에서 그
+폴더로 이동할 필요가 없습니다. 일반 문장만으로도 관련 요청이면 자동으로
+선택될 수 있지만, 처음에는 `@Research Library`로 명시하는 편이 확실합니다.
 
 Codex CLI 또는 IDE 확장에서는 `/skills`에서 `research-library`를 고르거나
 다음처럼 직접 언급할 수 있습니다.
@@ -49,10 +54,9 @@ Codex CLI 또는 IDE 확장에서는 `/skills`에서 `research-library`를 고�
 $research-library DBR cavity와 관련된 내용을 찾아줘.
 ```
 
-이 스킬은 저장소 범위로 설치되므로 Codex 앱에서는 `research-agent`
-프로젝트를 선택한 상태에서 사용합니다. 다른 프로젝트 어디서든 실행되는
-전역 스킬로 설치하면 별도의 쓰기 권한과 제거 절차가 필요하므로 기본 설치는
-원본 보호와 깔끔한 제거를 유지하는 프로젝트 범위를 사용합니다.
+`/research-library` 같은 개별 슬래시 명령은 만들지 않습니다. Codex의 사용자
+정의 슬래시 프롬프트는 더 이상 권장되지 않으므로 공식 스킬 호출인 `@`,
+`/skills`, `$research-library`를 사용합니다.
 
 Codex는 저장소 관리와 검색을 GPT-5.6 Luna xhigh에 맡기고, 수식·표·그림이
 있는 페이지만 GPT-5.6 Sol high에 전달합니다. 사용자가 모델을 고를 필요는
@@ -60,10 +64,14 @@ Codex는 저장소 관리와 검색을 GPT-5.6 Luna xhigh에 맡기고, 수식·
 
 ## 원본 보호 경계
 
-다음 조건은 지침이 아니라 설정과 코드 검사로 강제됩니다.
+Research Library가 수행하는 파일 작업에는 다음 경계를 적용합니다.
 
-- Codex의 쓰기 범위는 `research-agent` 프로젝트 내부뿐입니다.
-- 권한 상승은 비활성화되어 원본 폴더 쓰기를 요청할 수 없습니다.
+- Luna/Sol 전용 에이전트는 읽기 전용 기본값으로 등록됩니다.
+- 개인 명령 규칙은 Research Library의 고정된 실행 파일만 허용합니다.
+- 그 실행 파일은 별도 권한 경계로 다시 들어가 전체 파일을 읽기 전용으로
+  두고, `research-agent`의 `.research-store`와 `knowledge`만 쓰기 가능하게
+  만듭니다. 실행 코드·스킬·가상 환경·Git 데이터, 네트워크와 시스템 임시
+  폴더 쓰기는 허용하지 않습니다.
 - 원본과 프로젝트가 서로 포함되는 경로는 등록할 수 없습니다.
 - 원본 경로에는 Markdown, 숨김 파일, 캐시, 잠금 파일을 만들지 않습니다.
 - 원본의 수정·교체·이동·이름 변경·권한 변경·삭제 기능을 제공하지 않습니다.
@@ -71,6 +79,14 @@ Codex는 저장소 관리와 검색을 GPT-5.6 Luna xhigh에 맡기고, 수식·
 - 모든 Markdown, 이미지, SQLite, 임시 파일은 프로젝트 내부에만 생성합니다.
 - 설치 경로의 심볼릭 링크·하드 링크를 거부하고, 실제 Python이 프로젝트
   내부에 설치됐는지 확인합니다.
+
+개인 스킬은 현재 Codex 대화 자체가 이미 가진 권한을 회수할 수는 없습니다.
+원본 연구 폴더를 쓰기 가능한 Codex 프로젝트로 연 경우 그 대화의 일반 작업은
+여전히 해당 권한을 가집니다. 특히 작업을 `Full access`로 실행하면 그 설정이
+하위 에이전트의 읽기 전용 기본값보다 우선할 수 있습니다. 원본 폴더에서 일반
+Codex 작업까지 물리적으로 보호하려면 `Full access`를 사용하지 않습니다.
+Research Library의 저장 명령 자체는 현재 프로젝트 권한과 분리된 위 경계
+안에서 실행되므로 원본에는 쓸 수 없습니다.
 
 원본에서 파일이 사라지면 SQLite에 `missing` 상태만 기록합니다. 생성된
 Markdown이나 다른 원본을 대신 삭제하지 않습니다.
@@ -80,8 +96,7 @@ Markdown이나 다른 원본을 대신 삭제하지 않습니다.
 등록된 위치를 확인합니다.
 
 ```sh
-cd "$HOME/research-agent"
-./research-store source-list --plain
+"$HOME/research-agent/research-store" source-list --plain
 ```
 
 Finder 선택창으로 위치를 추가합니다.
@@ -93,22 +108,25 @@ bash "$HOME/research-agent/add-source.sh"
 정확한 경로나 PDF 파일 하나를 알고 있다면 직접 등록할 수도 있습니다.
 
 ```sh
-./research-store source-add "$HOME/Documents/광소자 연구"
-./research-store source-add "$HOME/Desktop/notes.pdf"
+"$HOME/research-agent/research-store" source-add "$HOME/Documents/광소자 연구"
+"$HOME/research-agent/research-store" source-add "$HOME/Desktop/notes.pdf"
 ```
 
 `source-remove`는 **앞으로의 스캔만 중단**합니다. 원본 경로 정보는 비활성
 상태로 보존되고, 원본과 이미 생성된 Markdown 스냅샷은 모두 남아 계속
 검색됩니다. 같은 위치를 다시 추가하면 스캔이 재개됩니다.
 
+먼저 `source-list --plain`에 표시된 ID를 확인합니다. 예를 들어 ID가
+`documents`라면 다음처럼 실행합니다.
+
 ```sh
-./research-store source-remove <source-id>
+"$HOME/research-agent/research-store" source-remove "documents"
 ```
 
 ## 증분 동기화
 
 ```sh
-./research-store sync
+"$HOME/research-agent/research-store" sync
 ```
 
 처음에는 등록된 위치에서 PDF를 찾습니다. 다음 실행부터는 경로, 크기,
@@ -121,15 +139,15 @@ bash "$HOME/research-agent/add-source.sh"
 않습니다.
 
 ```sh
-./research-store status
-./research-store review-list
+"$HOME/research-agent/research-store" status
+"$HOME/research-agent/research-store" review-list
 ```
 
 PDF와 저장된 대화를 함께 직접 검색할 수도 있습니다. 생성된 지식 파일은
 Git에서 제외되지만 이 명령은 해당 파일을 빠짐없이 검색합니다.
 
 ```sh
-./research-store search "DBR" "distributed Bragg reflector"
+"$HOME/research-agent/research-store" search "DBR" "distributed Bragg reflector"
 ```
 
 표, 수식, 그림 또는 텍스트 추출 실패가 감지된 페이지만 프로젝트 내부에
@@ -160,17 +178,18 @@ PNG로 렌더링합니다. 렌더링에는 프로젝트 의존성인 `pypdfium2`
 
 ```text
 research-agent/
-├── .agents/skills/                 # 프로젝트 스킬
-├── .codex/agents/                  # Luna/Sol 사용자 정의 에이전트
 ├── .tools/                         # 프로젝트 전용 uv, Git 제외
 ├── .python/                        # 프로젝트 전용 Python, Git 제외
 ├── .venv/                          # 프로젝트 전용 라이브러리, Git 제외
-├── config.toml                     # 읽기 전용 원본 경로, Git 제외
+├── resources/
+│   ├── skills/research-library/    # 개인 스킬의 실제 파일
+│   └── agents/                     # Luna/Sol 에이전트 템플릿
 ├── knowledge/
 │   ├── documents/                  # PDF Markdown, Git 제외
 │   ├── conversations/              # 저장한 대화, Git 제외
 │   └── assets/                     # 검토 이미지, Git 제외
 └── .research-store/
+    ├── config.toml                 # 읽기 전용 원본 경로, Git 제외
     ├── library.sqlite              # 증분 상태, Git 제외
     └── tmp/                         # 프로젝트 내부 임시 파일
 ```
@@ -181,14 +200,24 @@ research-agent/
 제외되므로 유지됩니다.
 
 ```sh
-git -C "$HOME/research-agent" pull --ff-only
-bash "$HOME/research-agent/install.sh"
+git -C "$HOME/research-agent" pull --ff-only && bash "$HOME/research-agent/install.sh"
 ```
 
-더 이상 사용하지 않을 때는 Codex에서 이 프로젝트를 제거한 뒤
-`~/research-agent` 폴더를 Finder의 휴지통으로 옮깁니다. 전역 설치 파일이나
-원본 폴더의 부속 파일이 없으므로 이 폴더 하나가 Research Agent의 전체
-영역입니다. 등록했던 원본 위치는 그대로 남습니다.
+업데이트가 끝나면 열려 있던 Codex 앱·CLI·IDE를 완전히 종료한 뒤 다시 열어
+새 스킬과 명령 규칙을 불러옵니다.
+
+더 이상 사용하지 않을 때는 저장소를 지우기 전에 다음 명령을 실행합니다.
+
+```sh
+bash "$HOME/research-agent/uninstall.sh"
+```
+
+제거 프로그램은 자신이 소유한 개인 스킬 링크, 에이전트 등록 파일 두 개,
+명령 규칙과 격리 설정을 모두 확인한 뒤 그 다섯 항목만 지웁니다. 다른 개인
+스킬·에이전트, 원본 연구 폴더, 변환된 Markdown과 대화 기록은 건드리지
+않습니다. 제거 후 Codex를 다시 시작합니다. 마지막으로 `~/research-agent`
+폴더를 휴지통으로 옮기면 생성된 Markdown과 대화 기록까지 함께 완전히
+제거됩니다.
 
 ## macOS 읽기 권한
 
