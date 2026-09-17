@@ -1,0 +1,87 @@
+#!/bin/sh
+set -eu
+
+umask 077
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+CLI="$ROOT/.venv/bin/research-store"
+MARKER="$ROOT/.research-agent-root"
+
+fail() {
+    echo "오류: $*" >&2
+    exit 1
+}
+
+safe_runtime_directory() {
+    managed_path=$1
+    managed_label=$2
+    [ ! -L "$managed_path" ] || fail "$managed_label 경로가 링크입니다: $managed_path"
+    if [ -e "$managed_path" ] && [ ! -d "$managed_path" ]; then
+        fail "$managed_label 경로가 폴더가 아닙니다: $managed_path"
+    fi
+    mkdir -p -- "$managed_path"
+    physical_path=$(CDPATH= cd -- "$managed_path" && pwd -P)
+    [ "$physical_path" = "$managed_path" ] || \
+        fail "$managed_label 경로가 프로젝트 밖을 가리킵니다: $managed_path"
+}
+
+if [ -L "$MARKER" ] || [ ! -f "$MARKER" ] || \
+   [ "$(cat "$MARKER")" != "research-agent-owned-root-v1" ]; then
+    fail "research-agent 프로젝트 루트를 확인할 수 없습니다."
+fi
+if stat -f '%l' "$MARKER" >/dev/null 2>&1; then
+    marker_links=$(stat -f '%l' "$MARKER")
+else
+    marker_links=$(stat -c '%h' "$MARKER")
+fi
+[ "$marker_links" = "1" ] || fail "프로젝트 루트 표시 파일이 하드 링크입니다."
+
+if [ -L "$ROOT/.venv" ] || [ ! -d "$ROOT/.venv" ] || \
+   [ "$(CDPATH= cd -- "$ROOT/.venv" 2>/dev/null && pwd -P)" != "$ROOT/.venv" ]; then
+    echo "가상 환경 경로가 안전하지 않습니다. install.sh를 다시 실행하세요." >&2
+    exit 1
+fi
+
+if [ ! -x "$CLI" ]; then
+    echo "설치가 필요합니다: bash \"$ROOT/install.sh\"" >&2
+    exit 1
+fi
+
+case "$(realpath "$CLI")" in
+    "$ROOT"/*) ;;
+    *)
+        echo "실행 파일이 프로젝트 밖을 가리킵니다. install.sh를 다시 실행하세요." >&2
+        exit 1
+        ;;
+esac
+
+RUNTIME_ROOT="$ROOT/.research-store"
+RUNTIME_TMP="$RUNTIME_ROOT/tmp"
+RUNTIME_HOME="$RUNTIME_ROOT/home"
+XDG_CACHE="$RUNTIME_ROOT/xdg-cache"
+XDG_CONFIG="$RUNTIME_ROOT/xdg-config"
+XDG_DATA="$RUNTIME_ROOT/xdg-data"
+XDG_STATE="$RUNTIME_ROOT/xdg-state"
+
+safe_runtime_directory "$RUNTIME_ROOT" "런타임"
+safe_runtime_directory "$RUNTIME_TMP" "임시 파일"
+safe_runtime_directory "$RUNTIME_HOME" "런타임 HOME"
+safe_runtime_directory "$XDG_CACHE" "런타임 캐시"
+safe_runtime_directory "$XDG_CONFIG" "런타임 설정"
+safe_runtime_directory "$XDG_DATA" "런타임 데이터"
+safe_runtime_directory "$XDG_STATE" "런타임 상태"
+
+unset ENV BASH_ENV PYTHONPATH PYTHONHOME PYTHONPYCACHEPREFIX
+unset PYTHONINSPECT PYTHONSTARTUP PYTHON_HISTORY
+unset SSLKEYLOGFILE QLOGDIR
+export HOME="$RUNTIME_HOME"
+export TMPDIR="$RUNTIME_TMP"
+export TMP="$RUNTIME_TMP"
+export TEMP="$RUNTIME_TMP"
+export XDG_CACHE_HOME="$XDG_CACHE"
+export XDG_CONFIG_HOME="$XDG_CONFIG"
+export XDG_DATA_HOME="$XDG_DATA"
+export XDG_STATE_HOME="$XDG_STATE"
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONNOUSERSITE=1
+
+exec "$CLI" --config "$ROOT/config.toml" "$@"

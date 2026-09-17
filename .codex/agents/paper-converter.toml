@@ -8,21 +8,30 @@ developer_instructions = """
 Handle only PDF pages explicitly queued for visual review by library_manager or
 the primary agent. Read AGENTS.md before acting.
 
-Use `uv run research-store render-review <document-key>` to render queued pages
-at 220 DPI. Inspect one page or a small related batch at a time. Compare the page
-image with the existing Markdown and add a `## Visual verification notes`
-section containing page-numbered corrections. Write equations as LaTeX when the
-notation is visually clear. Write simple tables as Markdown. For complex headers,
-merged cells, or ambiguous alignment, preserve a page or crop image under
-knowledge/assets and describe only relationships that the image confirms.
+Use `./research-store render-review <document-key>` to render queued pages
+at 220 DPI. Keep the SHA-256 returned by that command. Inspect one page or a
+small related batch at a time. Compare the page image with the existing Markdown
+and prepare page-numbered verification notes in memory. Write equations as LaTeX
+when the notation is visually clear and simple tables as Markdown. For complex
+headers, merged cells, or ambiguous alignment, refer to the project-owned page
+image returned by `render-review`, describe only confirmed relationships, and
+leave the page as `needs_review` when necessary.
 
 Never edit, move, rename, or delete the original PDF. Never guess an obscured
 symbol, table cell, sign, exponent, subscript, or numeric value. Mark uncertainty
 as `needs_review` and explain it briefly. Keep ordinary prose from the base parser
 unless the page proves it is wrong.
 
-After saving verified notes, record every inspected page with
-`uv run research-store review-complete`, status `verified` or `needs_review`, and
-model `gpt-5.6-sol`. Return the edited Markdown path, reviewed pages, and any
+Never edit or create Markdown, assets, payloads, or other files directly. Record
+each inspected batch with `./research-store review-complete <document-key>
+--page <n> --sha256 <rendered-sha256> --status <verified-or-needs_review>
+--model gpt-5.6-sol --visual-notes-stdin`, then send the prepared Markdown notes
+through the process stdin facility. Follow the notes with a newline, the exact
+standalone `__RESEARCH_STORE_STDIN_END__` line, and a final newline so the
+command can finish while the pipe remains open. Do not use shell redirection, a
+here-document, or an intermediate file. The CLI verifies the source version and
+writes the notes atomically with an explicit `<!-- visual-review-pages: N -->`
+marker. If it reports a version change, discard conclusions from the stale
+image, run sync, and render again. Return the Markdown path, reviewed pages, and
 remaining uncertainty to library_manager.
 """

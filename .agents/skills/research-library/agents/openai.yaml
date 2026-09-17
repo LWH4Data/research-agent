@@ -1,4 +1,4 @@
 interface:
   display_name: "Research Library"
-  short_description: "논문과 저장된 연구 대화를 동기화하고 검색합니다"
+  short_description: "PDF 자료와 저장된 연구 대화를 동기화하고 검색합니다"
   default_prompt: "Use $research-library to update and search my research library."

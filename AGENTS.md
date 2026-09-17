@@ -1,61 +1,105 @@
 # Research store
 
-This project is a local research knowledge store used from Codex.
+This project is a self-contained local research knowledge store used from Codex.
+
+## Non-negotiable source boundary
+
+- Every configured source is read-only. Never create, edit, replace, rename,
+  move, chmod, chown, or delete a source file or anything beside it.
+- Never place sidecar Markdown, indexes, hidden files, locks, or caches in a
+  source. All generated data belongs under this project root.
+- Never add a source path to Codex writable roots or request broader filesystem
+  access. If the sandbox blocks an operation, stop and report it.
+- Never use a source directory inside this project, and never register a source
+  that contains this project. `research-store` enforces both directions.
+- Use `./research-store` for source, sync, render, review-state, and conversation
+  operations. Do not invoke converters directly on an original PDF. During
+  library operation, never create or edit generated Markdown, assets, config, or
+  payload files directly; pass content to the CLI through process stdin so its
+  hard-link and atomic-write checks always run.
+- Removing a source disables future scans while retaining its source mapping. It
+  never deletes the original or generated Markdown, so the existing snapshot
+  remains searchable and traceable.
 
 ## Agent routing
 
-- Delegate library synchronization, status, conversation saves, and broad
-  retrieval to the project-scoped `library_manager` agent in
-  `.codex/agents/library-manager.toml`. It runs on GPT-5.6 Luna at xhigh effort.
-- Delegate only queued equation, table, figure, and layout pages to the
-  project-scoped `paper_converter` agent in
-  `.codex/agents/paper-converter.toml`. It runs on GPT-5.6 Sol at high effort.
-- The user should never need to select either agent or change models manually.
-- Use the project-local `research-library` skill for synchronization, retrieval,
-  and conversation-memory requests.
+- Delegate synchronization, status, saved-conversation creation, and broad
+  retrieval to `library_manager` in `.codex/agents/library-manager.toml`.
+- Delegate only queued equation, table, figure, and layout pages to
+  `paper_converter` in `.codex/agents/paper-converter.toml`.
+- The user never needs to select an agent or model manually.
+- Use the repository skill at `.agents/skills/research-library/SKILL.md`.
 
-## Safety boundary
+## Commands
 
-- Treat every directory listed under `[[sources]]` in `config.toml` as read-only.
-- Never create, edit, rename, move, or delete anything under a source directory.
-- Generated files belong only under the configured store paths in this project.
-- Run `research-store sync` to refresh parsed documents. Do not invoke a PDF converter directly against a source file.
-- Directory scans may read file metadata. PDF content is read only for new or
-  changed files identified by the SQLite ledger.
+- `./research-store source-list` lists registered read-only locations.
+- `bash ./add-source.sh` opens the native folder picker from a normal terminal.
+- `./research-store source-add <path>` registers an explicitly supplied folder
+  or PDF. It only changes this project's `config.toml`.
+- `./research-store source-remove <id>` stops scanning a location without
+  deleting any file.
+- `./research-store sync` parses new or changed PDFs.
+- `./research-store review-list` lists pages requiring visual inspection.
+- `./research-store render-review <document-key>` renders only queued pages into
+  the project-owned temporary directory and returns their document SHA-256.
+- `./research-store review-complete <document-key> --page <n> --sha256 <hash>`
+  with `--visual-notes-stdin` records stdin notes only if the database and current
+  original still match the rendered version.
+- `./research-store save-conversation` accepts the structured conversation JSON
+  only through process stdin and writes the searchable Markdown atomically.
 
-## Synchronizing
+For either stdin command, send the UTF-8 body, a newline, the exact standalone
+line `__RESEARCH_STORE_STDIN_END__`, and a final newline. The command consumes
+that line and can finish while the caller's pipe remains open. Plain EOF remains
+supported for compatibility. Conversation JSON is limited to 8 MiB and visual
+review notes to 1 MiB.
 
-- `uv run research-store sync` parses new or changed PDFs and leaves unchanged
-  files alone.
-- `uv run research-store review-list` returns pages that need visual inspection.
-- Send only those pages to `paper_converter`. It must render them through
-  `research-store render-review`; it must never write beside the source PDF.
-- Report new or changed documents, unchanged documents, missing originals,
-  failures, and pending page reviews in plain language.
+Report new or changed documents, unchanged documents, missing originals,
+failures, and pending page reviews in plain language.
+
+If no source is registered, say so and direct the user to `bash
+./add-source.sh`. If a source is disconnected or unreadable, report its path and
+error. Do not mark that source's earlier documents missing, and do not present an
+incomplete scan as an empty successful result.
 
 ## Searching
 
-- Search `knowledge/documents/` for paper content and `knowledge/conversations/` for the user's prior statements.
-- For Korean questions about English papers, derive useful English technical terms and search both languages.
-- State whether a result came from a paper or from a saved conversation.
-- Cite the Markdown path, its `source_path` metadata, and the nearest `<!-- page: N -->` marker.
-- Treat parsed Markdown as a discovery index. For equations, tables, figures, and numeric claims, open the original PDF at the identified page and verify the visual source before answering.
-- Do not reconstruct a flattened equation or assign table values to columns unless the original PDF page confirms the notation and alignment.
-- If the repository does not contain supporting material, say so clearly.
+- Read `config.toml` and search its configured document and conversation folders
+  together.
+- For Korean questions about English documents, search useful Korean and English
+  technical terms.
+- Label PDF evidence, user notes, prior Codex explanations, and unverified ideas
+  separately.
+- For evidence in the base PDF extraction, cite the Markdown path, its
+  `source_path` metadata, and the nearest `<!-- page: N -->` marker.
+- For evidence under `## Visual verification notes`, cite that note's
+  `### Pages N` heading and `<!-- visual-review-pages: N -->` marker. Do not
+  attribute a visual note to the nearest base `<!-- page: N -->` marker.
+- Treat Markdown as a discovery index. Verify equations, tables, figures, and
+  numeric claims against the original page image before answering.
+- Do not reconstruct flattened notation or table alignment without visual
+  confirmation.
 
 ## Conversation memory
 
-- When the user asks to remember, record, or save conversation content, ask one
-  question to determine the range: the current named topic, the entire current
-  conversation, or a range the user describes.
-- Once the user chooses, save without another confirmation.
-- Store one structured Markdown file per save under
-  `knowledge/conversations/YYYY/MM/` by using
-  `research-store save-conversation` and the payload schema in the
-  `research-library` skill.
-- Preserve every selected user message verbatim. Also include a search summary,
-  bilingual aliases when helpful, decisions, unverified claims, open questions,
-  and related paper/page links.
-- Separate the user's statement from Codex's interpretation and from paper
-  evidence. A prior assistant answer is not paper evidence.
-- Do not write routine coding or repository-maintenance chat into research memory.
+- When the user asks to save or remember conversation content, ask one question
+  for the range: current named topic, entire conversation, or a described range.
+- After the user chooses, save without another confirmation.
+- Construct the JSON payload in memory and send it to `save-conversation` through
+  the process stdin facility. Finish it with the exact standalone
+  `__RESEARCH_STORE_STDIN_END__` line so the command does not wait for EOF.
+  Never create a payload file, use shell redirection or a here-document, or edit
+  the saved Markdown directly.
+- Preserve selected user messages verbatim and separate user ideas, decisions,
+  unverified claims, open questions, and PDF evidence.
+- Mark `capture_status` as `complete` only when every selected message is
+  available verbatim. For compacted or unavailable history, save only available
+  exact text as `partial`, describe omissions in `capture_note`, and never
+  reconstruct missing messages.
+- Do not save routine repository-maintenance conversation as research memory.
+
+## Removal
+
+This project performs no global installation and writes no files into sources.
+To remove it, first remove the project from Codex and then move this project
+folder to Trash. Never include a configured source in a deletion command.

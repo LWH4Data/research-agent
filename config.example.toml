@@ -5,11 +5,16 @@ assets = "knowledge/assets"
 state = ".research-store/library.sqlite"
 temporary = ".research-store/tmp"
 
-# Register one or more existing directories. They are always treated as read-only.
+# Register any number of existing folders or individual PDF files. They are
+# always treated as read-only and must be outside this project.
 [[sources]]
 id = "documents"
 path = "~/Documents"
+kind = "directory"
+enabled = true
 
 # [[sources]]
-# id = "desktop-research"
-# path = "~/Desktop/Research"
+# id = "single-pdf"
+# path = "~/Desktop/notes.pdf"
+# kind = "file"
+# enabled = true

@@ -7,6 +7,8 @@ from pathlib import Path
 import sqlite3
 from typing import Any
 
+from .safety import ensure_owned_directory, reject_linked_file, require_owned_path
+
 
 SCHEMA_VERSION = 1
 
@@ -18,11 +20,22 @@ def now() -> str:
 class LibraryState(AbstractContextManager["LibraryState"]):
     """SQLite-backed sync ledger. Source documents are never opened for writing."""
 
-    def __init__(self, path: Path):
-        path.parent.mkdir(parents=True, exist_ok=True)
-        self.path = path
-        self.connection = sqlite3.connect(path)
+    def __init__(self, path: Path, root: Path):
+        self.root = root
+        self.path = require_owned_path(path, root, label="SQLite 저장 경로")
+        ensure_owned_directory(self.path.parent, root, label="SQLite 저장 폴더")
+        self.path = reject_linked_file(self.path, root, label="SQLite 저장 경로")
+        for suffix in ("-journal", "-wal", "-shm"):
+            reject_linked_file(
+                Path(f"{self.path}{suffix}"),
+                root,
+                label="SQLite 보조 파일 경로",
+            )
+        self.connection = sqlite3.connect(self.path)
         self.connection.row_factory = sqlite3.Row
+        # Keep SQLite's sort/index spill files in memory so every persistent
+        # write remains beside the project-owned database.
+        self.connection.execute("PRAGMA temp_store = MEMORY")
         self.connection.execute("PRAGMA foreign_keys = ON")
         self._initialize()
 
@@ -146,10 +159,16 @@ class LibraryState(AbstractContextManager["LibraryState"]):
             values,
         )
 
-    def mark_missing_except(self, seen: set[str]) -> int:
+    def mark_missing_except(
+        self, seen: set[str], scanned_source_ids: set[str]
+    ) -> int:
         missing = 0
         for document in self.documents():
-            if document["document_key"] in seen or not document["present"]:
+            if (
+                document["source_id"] not in scanned_source_ids
+                or document["document_key"] in seen
+                or not document["present"]
+            ):
                 continue
             document["present"] = 0
             document["missing_since"] = now()
@@ -187,7 +206,7 @@ class LibraryState(AbstractContextManager["LibraryState"]):
                 d.output_path
             FROM page_reviews AS r
             JOIN documents AS d USING(document_key)
-            WHERE r.status = 'pending' AND d.present = 1
+            WHERE r.status IN ('pending', 'needs_review') AND d.present = 1
             ORDER BY r.document_key, r.page_number
             """
         ).fetchall()
@@ -270,6 +289,13 @@ class LibraryState(AbstractContextManager["LibraryState"]):
             ),
         )
 
+    def get_conversation(self, conversation_id: str) -> dict[str, Any] | None:
+        row = self.connection.execute(
+            "SELECT * FROM conversations WHERE conversation_id = ?",
+            (conversation_id,),
+        ).fetchone()
+        return None if row is None else dict(row)
+
     def status(self) -> dict[str, Any]:
         document_counts = self.connection.execute(
             """
@@ -282,7 +308,10 @@ class LibraryState(AbstractContextManager["LibraryState"]):
             """
         ).fetchone()
         pending = self.connection.execute(
-            "SELECT COUNT(*) FROM page_reviews WHERE status = 'pending'"
+            """
+            SELECT COUNT(*) FROM page_reviews
+            WHERE status IN ('pending', 'needs_review')
+            """
         ).fetchone()[0]
         conversations = self.connection.execute(
             "SELECT COUNT(*) FROM conversations"

@@ -1,0 +1,10 @@
+# Keep every local Codex command inside this project boundary.
+sandbox_mode = "workspace-write"
+approval_policy = "never"
+allow_login_shell = false
+
+[sandbox_workspace_write]
+writable_roots = []
+network_access = false
+exclude_slash_tmp = true
+exclude_tmpdir_env_var = true

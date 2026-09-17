@@ -1,14 +1,15 @@
 .DS_Store
 .venv/
+.tools/
+.python/
 .uv-cache/
+/.research-install.*/
 __pycache__/
 *.py[cod]
 
 # User-specific paths and generated knowledge
-config.toml
+/config.toml
 .research-store/
-papers/*
-!papers/.gitkeep
 knowledge/documents/**
 knowledge/conversations/**
 knowledge/assets/**
