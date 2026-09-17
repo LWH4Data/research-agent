@@ -38,9 +38,11 @@ its prior document state. Do not describe an incomplete scan as zero results.
 
 ## Search
 
-Read the configured document and conversation paths from `config.toml`, then
-search their Markdown files together. Use Korean and English technical terms
-when the query crosses languages. Identify each result as PDF evidence, a user
+Use `./research-store search <term> [<term> ...]` for initial retrieval. The
+command searches generated PDF Markdown and saved conversations even though
+they are intentionally excluded from Git. Expand Korean queries with useful
+English technical terms and pass all useful terms in one call. Read the returned
+files around each matching line. Identify each result as PDF evidence, a user
 note, or a prior Codex explanation. For base PDF extraction, include the
 Markdown path, configured source path, and nearest `<!-- page: N -->` marker.
 For evidence under `## Visual verification notes`, cite its `### Pages N`

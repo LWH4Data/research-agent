@@ -9,6 +9,7 @@ import sys
 from .conversations import save_conversation
 from .config import load_config
 from .picker import choose_source
+from .search import search_library
 from .sources import (
     add_sources,
     default_config_path,
@@ -85,6 +86,11 @@ def _parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("sync", help="신규·변경 PDF를 Markdown으로 변환")
     subparsers.add_parser("status", help="마지막 동기화 상태 출력")
+    search = subparsers.add_parser(
+        "search", help="PDF Markdown과 저장된 대화를 함께 검색"
+    )
+    search.add_argument("queries", nargs="+", help="하나 이상의 검색어")
+    search.add_argument("--limit", type=int, default=50, help="최대 결과 개수 (1-200)")
     subparsers.add_parser("review-list", help="이미지 판독이 필요한 페이지 목록")
 
     render = subparsers.add_parser("render-review", help="검토할 PDF 페이지를 PNG로 렌더링")
@@ -184,6 +190,8 @@ def main() -> None:
                     )
             elif args.command == "status":
                 result = library_status(config)
+            elif args.command == "search":
+                result = search_library(config, args.queries, limit=args.limit)
             elif args.command == "review-list":
                 result = pending_reviews(config)
             elif args.command == "render-review":

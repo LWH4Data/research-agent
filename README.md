@@ -107,6 +107,13 @@ bash "$HOME/research-agent/add-source.sh"
 ./research-store review-list
 ```
 
+PDF와 저장된 대화를 함께 직접 검색할 수도 있습니다. 생성된 지식 파일은
+Git에서 제외되지만 이 명령은 해당 파일을 빠짐없이 검색합니다.
+
+```sh
+./research-store search "DBR" "distributed Bragg reflector"
+```
+
 표, 수식, 그림 또는 텍스트 추출 실패가 감지된 페이지만 프로젝트 내부에
 PNG로 렌더링합니다. 렌더링에는 프로젝트 의존성인 `pypdfium2`를 사용하므로
 별도의 시스템 PDF 도구가 필요하지 않습니다. 렌더링 때의 SHA-256과 검토

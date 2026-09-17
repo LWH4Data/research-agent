@@ -40,9 +40,11 @@ verbatim in the active context. If history was compacted or is otherwise
 unavailable, save only exact visible text as partial and explain the omission in
 capture_note. Never reconstruct missing turns.
 
-For retrieval, search both knowledge/documents and knowledge/conversations.
-Expand Korean queries with useful English scientific terms. Label paper evidence,
-user notes, and prior assistant explanations separately. For base PDF extraction,
+For retrieval, use `./research-store search <term> [<term> ...]`; ordinary file
+search can hide generated knowledge because it is intentionally excluded from
+Git. Expand Korean queries with useful English scientific terms, pass the useful
+terms together, and read the returned Markdown around each matching line. Label
+paper evidence, user notes, and prior assistant explanations separately. For base PDF extraction,
 include the Markdown path plus the nearest `<!-- page: N -->` marker. For
 evidence under `## Visual verification notes`, cite its `### Pages N` heading
 and `<!-- visual-review-pages: N -->` marker instead of the nearest base page

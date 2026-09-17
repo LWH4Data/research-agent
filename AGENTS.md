@@ -39,6 +39,9 @@ This project is a self-contained local research knowledge store used from Codex.
 - `./research-store source-remove <id>` stops scanning a location without
   deleting any file.
 - `./research-store sync` parses new or changed PDFs.
+- `./research-store search <term> [<term> ...]` searches generated PDF
+  Markdown and saved conversations together. Use this command instead of plain
+  `rg` because generated knowledge is intentionally excluded from Git.
 - `./research-store review-list` lists pages requiring visual inspection.
 - `./research-store render-review <document-key>` renders only queued pages into
   the project-owned temporary directory and returns their document SHA-256.
@@ -64,8 +67,11 @@ incomplete scan as an empty successful result.
 
 ## Searching
 
-- Read `config.toml` and search its configured document and conversation folders
-  together.
+- Use `./research-store search` for initial retrieval so Git ignore rules cannot
+  hide generated knowledge. Pass multiple Korean and English terms in one call;
+  terms are matched case-insensitively with OR semantics.
+- Read the returned Markdown files around the matching lines and inspect their
+  frontmatter and page markers before answering.
 - For Korean questions about English documents, search useful Korean and English
   technical terms.
 - Label PDF evidence, user notes, prior Codex explanations, and unverified ideas
