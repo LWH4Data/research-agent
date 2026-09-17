@@ -5,6 +5,7 @@ description = "Incremental read-only PDF and conversation research library for C
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+  "fonttools>=4.0",
   "pillow>=10.0",
   "pypdf>=6.0",
   "pypdfium2>=4.30",
