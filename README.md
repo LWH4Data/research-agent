@@ -36,6 +36,24 @@ git clone https://github.com/LWH4Data/research-agent.git "$HOME/research-agent" 
 - `이 대화에서 실험 설계 부분만 저장해줘.`
 - `지난번에 내가 굴절률 보정에 관해 뭐라고 했지?`
 
+### 빠른 호출
+
+Codex 앱에서는 입력창에 `@`를 입력하고 **Research Library**를 선택한 뒤
+질문하면 됩니다. 프로젝트를 한 번 추가한 뒤에는 터미널에서 매번 폴더를
+이동하거나 Codex를 다시 실행할 필요가 없습니다.
+
+Codex CLI 또는 IDE 확장에서는 `/skills`에서 `research-library`를 고르거나
+다음처럼 직접 언급할 수 있습니다.
+
+```text
+$research-library DBR cavity와 관련된 내용을 찾아줘.
+```
+
+이 스킬은 저장소 범위로 설치되므로 Codex 앱에서는 `research-agent`
+프로젝트를 선택한 상태에서 사용합니다. 다른 프로젝트 어디서든 실행되는
+전역 스킬로 설치하면 별도의 쓰기 권한과 제거 절차가 필요하므로 기본 설치는
+원본 보호와 깔끔한 제거를 유지하는 프로젝트 범위를 사용합니다.
+
 Codex는 저장소 관리와 검색을 GPT-5.6 Luna xhigh에 맡기고, 수식·표·그림이
 있는 페이지만 GPT-5.6 Sol high에 전달합니다. 사용자가 모델을 고를 필요는
 없습니다.
