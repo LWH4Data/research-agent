@@ -55,7 +55,12 @@ class SearchTests(unittest.TestCase):
             config = load_config(config_path)
             sync_library(
                 config,
-                lambda _: "<!-- page: 1 -->\n\nTransformer cavity evidence.\n",
+                lambda _: (
+                    "<!-- page: 1 -->\n\n"
+                    "Transformer cavity evidence.\n"
+                    "Transformer attention evidence.\n"
+                    "Transformer encoder evidence.\n"
+                ),
             )
             save_conversation(
                 config,
@@ -79,6 +84,8 @@ class SearchTests(unittest.TestCase):
                     "--config",
                     str(config_path),
                     "search",
+                    "--limit",
+                    "2",
                     "transformer",
                     "굴절률",
                 ],
@@ -88,7 +95,7 @@ class SearchTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
-            self.assertFalse(payload["truncated"])
+            self.assertTrue(payload["truncated"])
             self.assertEqual(
                 {match["type"] for match in payload["matches"]},
                 {"pdf-document", "conversation"},

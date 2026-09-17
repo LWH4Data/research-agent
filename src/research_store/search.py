@@ -54,17 +54,26 @@ def search_library(
         raise ValueError("검색 결과 개수는 1에서 200 사이여야 합니다")
 
     prepared: list[tuple[str, str]] = []
+    seen_queries: set[str] = set()
     for query in queries:
         value = query.strip()
         if not value:
             continue
         if len(value) > 500:
             raise ValueError("검색어는 500자 이하여야 합니다")
-        prepared.append((value, value.casefold()))
+        normalized = value.casefold()
+        if normalized in seen_queries:
+            continue
+        seen_queries.add(normalized)
+        prepared.append((value, normalized))
     if not prepared:
         raise ValueError("하나 이상의 검색어가 필요합니다")
+    if len(prepared) > 32:
+        raise ValueError("검색어는 한 번에 32개까지 사용할 수 있습니다")
 
-    matches: list[dict[str, object]] = []
+    buckets: list[list[tuple[str, int]]] = [[] for _ in prepared]
+    records: dict[tuple[str, int], dict[str, object]] = {}
+    total_matches = 0
     roots = (
         ("pdf-document", config.documents),
         ("conversation", config.conversations),
@@ -75,32 +84,53 @@ def search_library(
                 for line_number, line in enumerate(file, start=1):
                     display_line = line.strip()
                     folded = display_line.casefold()
-                    hits = [
-                        (original, folded.find(normalized))
-                        for original, normalized in prepared
+                    hit_indices = [
+                        index
+                        for index, (_, normalized) in enumerate(prepared)
                         if normalized in folded
                     ]
-                    if not hits:
+                    if not hit_indices:
                         continue
-                    matches.append(
-                        {
-                            "type": record_type,
-                            "path": path.relative_to(config.root).as_posix(),
-                            "line": line_number,
-                            "matched_queries": [query for query, _ in hits],
-                            "text": _excerpt(
-                                display_line, [position for _, position in hits]
-                            ),
-                        }
-                    )
-                    if len(matches) >= limit:
-                        return {
-                            "queries": [query for query, _ in prepared],
-                            "matches": matches,
-                            "truncated": True,
-                        }
+                    total_matches += 1
+                    if not any(len(buckets[index]) < limit for index in hit_indices):
+                        continue
+                    relative_path = path.relative_to(config.root).as_posix()
+                    key = (relative_path, line_number)
+                    positions = [
+                        folded.find(prepared[index][1]) for index in hit_indices
+                    ]
+                    records[key] = {
+                        "type": record_type,
+                        "path": relative_path,
+                        "line": line_number,
+                        "matched_queries": [
+                            prepared[index][0] for index in hit_indices
+                        ],
+                        "text": _excerpt(display_line, positions),
+                    }
+                    for index in hit_indices:
+                        if len(buckets[index]) < limit:
+                            buckets[index].append(key)
+
+    selected: list[dict[str, object]] = []
+    selected_keys: set[tuple[str, int]] = set()
+    for position in range(limit):
+        for bucket in buckets:
+            if position >= len(bucket):
+                continue
+            key = bucket[position]
+            if key in selected_keys:
+                continue
+            selected_keys.add(key)
+            selected.append(records[key])
+            if len(selected) >= limit:
+                return {
+                    "queries": [query for query, _ in prepared],
+                    "matches": selected,
+                    "truncated": total_matches > len(selected),
+                }
     return {
         "queries": [query for query, _ in prepared],
-        "matches": matches,
-        "truncated": False,
+        "matches": selected,
+        "truncated": total_matches > len(selected),
     }
