@@ -16,3 +16,7 @@ knowledge/assets/**
 !knowledge/documents/.gitkeep
 !knowledge/conversations/.gitkeep
 !knowledge/assets/.gitkeep
+
+# Local research inputs and private experiment evidence
+/papers/
+/docs/technical/experiments/raw/
