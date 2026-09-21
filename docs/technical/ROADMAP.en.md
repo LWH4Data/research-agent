@@ -15,7 +15,7 @@ flowchart LR
     M1[1. Source protection and permissions<br/>Validated] --> M2[2. PDF conversion reliability<br/>Under validation]
     M2 --> M3[3. Subscription usage and efficiency<br/>Experiment not started]
     M3 --> M4[4. Retrieval quality<br/>Review planned]
-    M4 --> M5[5. Conversation storage<br/>Review planned]
+    M4 --> M5[5. Conversation storage and management<br/>Implementation validated]
     M5 --> M6[6. Installation, removal, and user docs<br/>Review planned]
 ```
 
@@ -25,7 +25,7 @@ flowchart LR
 | PDF conversion and visual review | Under validation | Establish accuracy criteria with representative PDFs |
 | Subscription usage and efficiency | Experiment not started | Measure identical workloads on Plus and Pro 5x |
 | Retrieval | Implemented; design review pending | Validate retrieval quality and evidence labels |
-| Conversation storage | Implemented; design review pending | Validate capture scope and retrieval usefulness |
+| Conversation storage and management | Implemented and technically validated | Validate natural-language UX and retrieval usefulness |
 | Installation and removal | Implemented; design review pending | Validate the installation experience for non-developers |
 | User documentation | File structure only | Write the real usage flow and FAQ |
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 import os
 from pathlib import Path
 import secrets
@@ -183,6 +185,92 @@ def atomic_text(path: Path, text: str, root: Path) -> None:
                 pass
         raise
     finally:
+        os.close(parent_descriptor)
+
+
+@contextmanager
+def staged_owned_file_removal(
+    path: Path, root: Path, *, label: str
+) -> Iterator[Path]:
+    """Hide an owned file, restore it on error, and unlink it after success."""
+    target = require_owned_path(path, root, label=label)
+    parent_descriptor, _ = _open_owned_directory(
+        target.parent, root, label=f"{label} 폴더", create=False
+    )
+    staged_name: str | None = None
+    staged_is_placeholder = False
+    try:
+        try:
+            target_info = os.stat(
+                target.name,
+                dir_fd=parent_descriptor,
+                follow_symlinks=False,
+            )
+        except FileNotFoundError as error:
+            raise ValueError(f"{label} 파일이 없습니다: {target}") from error
+        if stat.S_ISLNK(target_info.st_mode):
+            raise ValueError(f"{label}는 심볼릭 링크일 수 없습니다: {target}")
+        if not stat.S_ISREG(target_info.st_mode):
+            raise ValueError(f"{label}는 일반 파일이어야 합니다: {target}")
+        if target_info.st_nlink != 1:
+            raise ValueError(f"{label}는 하드 링크일 수 없습니다: {target}")
+
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+        for _ in range(128):
+            candidate = f".delete-{secrets.token_hex(12)}"
+            try:
+                descriptor = os.open(
+                    candidate,
+                    flags,
+                    0o600,
+                    dir_fd=parent_descriptor,
+                )
+            except FileExistsError:
+                continue
+            os.close(descriptor)
+            staged_name = candidate
+            staged_is_placeholder = True
+            break
+        else:
+            raise RuntimeError("안전한 삭제 준비 파일 이름을 만들 수 없습니다")
+
+        try:
+            os.replace(
+                target.name,
+                staged_name,
+                src_dir_fd=parent_descriptor,
+                dst_dir_fd=parent_descriptor,
+            )
+        except BaseException:
+            os.unlink(staged_name, dir_fd=parent_descriptor)
+            staged_name = None
+            staged_is_placeholder = False
+            raise
+        staged_is_placeholder = False
+        os.fsync(parent_descriptor)
+
+        try:
+            yield target
+        except BaseException:
+            os.replace(
+                staged_name,
+                target.name,
+                src_dir_fd=parent_descriptor,
+                dst_dir_fd=parent_descriptor,
+            )
+            staged_name = None
+            os.fsync(parent_descriptor)
+            raise
+        else:
+            os.unlink(staged_name, dir_fd=parent_descriptor)
+            staged_name = None
+            os.fsync(parent_descriptor)
+    finally:
+        if staged_name is not None and staged_is_placeholder:
+            try:
+                os.unlink(staged_name, dir_fd=parent_descriptor)
+            except FileNotFoundError:
+                pass
         os.close(parent_descriptor)
 
 

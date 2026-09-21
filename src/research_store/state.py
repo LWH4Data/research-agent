@@ -10,7 +10,7 @@ from typing import Any
 from .safety import ensure_owned_directory, reject_linked_file, require_owned_path
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def now() -> str:
@@ -37,16 +37,37 @@ class LibraryState(AbstractContextManager["LibraryState"]):
         # write remains beside the project-owned database.
         self.connection.execute("PRAGMA temp_store = MEMORY")
         self.connection.execute("PRAGMA foreign_keys = ON")
-        self._initialize()
+        try:
+            self._initialize()
+        except BaseException:
+            self.connection.close()
+            raise
 
     def _initialize(self) -> None:
-        self.connection.executescript(
+        self.connection.execute(
             """
             CREATE TABLE IF NOT EXISTS metadata (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
-            );
+            )
+            """
+        )
+        version_row = self.connection.execute(
+            "SELECT value FROM metadata WHERE key = 'schema_version'"
+        ).fetchone()
+        if version_row is not None:
+            try:
+                stored_version = int(version_row["value"])
+            except (TypeError, ValueError) as error:
+                raise RuntimeError("SQLite 스키마 버전이 올바르지 않습니다") from error
+            if stored_version > SCHEMA_VERSION:
+                raise RuntimeError(
+                    "현재 프로그램보다 새로운 SQLite 스키마입니다: "
+                    f"{stored_version} > {SCHEMA_VERSION}"
+                )
 
+        self.connection.executescript(
+            """
             CREATE TABLE IF NOT EXISTS documents (
                 document_key TEXT PRIMARY KEY,
                 source_id TEXT NOT NULL,
@@ -87,10 +108,35 @@ class LibraryState(AbstractContextManager["LibraryState"]):
                 title TEXT NOT NULL,
                 scope TEXT NOT NULL,
                 created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                revision INTEGER NOT NULL DEFAULT 1,
                 tags TEXT NOT NULL,
                 aliases TEXT NOT NULL
             );
             """
+        )
+        conversation_columns = {
+            str(row["name"])
+            for row in self.connection.execute("PRAGMA table_info(conversations)")
+        }
+        if "updated_at" not in conversation_columns:
+            self.connection.execute(
+                "ALTER TABLE conversations ADD COLUMN updated_at TEXT"
+            )
+        if "revision" not in conversation_columns:
+            self.connection.execute(
+                "ALTER TABLE conversations "
+                "ADD COLUMN revision INTEGER NOT NULL DEFAULT 1"
+            )
+        self.connection.execute(
+            """
+            UPDATE conversations
+            SET updated_at = created_at
+            WHERE updated_at IS NULL OR updated_at = ''
+            """
+        )
+        self.connection.execute(
+            "UPDATE conversations SET revision = 1 WHERE revision < 1"
         )
         self.set_metadata("schema_version", str(SCHEMA_VERSION))
         self.connection.commit()
@@ -116,6 +162,12 @@ class LibraryState(AbstractContextManager["LibraryState"]):
             "SELECT value FROM metadata WHERE key = ?", (key,)
         ).fetchone()
         return None if row is None else str(row["value"])
+
+    def commit(self) -> None:
+        self.connection.commit()
+
+    def begin_immediate(self) -> None:
+        self.connection.execute("BEGIN IMMEDIATE")
 
     def get_document(self, document_key: str) -> dict[str, Any] | None:
         row = self.connection.execute(
@@ -263,18 +315,22 @@ class LibraryState(AbstractContextManager["LibraryState"]):
         created_at: str,
         tags: list[str],
         aliases: list[str],
+        updated_at: str | None = None,
+        revision: int = 1,
     ) -> None:
         self.connection.execute(
             """
             INSERT INTO conversations(
                 conversation_id, output_path, title, scope,
-                created_at, tags, aliases
-            ) VALUES(?, ?, ?, ?, ?, ?, ?)
+                created_at, updated_at, revision, tags, aliases
+            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(conversation_id) DO UPDATE SET
                 output_path = excluded.output_path,
                 title = excluded.title,
                 scope = excluded.scope,
                 created_at = excluded.created_at,
+                updated_at = excluded.updated_at,
+                revision = excluded.revision,
                 tags = excluded.tags,
                 aliases = excluded.aliases
             """,
@@ -284,6 +340,8 @@ class LibraryState(AbstractContextManager["LibraryState"]):
                 title,
                 scope,
                 created_at,
+                updated_at or created_at,
+                revision,
                 json.dumps(tags, ensure_ascii=False),
                 json.dumps(aliases, ensure_ascii=False),
             ),
@@ -295,6 +353,70 @@ class LibraryState(AbstractContextManager["LibraryState"]):
             (conversation_id,),
         ).fetchone()
         return None if row is None else dict(row)
+
+    def conversations(self) -> list[dict[str, Any]]:
+        rows = self.connection.execute(
+            """
+            SELECT * FROM conversations
+            ORDER BY created_at DESC, conversation_id
+            """
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def update_conversation(
+        self,
+        conversation_id: str,
+        *,
+        title: str,
+        updated_at: str,
+        revision: int,
+        expected_revision: int,
+        tags: list[str],
+        aliases: list[str],
+    ) -> None:
+        cursor = self.connection.execute(
+            """
+            UPDATE conversations
+            SET title = ?, updated_at = ?, revision = ?, tags = ?, aliases = ?
+            WHERE conversation_id = ? AND revision = ?
+            """,
+            (
+                title,
+                updated_at,
+                revision,
+                json.dumps(tags, ensure_ascii=False),
+                json.dumps(aliases, ensure_ascii=False),
+                conversation_id,
+                expected_revision,
+            ),
+        )
+        if cursor.rowcount != 1:
+            current = self.get_conversation(conversation_id)
+            if current is None:
+                raise ValueError(f"저장된 대화를 찾을 수 없습니다: {conversation_id}")
+            raise ValueError(
+                "저장된 대화가 다른 작업에서 변경되었습니다. 목록을 다시 확인하세요: "
+                f"expected={expected_revision}, current={current['revision']}"
+            )
+
+    def delete_conversation(
+        self, conversation_id: str, *, expected_revision: int
+    ) -> None:
+        cursor = self.connection.execute(
+            """
+            DELETE FROM conversations
+            WHERE conversation_id = ? AND revision = ?
+            """,
+            (conversation_id, expected_revision),
+        )
+        if cursor.rowcount != 1:
+            current = self.get_conversation(conversation_id)
+            if current is None:
+                raise ValueError(f"저장된 대화를 찾을 수 없습니다: {conversation_id}")
+            raise ValueError(
+                "저장된 대화가 다른 작업에서 변경되었습니다. 목록을 다시 확인하세요: "
+                f"expected={expected_revision}, current={current['revision']}"
+            )
 
     def status(self) -> dict[str, Any]:
         document_counts = self.connection.execute(

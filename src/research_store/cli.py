@@ -6,7 +6,12 @@ import json
 from pathlib import Path
 import sys
 
-from .conversations import save_conversation
+from .conversations import (
+    delete_conversation,
+    list_conversations,
+    save_conversation,
+    update_conversation,
+)
 from .config import load_config
 from .picker import choose_source
 from .search import search_library
@@ -121,6 +126,21 @@ def _parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "save-conversation", help="선택된 대화 범위를 구조화된 Markdown으로 저장"
     )
+    subparsers.add_parser("conversation-list", help="저장된 대화 기록 목록")
+    conversation_update = subparsers.add_parser(
+        "conversation-update", help="저장된 대화의 검색용 정리 정보 수정"
+    )
+    conversation_update.add_argument("conversation_id")
+    conversation_update.add_argument(
+        "--expected-revision", type=int, required=True
+    )
+    conversation_delete = subparsers.add_parser(
+        "conversation-delete", help="저장된 대화 기록 삭제"
+    )
+    conversation_delete.add_argument("conversation_id")
+    conversation_delete.add_argument(
+        "--expected-revision", type=int, required=True
+    )
     return parser
 
 
@@ -224,7 +244,9 @@ def main() -> None:
                         visual_notes=visual_notes,
                     )
                 }
-            else:
+            elif args.command == "conversation-list":
+                result = {"conversations": list_conversations(config)}
+            elif args.command in {"save-conversation", "conversation-update"}:
                 raw_input = _read_stdin_text(
                     label="대화 JSON",
                     max_bytes=CONVERSATION_STDIN_LIMIT,
@@ -235,8 +257,24 @@ def main() -> None:
                     payload = json.loads(raw_input)
                 except json.JSONDecodeError as error:
                     raise ValueError(f"대화 JSON을 읽을 수 없습니다: {error}") from error
-                saved = save_conversation(config, payload)
-                result = {"saved": str(saved)}
+                if args.command == "save-conversation":
+                    saved = save_conversation(config, payload)
+                    result = {"saved": str(saved)}
+                else:
+                    result = update_conversation(
+                        config,
+                        args.conversation_id,
+                        payload,
+                        expected_revision=args.expected_revision,
+                    )
+            elif args.command == "conversation-delete":
+                result = delete_conversation(
+                    config,
+                    args.conversation_id,
+                    expected_revision=args.expected_revision,
+                )
+            else:  # pragma: no cover - argparse restricts command values.
+                raise RuntimeError(f"지원하지 않는 명령입니다: {args.command}")
         print(json.dumps(result, ensure_ascii=False, indent=2))
     except (OSError, RuntimeError, ValueError) as error:
         print(f"오류: {error}", file=sys.stderr)

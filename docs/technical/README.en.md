@@ -7,6 +7,14 @@
 This document records the operating principles and design decisions of Research
 Agent by topic.
 
+## Contents
+
+1. [Protecting Original User Directories and Managing Permissions](#1-protecting-original-user-directories-and-managing-permissions)
+2. [PDF Conversion and Result Reliability](#2-pdf-conversion-and-result-reliability)
+3. [Storage and Incremental Synchronization](#3-storage-and-incremental-synchronization)
+4. [Skill Invocation, Retrieval, and Evidence Assembly](#4-skill-invocation-retrieval-and-evidence-assembly)
+5. [Conversation Storage and the Research Memory Lifecycle](#5-conversation-storage-and-the-research-memory-lifecycle)
+
 ## 1. Protecting Original User Directories and Managing Permissions
 
 ### Design Goal
@@ -273,3 +281,565 @@ is outside its present guarantee.
 | Define image interpretation and uncertainty handling | [`research-paper-converter.toml`](../../resources/agents/research-paper-converter.toml) |
 | Route user requests into synchronization, search, and review | [`research-library/SKILL.md`](../../resources/skills/research-library/SKILL.md) |
 | Verify conversion, queues, hash matching, and source preservation | [`test_sync.py`](../../tests/test_sync.py) |
+
+## 3. Storage and Incremental Synchronization
+
+### Design Goal
+
+Research Agent does not convert every PDF again whenever it revisits registered
+source locations. It checks whether PDFs still exist and reads their basic file
+state, but converts only newly discovered documents or documents whose content
+has changed.
+
+This design reduces repeated work and avoids unnecessary visual review and
+subscription usage for unchanged documents. Research Agent writes no state file
+or index into an original location. Every synchronization record remains inside
+the Research Agent project.
+
+### Responsibilities of Each Storage Area
+
+| Storage area | Responsibility |
+| --- | --- |
+| `knowledge/documents/` | PDF-derived Markdown that Codex and the user search and read |
+| `.research-store/library.sqlite` | Internal ledger of document state, hashes, parser versions, and review queues |
+| `.research-store/tmp/` | Temporary PDF copies and page images used during processing |
+
+Markdown preserves content for search and citation. SQLite is not the database
+for user-facing document text. It records the state needed to decide whether a
+PDF must be processed again.
+
+### Document Identity
+
+Each PDF is identified by combining its **source ID and its relative path within
+that source**.
+
+```text
+<source-id>:<relative-path>
+```
+
+For example, `optics/laser.pdf` inside a source registered as `papers` has the
+document key `papers:optics/laser.pdf`. Identical PDFs in different source
+locations remain separate documents because they have different provenance.
+
+### Synchronization Flow
+
+```mermaid
+flowchart TD
+    A[Discover PDFs in registered sources] --> B[Read path, size, and modification time]
+    B --> C{Matches the previous state?}
+    C -->|Yes| D[Skip conversion]
+    C -->|No| E[Copy PDF into internal temporary storage]
+    E --> F[Calculate SHA-256]
+    F --> G{Matches the previous hash?}
+    G -->|Yes| H[Update file state only<br/>Skip conversion]
+    G -->|No| I[Convert PDF to Markdown]
+    I --> J[Save Markdown atomically]
+    J --> K[Update SQLite state<br/>and review queue]
+```
+
+### Change Detection Order
+
+The first step compares file size, nanosecond modification time, parser version,
+the previous error state, and the presence of generated Markdown. When all of
+these values match, the document is marked `unchanged` without reading the PDF
+again.
+
+When the basic state differs, Research Agent copies the original PDF into its
+internal temporary storage and calculates SHA-256. This is an ordinary temporary
+file copy, not a process or repository fork. If the hash matches the previous
+record, the content is considered unchanged and only metadata such as size and
+modification time is updated. The temporary PDF copy is deleted after the check
+or conversion finishes.
+
+Research Agent performs a full conversion when:
+
+- It discovers a PDF for the first time.
+- SHA-256 differs from the previous record.
+- The PDF parser version has changed.
+- Generated Markdown is missing.
+- The previous conversion ended with an error.
+- A storage-path migration requires regeneration.
+
+After reconversion, Research Agent replaces the Markdown and rebuilds the visual
+review candidates from the current PDF. An unchanged document keeps its existing
+Markdown and visual review state.
+
+### Detecting Changes During Processing
+
+Research Agent compares the original PDF's size and modification time before and
+after conversion. If the source changes while it is being processed, the new
+result is rejected and the event is recorded as an error. Existing Markdown, if
+any, remains in place so the next synchronization can retry safely.
+
+The original remains a read-only input throughout this process. Hashing and
+conversion operate on the internal copy, and no temporary file is created in the
+original source location.
+
+### Missing Documents and Unavailable Sources
+
+When a previously recorded PDF is absent from a source that was scanned
+successfully, SQLite records it as `missing` together with the time it was
+noticed. Existing Markdown and review records are retained.
+
+When an entire source is unavailable or unreadable, Research Agent does not mark
+all of its documents as missing. It reports the source as `unavailable` so that a
+disconnected external drive or a temporary permission failure is not mistaken
+for document deletion.
+
+### Representative Behavior
+
+| Situation | Behavior |
+| --- | --- |
+| A new PDF appears | Generate Markdown and register review candidates |
+| Synchronization runs with no changes | Scan the source and skip conversion |
+| Only modification time changes | Update state without conversion when the hash matches |
+| PDF content changes | Regenerate Markdown and rebuild review candidates |
+| Parser version changes | Convert again with the current parser |
+| Generated Markdown is deleted | Recreate it from the original PDF |
+| Conversion fails | Record the error and retry during the next synchronization |
+| An original PDF is deleted | Mark it `missing` and retain existing Markdown |
+| A source is disconnected | Report a source error without marking its documents missing |
+| A missing PDF returns | Check its hash and restore its current state |
+
+### Current Scope and Limitations
+
+- Conversion is skipped for unchanged PDFs, but every synchronization still
+  scans registered sources for PDF files.
+- Renaming a file or changing its relative path marks the old document as
+  `missing` and creates a new document. The system does not automatically connect
+  the two paths as a document move.
+- Identical PDFs in multiple source locations are stored separately to preserve
+  provenance, which can produce duplicate search results.
+- The fast path trusts file size and modification time. It does not calculate a
+  hash on every run to detect an unusual content change that preserves both
+  values.
+
+This approach is intended to reduce repeated conversion costs while preserving
+the relationship between original locations and generated results at a personal
+research-library scale. If the number of PDFs grows enough for discovery itself
+to become slow, filesystem monitoring or a separate indexing strategy should be
+reconsidered.
+
+### Implementation Responsibilities
+
+| Responsibility | Source files |
+| --- | --- |
+| Discover PDFs, detect changes, create temporary copies, convert, and record missing documents | [`sync.py`](../../src/research_store/sync.py) |
+| Store document state, hashes, parser versions, and review queues | [`state.py`](../../src/research_store/state.py) |
+| Configure source locations and Research Agent storage paths | [`config.py`](../../src/research_store/config.py) |
+| Validate safe paths and save Markdown atomically | [`safety.py`](../../src/research_store/safety.py) |
+| Verify incremental behavior and source immutability | [`test_sync.py`](../../tests/test_sync.py) |
+
+## 4. Skill Invocation, Retrieval, and Evidence Assembly
+
+### Design Goal
+
+Research Agent is not installed inside a particular Codex project. A personal
+Research Library skill registered in the user's home directory locates one
+separately installed Research Agent store from any Codex project. It searches
+synchronized PDFs and conversations that the user explicitly saved.
+
+Retrieval is intended to locate relevant Markdown rather than produce an answer
+immediately. The library manager reads context around each match, distinguishes
+the type of information and its PDF page, and makes that evidence available to
+the user Codex session for answering.
+
+### Relationship Between Projects and Research Agent
+
+The default installation places the Research Agent repository at
+`~/research-agent`. The installer records the physical location of the repository
+from which it runs, so an installation made elsewhere continues to use that
+location.
+
+```mermaid
+flowchart LR
+    A[Codex project A] --> S[Personal Research Library Skill]
+    B[Codex project B] --> S
+    C[Codex project C] --> S
+    S --> R[One Research Agent store]
+    R --> D[knowledge/documents/]
+    R --> V[knowledge/conversations/]
+    R -.->|Read only| P[Registered original PDF locations]
+```
+
+The skill does not assume that the current working directory is Research Agent.
+Its installed `research-root` launcher calculates the project root from its own
+physical location, verifies the project marker, and returns the store path. The
+same personal research store is therefore available while the user works in
+another project.
+
+The current design does not create a separate Research Agent store for every
+Codex project. Every invocation uses the same `knowledge/` directory and SQLite
+state. This supports finding scattered research documents and saved ideas across
+project and session boundaries.
+
+### Search Targets
+
+The search command recursively reads Markdown in two locations.
+
+| Location | Result type |
+| --- | --- |
+| `knowledge/documents/` | Document evidence generated from PDFs |
+| `knowledge/conversations/` | Conversation ranges explicitly saved by the user |
+
+Retrieval does not reopen and convert every original PDF. SQLite is not used for
+full-text search. A PDF that has not been synchronized and a past conversation
+that has not been saved cannot appear in results.
+
+### Retrieval Flow
+
+```mermaid
+flowchart TD
+    U[User research question] --> S[Research Library Skill]
+    S --> R[Locate the Research Agent store]
+    R --> A[Luna library manager]
+    A --> Q[Build Korean and English search terms]
+    Q --> T[Run the constrained search command]
+    T --> P[Search PDF Markdown]
+    T --> C[Search saved conversation Markdown]
+    P --> M[Return matching file, line, and excerpt]
+    C --> M
+    M --> X[Read context around each matching line]
+    X --> E[Classify evidence and locate PDF page]
+    E --> O[Answer in the user Codex session]
+```
+
+### Building Search Terms From a Question
+
+The library manager selects important terms from the user's natural-language
+question. It also supplies related English technical terms for Korean questions
+so that English research documents can be found.
+
+For example, a question about `광소자의 결합 효율` may be expanded to terms such
+as:
+
+```text
+광소자
+결합 효율
+optical device
+coupling efficiency
+coupling loss
+```
+
+There is no fixed synonym dictionary. Luna chooses useful terms from the context
+of the question and passes them together in one search command.
+
+### Current Retrieval Method
+
+The current implementation uses neither vectors nor embeddings. It reads each
+Markdown file line by line and performs case-insensitive substring matching. A
+result contains:
+
+- Whether the match came from a PDF document or a saved conversation.
+- The project-relative Markdown path.
+- The matching line number and terms.
+- A short excerpt around the match.
+
+When several terms are used, results are interleaved across the terms. This keeps
+a very common term from displacing every result for the other terms.
+
+The excerpt returned by the search command is a candidate location rather than
+the final evidence. The library manager reopens the Markdown around that line and
+decides whether the surrounding context is relevant. The system reads context
+adaptively instead of storing fixed chunks in advance.
+
+### PDF Pages and Visual Review Evidence
+
+For base PDF extraction, the library manager finds the nearest page marker around
+the result.
+
+```markdown
+<!-- page: 12 -->
+```
+
+An answer can include the Markdown path, the configured original location, and
+the page number. Content under `Visual verification notes` uses the note heading
+and visual review marker instead of the nearest base page marker.
+
+```markdown
+### Pages 12
+
+<!-- visual-review-pages: 12 -->
+```
+
+This distinguishes base text extraction from an AI review of the rendered
+original page.
+
+### Distinguishing Information Types
+
+PDFs and saved conversations are searched together but are not treated as the
+same kind of evidence.
+
+| Information type | Meaning in an answer |
+| --- | --- |
+| PDF evidence | Content from base PDF extraction or rendered-page review |
+| User record | Something the user previously said or decided |
+| Prior Codex explanation | A previous AI response that is not treated as paper evidence |
+
+A Codex explanation preserved in a saved conversation must not be presented as a
+fact verified by a PDF. The distinction among user ideas, decisions, unverified
+claims, and document evidence remains intact.
+
+### Data From Multiple Codex Projects
+
+PDFs are identified by source ID and relative path rather than by the Codex
+project from which the source was registered. The originating Codex project is
+not recorded.
+
+Saved conversations are identified by date, title, selected scope, tags, and a
+content hash. They do not currently record the Codex project from which they were
+saved. Conversations from multiple projects therefore share
+`knowledge/conversations/` and are searched together.
+
+This behavior matches the current goal of sharing one personal research memory
+across projects. If unrelated research areas eventually require separation, the
+preferred extension is to add a logical classification such as `collection` to
+PDF sources and conversations, then search either all collections or a selected
+one instead of copying the whole store per project.
+
+### Current Scope and Limitations
+
+- Results can be missed when query expansion fails to produce terms used by the
+  document.
+- Line breaks or hyphenation in extracted PDF text can prevent a string match.
+- Results are not ranked by semantic similarity or evidential importance.
+- Existing Markdown remains searchable when its original disappears or its
+  source is removed from future scans.
+- Unsaved conversations and unsynchronized PDFs cannot be searched.
+- Retrieval cannot currently be limited to the current Codex project or filter
+  conversations by project.
+
+This method is a prototype for finding exact terms and their surrounding context
+in a personal-scale research library without a separate embedding model. Results
+from real documents should determine whether a full-text index, semantic
+retrieval, or collection boundaries are needed.
+
+### Verification Criteria
+
+- Every Codex project resolves to the one registered Research Agent store.
+- PDF Markdown and conversation Markdown excluded from Git can be searched
+  together.
+- Useful English technical terms can supplement a Korean question.
+- Results distinguish PDF evidence, user records, and prior Codex explanations.
+- PDF evidence is connected to the correct Markdown path and page marker.
+- A common search term does not displace every result for other terms.
+
+### Implementation Responsibilities
+
+| Responsibility | Source files |
+| --- | --- |
+| Skill entry point, query expansion, and evidence-labeling rules | [`research-library/SKILL.md`](../../resources/skills/research-library/SKILL.md) |
+| Locate the registered store | [`research-root`](../../resources/skills/research-library/scripts/research-root) |
+| Luna retrieval and contextual reading | [`research-library-manager.toml`](../../resources/agents/research-library-manager.toml) |
+| Discover Markdown, match strings, and distribute results | [`search.py`](../../src/research_store/search.py) |
+| Verify unified PDF and conversation retrieval | [`test_search.py`](../../tests/test_search.py) |
+
+## 5. Conversation Storage and the Research Memory Lifecycle
+
+### Design Goal
+
+A saved conversation is not the original Codex conversation. It is a
+user-selected range captured as searchable Research Agent memory. The user must
+be able to find a record in natural language, correct its search-oriented
+organization, and delete it when it is no longer wanted.
+
+Updates and deletions apply only to conversation records owned by Research
+Agent. They do not affect original PDFs, PDF-derived Markdown, other saved
+conversations, or the actual conversation in the Codex app.
+
+### User Requests and Internal Commands
+
+The user does not need to know terminal commands or conversation IDs in
+advance. They can make natural-language requests from any Codex project.
+
+```text
+“Show me my saved conversations.”
+“Update the summary and tags for the conversation about refractive-index correction.”
+“Delete the saved memory about the laser experiment.”
+```
+
+```mermaid
+flowchart TD
+    U[User request in natural language] --> S[Research Library Skill]
+    S --> A[Luna library manager]
+    A --> L[Find candidates with conversation-list]
+    L --> M{Number of matches}
+    M -->|None| N[Report that no record was found]
+    M -->|One| I[Select the exact conversation_id]
+    M -->|Several| Q[Show title and date<br/>Ask the user to choose]
+    Q --> I
+    I -->|Update| UP[conversation-update<br/>Pass ID and expected revision]
+    I -->|Delete| DE[conversation-delete<br/>Pass ID and expected revision]
+    UP --> K[Update conversation Markdown and SQLite]
+    DE --> X[Remove conversation Markdown and SQLite row]
+```
+
+`conversation-list`, `conversation-update`, and `conversation-delete` are
+internal commands used by the skill and library manager. The agent never edits
+Markdown or SQLite directly. It makes every change through constrained commands
+that validate paths and file links.
+
+`conversation-list` takes no additional input and returns each record's ID,
+title, scope, creation and update times, revision, tags, aliases, and internal
+path. This output is an index for resolving a natural-language request to an
+exact record rather than terminal output that the user must interpret directly.
+
+When title, tags, and aliases are not enough to locate the record described by
+the user, the manager keeps only conversation results from unified search and
+joins each result path back to the path and exact ID in the list. It may read a
+small number of candidate Markdown records for context. It never guesses an ID
+from a search result or title alone.
+
+When one candidate is unambiguous, the requested operation proceeds. Only when
+several records have the same or similar description does the skill show their
+titles, saved times, and IDs and ask the user to choose. An update or deletion is
+never selected by title or file path alone.
+
+### Record Identity and Revision History
+
+The initial save assigns a content-derived `conversation_id`. Updating a title,
+summary, or tags does not change this ID. Because several records may share a
+title, every later update and deletion uses the stable ID.
+
+```yaml
+id: conversation-20260921-...
+created_at: 2026-09-21T10:00:00+09:00
+updated_at: 2026-09-21T14:30:00+09:00
+revision: 2
+```
+
+| Field | Meaning |
+| --- | --- |
+| `id` | Stable identifier retained after the record is created |
+| `created_at` | Initial save time, which is immutable |
+| `updated_at` | Time when search-oriented organization was last changed |
+| `revision` | Starts at 1 and increases by one after each successful update |
+
+The current `revision` returned by the list command also acts as a condition
+that protects the record from another Codex task running at the same time. The
+library manager passes an internal `--expected-revision <N>` value with every
+update and deletion; the user never needs to see or supply this flag.
+
+If two tasks both observe revision 2 and one updates the record to revision 3,
+an update or deletion submitted by the other task with revision 2 is rejected.
+Neither Markdown nor SQLite is changed. The manager must list and read the
+record again and rebuild the request from the latest values rather than reusing
+stale JSON or a stale revision. This prevents one project from silently
+overwriting or deleting a change just made from another project.
+
+### Editable Content
+
+An update corrects the organization created for retrieval and reuse. It does
+not rewrite the captured transcript.
+
+| Editable | Immutable |
+| --- | --- |
+| Title | Selected transcript |
+| Search summary | Saved `scope` |
+| Tags and aliases | Initial `created_at` |
+| User points | Conversation ID |
+| Decisions | Transcript capture status and omission note |
+| Unverified ideas | Original PDFs and PDF-derived Markdown |
+| Open questions | Actual conversation in the Codex app |
+| Related-document references |  |
+
+`conversation-update <conversation-id> --expected-revision <N>` reads one JSON
+object containing every editable field from standard input. If the user asks to
+change only some fields, the library manager reads the current Markdown at the
+internal path returned by the list command and supplies a complete object,
+including editable fields that should remain unchanged. The command rejects the
+operation without a change when a field is missing, an unknown field is present,
+or an immutable field such as transcript or scope is supplied.
+
+The exact nine keys are `title`, `summary`, `tags`, `aliases`, `user_points`,
+`decisions`, `unverified`, `open_questions`, and `related_documents`.
+
+The command safely replaces the Markdown and then updates SQLite lookup fields.
+For ordinary write errors it attempts to restore both sides to their prior
+state. A successful update makes the revised title and summary available to the
+next search.
+
+If the selected range or transcript was saved incorrectly, Research Agent does
+not edit the quoted text into a record that differs from the real conversation.
+The user deletes that record and saves the correct range again.
+
+### Deletion Boundary
+
+`conversation-delete <conversation-id> --expected-revision <N>` permanently
+removes the following two items only when both the exact ID and the revision
+observed in the list still match:
+
+```text
+The corresponding Markdown under knowledge/conversations/
+The corresponding conversation row in .research-store/library.sqlite
+```
+
+It does not delete:
+
+- The actual conversation retained by the Codex app.
+- Original PDFs or original source directories.
+- PDF-derived Markdown or visual review records.
+- Any other saved conversation.
+
+The prototype has no trash or undo operation for a deleted conversation record.
+When the Markdown exists, deletion proceeds only when it is inside Research
+Agent's conversation storage, the SQLite path agrees with it, and the ID inside
+the Markdown matches the requested ID. A symbolic link, hard link, path escape,
+or ID mismatch causes the operation to fail without deleting anything.
+
+If the list reports `available: false`, the Markdown is already missing. An
+update is rejected because the transcript and metadata cannot be verified. A
+deletion can still clean up the remaining SQLite row when the safe conversation
+path, exact ID, and revision match; the result reports that no Markdown remained
+to delete.
+
+### Current Scope and Limitations
+
+- A past conversation that was never saved cannot be listed, updated, or
+  deleted.
+- This feature does not edit or delete the actual Codex conversation.
+- Conversations saved from several Codex projects share one store, so records
+  with similar titles may need to be distinguished by date and ID.
+- Revision tracking currently retains only the revision number and latest
+  update time, not a full copy of each previous version.
+- Deleted records have no trash or recovery mechanism.
+- Individual transcript passages cannot be rewritten. An incorrect transcript
+  or scope must be deleted and saved again.
+- The Markdown file and SQLite are not one ACID transaction. The implementation
+  attempts compensating recovery for ordinary errors and detects revision
+  mismatches, but a process or computer that stops during file replacement or
+  deletion can leave the two sides inconsistent or leave an internal staged
+  deletion file. The prototype has no automatic repair command.
+- The initial ID incorporates the first title, timestamp, and transcript. If a
+  record is retitled and the same transcript is saved again under that new
+  title, a second record can be created.
+
+### Verification Criteria
+
+- A natural-language request can list saved conversations.
+- One unambiguous candidate is updated or deleted by exact ID without another
+  selection step.
+- When several candidates match, the user can select the exact record before it
+  changes.
+- Updating preserves the ID, transcript, scope, and initial creation time.
+- Updating increments `revision` and refreshes `updated_at`.
+- Revised organizational information appears in the next search.
+- Deleting removes only the corresponding Markdown and SQLite record, so it no
+  longer appears in search.
+- Updates and deletions do not affect PDFs, other conversations, or the actual
+  Codex conversation.
+- An update or deletion using a stale revision is rejected without a change.
+- Unsupported future Markdown versions and Markdown/SQLite revision mismatches
+  are rejected without a change.
+- Manipulated paths, links, and ID mismatches are rejected without a change.
+
+### Implementation Responsibilities
+
+| Responsibility | Source files |
+| --- | --- |
+| Route natural-language requests to conversation listing, update, and deletion | [`research-library/SKILL.md`](../../resources/skills/research-library/SKILL.md) |
+| Select candidates and invoke constrained commands with Luna | [`research-library-manager.toml`](../../resources/agents/research-library-manager.toml) |
+| Define the saved format, editable fields, and safe deletion | [`conversations.py`](../../src/research_store/conversations.py) |
+| Manage conversation lookup, revisions, and deletion state | [`state.py`](../../src/research_store/state.py) |
+| Define inputs and outputs for internal conversation commands | [`cli.py`](../../src/research_store/cli.py) |
+| Verify the conversation lifecycle and preservation of originals | [`test_conversation_management.py`](../../tests/test_conversation_management.py) |

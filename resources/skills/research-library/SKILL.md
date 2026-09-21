@@ -1,6 +1,6 @@
 ---
 name: research-library
-description: Register scattered read-only PDF locations, synchronize them into a local Markdown research library, search PDF documents and saved conversations together, or save a selected conversation range.
+description: Register scattered read-only PDF locations, synchronize them into a local Markdown research library, search PDF documents and saved conversations together, or save, list, update, and delete selected conversation memories.
 ---
 
 # Research Library
@@ -84,3 +84,67 @@ a complete transcript.
 
 Read [references/conversation-payload.md](references/conversation-payload.md)
 when preparing the save payload.
+
+## Manage saved conversations
+
+Let the user manage saved memories in natural language. Do not require them to
+know or type an internal command, file path, or conversation ID in advance.
+Delegate listing, identification, updates, and deletion to
+`research_library_manager`; it uses the internal `conversation-list`,
+`conversation-update`, and `conversation-delete` commands.
+
+Use `conversation-list` to resolve the intended record before changing it. An
+update or deletion must ultimately target one exact `conversation_id`, never a
+title or Markdown path. Retain the selected record's `revision` and pass it as
+the internal `--expected-revision` value for the mutation; the user does not
+need to know this flag. If one record is an unambiguous match, proceed with the
+user's requested update or deletion without another confirmation. If several
+records match, show concise choices with title, saved time, and ID, and ask only
+which record the user means. If none match, report that without changing
+anything.
+
+Match the natural-language request against the list's title, tags, and aliases.
+If those fields are not enough, run `search` with useful terms from the request,
+keep only `conversation` results, and join each result path back to the exact
+path and ID returned by `conversation-list`. Read a small number of candidate
+Markdown records when context is still needed. Never guess an ID from a title or
+search result alone.
+
+Updates may change only search-oriented organization. The exact JSON keys are
+`title`, `summary`, `tags`, `aliases`, `user_points`, `decisions`, `unverified`,
+`open_questions`, and `related_documents`. `conversation-update` requires the
+exact conversation ID, `--expected-revision`, and one complete JSON object
+containing all of those mutable fields. For a partial user request, read the
+current Markdown at the path returned by `conversation-list` and carry its other
+editable values forward; do not omit fields. Never include unknown or immutable
+fields. Preserve the stable conversation ID, selected transcript, scope,
+original `created_at`, and transcript-capture metadata. A successful update
+advances `revision` and `updated_at`. If the transcript or selected range is
+wrong, delete the saved record and save the correct range again instead of
+rewriting quoted history.
+
+Deletion permanently removes only the matching conversation Markdown and its
+SQLite record from Research Agent. It does not delete the actual Codex
+conversation, PDFs, PDF-derived Markdown, or other saved conversations. Clearly
+state this boundary in the result. There is no conversation trash or undo in the
+current prototype.
+
+If `conversation-list` reports `available: false`, the Markdown is already
+missing. An update must stop because the immutable transcript cannot be
+verified. A deletion may still remove that exact orphaned SQLite record when
+its ID and expected revision match; report that no Markdown file remained to
+delete.
+
+If an update or deletion reports a revision mismatch, it made no change. Run
+`conversation-list` again, re-read the exact record, and rebuild the operation
+from its latest revision and content. Never retry with the stale JSON or stale
+revision. If concurrent changes keep preventing the operation, report the
+conflict instead of looping.
+
+For updates, construct the complete mutable JSON object in memory and send it
+only through the command's process-stdin interface using the same 8 MiB limit
+and sentinel protocol as conversation saving.
+Never create a payload file, use shell redirection or a here-document, or edit
+conversation Markdown or SQLite directly. Use the constrained commands for
+deletion as well; never remove a Markdown file with a general filesystem
+command.

@@ -53,8 +53,15 @@ This project is a self-contained local research knowledge store used from Codex.
   original still match the rendered version.
 - `./research-store save-conversation` accepts the structured conversation JSON
   only through process stdin and writes the searchable Markdown atomically.
+- `./research-store conversation-list` returns the exact IDs, revisions, and
+  project-owned paths of saved conversation records.
+- `./research-store conversation-update <id> --expected-revision <n>` accepts
+  one complete mutable-field JSON object through process stdin. It never edits
+  the saved transcript, scope, creation time, capture metadata, ID, or path.
+- `./research-store conversation-delete <id> --expected-revision <n>` removes
+  only the matching conversation Markdown and SQLite row.
 
-For either stdin command, send the UTF-8 body, a newline, the exact standalone
+For any stdin command, send the UTF-8 body, a newline, the exact standalone
 line `__RESEARCH_STORE_STDIN_END__`, and a final newline. The command consumes
 that line and can finish while the caller's pipe remains open. Plain EOF remains
 supported for compatibility. Conversation JSON is limited to 8 MiB and visual
@@ -106,6 +113,25 @@ incomplete scan as an empty successful result.
   exact text as `partial`, describe omissions in `capture_note`, and never
   reconstruct missing messages.
 - Do not save routine repository-maintenance conversation as research memory.
+- For listing, updating, or deleting a saved conversation, first use
+  `conversation-list` and resolve one exact ID. Ask the user to choose only when
+  several records plausibly match.
+- If title, tags, and aliases do not identify the user's description, use
+  `search`, keep only conversation results, and join their paths back to exact
+  `conversation-list` entries. Never infer an ID from a title or search hit.
+- Pass the listed revision as `--expected-revision` for every update or delete.
+  On a revision conflict, list and read the record again; never retry stale
+  content or a stale revision.
+- Updates must contain exactly `title`, `summary`, `tags`, `aliases`,
+  `user_points`, `decisions`, `unverified`, `open_questions`, and
+  `related_documents`. Carry forward values the user did not ask to change.
+- Never edit conversation Markdown or SQLite directly. A wrong transcript or
+  scope must be deleted and saved again from the correct range.
+- Deletion has no trash or undo. It does not remove the actual Codex task, any
+  PDF, PDF-derived Markdown, or another saved conversation.
+- When a listed record has `available: false`, refuse updates. Deletion may
+  remove its exact orphaned SQLite row when ID and expected revision match; say
+  that the Markdown was already missing.
 
 ## Removal
 
