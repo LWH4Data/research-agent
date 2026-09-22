@@ -261,6 +261,8 @@ def _render_sandbox_config(root: Path) -> str:
             REGISTRATION_HEADER,
             ROOT_HEADER + str(root),
             "# Isolated config used only by the Research Library command launcher.",
+            'default_permissions = "research-store"',
+            "",
             "[permissions.research-store]",
             'description = "Read files and write only Research Library data."',
             "",

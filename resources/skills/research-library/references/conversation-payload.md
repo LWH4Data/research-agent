@@ -1,5 +1,10 @@
 # Conversation payload
 
+Operational progress, activity, and recovery messages are not research memory.
+Exclude them from every payload field, including the transcript, summary,
+categories, tags, aliases, and related documents. Removing only those messages
+does not make an otherwise complete capture partial.
+
 Construct the UTF-8 JSON object in memory, start
 the absolute `SKILL_DIR/scripts/research-store save-conversation` path, and send the JSON
 through the process stdin facility. Then
@@ -49,7 +54,7 @@ Useful optional fields:
   "open_questions": ["아직 답하지 못한 질문"],
   "status": ["design-decision"],
   "related_documents": [
-    {"path": "../documents/source/paper.md", "pages": [4, 5]}
+    "papers:optics/paper.pdf (pages 4-5)"
   ]
 }
 ```

@@ -67,4 +67,4 @@ if [ -z "$CODEX" ] || [ ! -x "$CODEX" ]; then
 fi
 
 exec env CODEX_HOME="$SANDBOX_HOME" "$CODEX" sandbox \
-    -P research-store -C "$ROOT" -- "$ROOT/research-store" "$@"
+    -P research-store -C "$SANDBOX_HOME" -- "$ROOT/research-store" "$@"

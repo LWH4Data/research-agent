@@ -8,12 +8,14 @@ import sys
 
 from .conversations import (
     delete_conversation,
+    get_conversation,
     list_conversations,
     save_conversation,
     update_conversation,
 )
 from .config import load_config
 from .picker import choose_source
+from .progress import progress_renderer
 from .search import search_library
 from .sources import (
     add_sources,
@@ -22,6 +24,7 @@ from .sources import (
     remove_sources,
     source_rows,
 )
+from .state import LibraryState
 from .sync import (
     complete_reviews,
     library_status,
@@ -89,7 +92,13 @@ def _parser() -> argparse.ArgumentParser:
     )
     source_remove.add_argument("source_ids", nargs="+")
 
-    subparsers.add_parser("sync", help="신규·변경 PDF를 Markdown으로 변환")
+    sync = subparsers.add_parser("sync", help="신규·변경 PDF를 Markdown으로 변환")
+    sync.add_argument(
+        "--progress",
+        choices=("auto", "off", "jsonl"),
+        default="auto",
+        help="진행 표시 방식: 터미널 자동 표시, 끄기, 또는 Agent용 JSONL",
+    )
     subparsers.add_parser("status", help="마지막 동기화 상태 출력")
     search = subparsers.add_parser(
         "search", help="PDF Markdown과 저장된 대화를 함께 검색"
@@ -105,7 +114,14 @@ def _parser() -> argparse.ArgumentParser:
 
     reviewed = subparsers.add_parser("review-complete", help="페이지 이미지 판독 상태 기록")
     reviewed.add_argument("document", help="review-list에 표시된 document_key")
-    reviewed.add_argument("--page", type=int, action="append", required=True, dest="pages")
+    reviewed.add_argument(
+        "--page",
+        type=int,
+        action="append",
+        required=True,
+        dest="pages",
+        help="저장할 단일 페이지 번호(한 번만 지정)",
+    )
     reviewed.add_argument(
         "--sha256", required=True, help="render-review가 반환한 문서 SHA-256"
     )
@@ -127,12 +143,21 @@ def _parser() -> argparse.ArgumentParser:
         "save-conversation", help="선택된 대화 범위를 구조화된 Markdown으로 저장"
     )
     subparsers.add_parser("conversation-list", help="저장된 대화 기록 목록")
+    conversation_get = subparsers.add_parser(
+        "conversation-get", help="저장된 대화의 수정 가능한 정리 정보 조회"
+    )
+    conversation_get.add_argument("conversation_id")
     conversation_update = subparsers.add_parser(
         "conversation-update", help="저장된 대화의 검색용 정리 정보 수정"
     )
     conversation_update.add_argument("conversation_id")
     conversation_update.add_argument(
         "--expected-revision", type=int, required=True
+    )
+    conversation_update.add_argument(
+        "--confirm-legacy-promotion",
+        action="store_true",
+        help="검토한 v1/v2 정리 후보를 v3로 처음 승격",
     )
     conversation_delete = subparsers.add_parser(
         "conversation-delete", help="저장된 대화 기록 삭제"
@@ -156,7 +181,13 @@ def main() -> None:
     try:
         config_path = _config_path(args.config)
         if args.command == "init":
-            result: object = {"config": str(initialize_config(config_path))}
+            initialized = initialize_config(config_path)
+            config = load_config(initialized)
+            # Installation and explicit initialization are the schema migration
+            # boundary. Read-only commands never upgrade SQLite implicitly.
+            with LibraryState(config.state, config.root):
+                pass
+            result: object = {"config": str(initialized)}
         elif args.command == "source-add":
             paths = list(args.paths)
             if not paths:
@@ -203,7 +234,12 @@ def main() -> None:
         else:
             config = load_config(config_path)
             if args.command == "sync":
-                result = asdict(sync_library(config))
+                result = asdict(
+                    sync_library(
+                        config,
+                        progress=progress_renderer(args.progress),
+                    )
+                )
                 if result["registered_sources"] == 0:
                     result["message"] = (
                         "등록된 PDF 위치가 없습니다. bash ./add-source.sh로 추가하세요."
@@ -246,6 +282,8 @@ def main() -> None:
                 }
             elif args.command == "conversation-list":
                 result = {"conversations": list_conversations(config)}
+            elif args.command == "conversation-get":
+                result = get_conversation(config, args.conversation_id)
             elif args.command in {"save-conversation", "conversation-update"}:
                 raw_input = _read_stdin_text(
                     label="대화 JSON",
@@ -266,6 +304,7 @@ def main() -> None:
                         args.conversation_id,
                         payload,
                         expected_revision=args.expected_revision,
+                        confirm_legacy_promotion=args.confirm_legacy_promotion,
                     )
             elif args.command == "conversation-delete":
                 result = delete_conversation(
@@ -276,6 +315,12 @@ def main() -> None:
             else:  # pragma: no cover - argparse restricts command values.
                 raise RuntimeError(f"지원하지 않는 명령입니다: {args.command}")
         print(json.dumps(result, ensure_ascii=False, indent=2))
+    except KeyboardInterrupt as error:
+        print(
+            "\n작업을 안전하게 중단했습니다. 다음 실행에서 저장된 지점부터 다시 확인합니다.",
+            file=sys.stderr,
+        )
+        raise SystemExit(130) from error
     except (OSError, RuntimeError, ValueError) as error:
         print(f"오류: {error}", file=sys.stderr)
         raise SystemExit(1) from error

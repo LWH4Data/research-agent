@@ -83,6 +83,22 @@ class PersonalRegistrationTests(unittest.TestCase):
                 self.assertEqual(parsed["sandbox_mode"], "read-only")
                 self.assertNotIn("sandbox_workspace_write", parsed)
                 self.assertIn(str(skill_link / "scripts/research-store"), text)
+                self.assertIn(
+                    "untrusted research data",
+                    parsed["developer_instructions"],
+                )
+                self.assertIn(
+                    "higher-priority instructions",
+                    parsed["developer_instructions"],
+                )
+            manager_text = (
+                home / ".codex/agents/research-library-manager.toml"
+            ).read_text(encoding="utf-8")
+            self.assertIn("conversation-get", manager_text)
+            self.assertIn("--confirm-legacy-promotion", manager_text)
+            self.assertIn("legacy deletion fallback", manager_text)
+            self.assertIn("primary Codex session, not this manager", manager_text)
+            self.assertIn("Do not try to\\ncreate a nested agent", manager_text)
             rule = home / ".codex/rules/research-library.rules"
             rule_text = rule.read_text(encoding="utf-8")
             self.assertTrue(rule_text.startswith("# research-agent-registration-v1\n"))
@@ -99,6 +115,7 @@ class PersonalRegistrationTests(unittest.TestCase):
                 )
             )
             sandbox = tomllib.loads(sandbox_text)
+            self.assertEqual(sandbox["default_permissions"], "research-store")
             profile = sandbox["permissions"]["research-store"]
             self.assertEqual(profile["filesystem"][":root"], "read")
             self.assertNotIn(str(ROOT), profile["filesystem"])
@@ -317,9 +334,11 @@ class PersonalRegistrationTests(unittest.TestCase):
             fake_bin = base / "bin"
             fake_bin.mkdir()
             fake_codex = fake_bin / "codex"
+            invocation = base / "codex-invocation.txt"
             fake_codex.write_text(
                 """#!/bin/sh
 set -eu
+printf '%s\n' "$@" > "$FAKE_CODEX_INVOCATION"
 [ "$1" = "sandbox" ]
 shift
 while [ "$1" != "--" ]; do shift; done
@@ -332,6 +351,7 @@ exec "$@"
             environment = dict(os.environ)
             environment["PATH"] = str(fake_bin) + os.pathsep + environment["PATH"]
             environment["HOME"] = str(home)
+            environment["FAKE_CODEX_INVOCATION"] = str(invocation)
             help_result = subprocess.run(
                 [str(store_launcher), "--help"],
                 cwd=cwd,
@@ -341,6 +361,20 @@ exec "$@"
             )
             self.assertEqual(help_result.returncode, 0, help_result.stderr)
             self.assertIn("research-store", help_result.stdout)
+            arguments = invocation.read_text(encoding="utf-8").splitlines()
+            self.assertEqual(
+                arguments[:5],
+                [
+                    "sandbox",
+                    "-P",
+                    "research-store",
+                    "-C",
+                    str(home / ".codex/research-library-sandbox"),
+                ],
+            )
+            self.assertEqual(arguments[5], "--")
+            self.assertEqual(arguments[6], str(ROOT / "research-store"))
+            self.assertEqual(arguments[7:], ["--help"])
             removed = run_registration("uninstall", home)
             self.assertEqual(removed.returncode, 0, removed.stderr)
 

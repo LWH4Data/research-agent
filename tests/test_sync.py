@@ -1089,7 +1089,27 @@ class SyncLibraryTests(unittest.TestCase):
             )
             legacy.parent.mkdir(parents=True)
             legacy.write_text(
-                f"---\nid: {json.dumps(legacy_id)}\n---\nlegacy\n",
+                "\n".join(
+                    [
+                        "---",
+                        "schema_version: 1",
+                        f"id: {json.dumps(legacy_id)}",
+                        'type: "conversation"',
+                        f"title: {json.dumps(payload['title'], ensure_ascii=False)}",
+                        f"created_at: {json.dumps(payload['created_at'])}",
+                        'language: ["ko"]',
+                        'scope: "current-topic"',
+                        "tags: []",
+                        "aliases: []",
+                        'status: ["research-note"]',
+                        "related_documents: []",
+                        'transcript_capture: "complete"',
+                        'capture_note: ""',
+                        "---",
+                        "legacy",
+                        "",
+                    ]
+                ),
                 encoding="utf-8",
             )
             with LibraryState(config.state, config.root) as state:

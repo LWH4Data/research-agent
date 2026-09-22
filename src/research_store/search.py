@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from contextlib import nullcontext
 import os
 from pathlib import Path
 
 from .config import Config
+from .conversations import recover_conversations
+from .locking import conversation_lock
+from .operations import recover_document_operation
 from .safety import reject_linked_file, require_owned_path
 
 
@@ -71,6 +75,11 @@ def search_library(
     if len(prepared) > 32:
         raise ValueError("검색어는 한 번에 32개까지 사용할 수 있습니다")
 
+    # A previous process may have stopped after replacing generated Markdown
+    # but before committing the matching SQLite rows. Repair that boundary
+    # before search reads any PDF-derived document.
+    recover_document_operation(config)
+
     buckets: list[list[tuple[str, int]]] = [[] for _ in prepared]
     records: dict[tuple[str, int], dict[str, object]] = {}
     total_matches = 0
@@ -79,38 +88,64 @@ def search_library(
         ("conversation", config.conversations),
     )
     for record_type, root in roots:
-        for path in _markdown_files(root, config):
-            with path.open("r", encoding="utf-8") as file:
-                for line_number, line in enumerate(file, start=1):
-                    display_line = line.strip()
-                    folded = display_line.casefold()
-                    hit_indices = [
-                        index
-                        for index, (_, normalized) in enumerate(prepared)
-                        if normalized in folded
-                    ]
-                    if not hit_indices:
-                        continue
-                    total_matches += 1
-                    if not any(len(buckets[index]) < limit for index in hit_indices):
-                        continue
-                    relative_path = path.relative_to(config.root).as_posix()
-                    key = (relative_path, line_number)
-                    positions = [
-                        folded.find(prepared[index][1]) for index in hit_indices
-                    ]
-                    records[key] = {
-                        "type": record_type,
-                        "path": relative_path,
-                        "line": line_number,
-                        "matched_queries": [
-                            prepared[index][0] for index in hit_indices
-                        ],
-                        "text": _excerpt(display_line, positions),
-                    }
-                    for index in hit_indices:
-                        if len(buckets[index]) < limit:
-                            buckets[index].append(key)
+        lock = (
+            conversation_lock(config.root)
+            if record_type == "conversation"
+            else nullcontext()
+        )
+        with lock:
+            if record_type == "conversation":
+                recover_conversations(config, lock_held=True)
+            for path in _markdown_files(root, config):
+                with path.open("r", encoding="utf-8") as file:
+                    in_frontmatter = False
+                    for line_number, line in enumerate(file, start=1):
+                        display_line = line.strip()
+                        if line_number == 1 and display_line == "---":
+                            in_frontmatter = True
+                            continue
+                        if in_frontmatter and display_line == "---":
+                            in_frontmatter = False
+                            continue
+                        if (
+                            record_type == "conversation"
+                            and in_frontmatter
+                            and display_line.startswith(("editable:", "title:"))
+                        ):
+                            # The human-readable body already carries the title
+                            # and v3 editable content, so indexing both duplicates
+                            # hits.
+                            continue
+                        folded = display_line.casefold()
+                        hit_indices = [
+                            index
+                            for index, (_, normalized) in enumerate(prepared)
+                            if normalized in folded
+                        ]
+                        if not hit_indices:
+                            continue
+                        total_matches += 1
+                        if not any(
+                            len(buckets[index]) < limit for index in hit_indices
+                        ):
+                            continue
+                        relative_path = path.relative_to(config.root).as_posix()
+                        key = (relative_path, line_number)
+                        positions = [
+                            folded.find(prepared[index][1]) for index in hit_indices
+                        ]
+                        records[key] = {
+                            "type": record_type,
+                            "path": relative_path,
+                            "line": line_number,
+                            "matched_queries": [
+                                prepared[index][0] for index in hit_indices
+                            ],
+                            "text": _excerpt(display_line, positions),
+                        }
+                        for index in hit_indices:
+                            if len(buckets[index]) < limit:
+                                buckets[index].append(key)
 
     selected: list[dict[str, object]] = []
     selected_keys: set[tuple[str, int]] = set()

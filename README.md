@@ -60,15 +60,17 @@ $research-library DBR cavity와 관련된 내용을 찾아줘.
 정의 슬래시 프롬프트는 더 이상 권장되지 않으므로 공식 스킬 호출인 `@`,
 `/skills`, `$research-library`를 사용합니다.
 
-Codex는 저장소 관리와 검색을 GPT-5.6 Luna xhigh에 맡기고, 수식·표·그림이
-있는 페이지만 GPT-5.6 Sol high에 전달합니다. 사용자가 모델을 고를 필요는
-없습니다.
+주 Codex 세션은 저장소 관리와 검색을 GPT-5.6 Luna xhigh에 맡깁니다. 시각
+검토가 필요하면 주 세션이 GPT-5.6 Sol ultra를 직접 호출하고, 완료 뒤 Luna에
+다시 검색을 맡깁니다. 사용자가 모델을 고를 필요는 없습니다.
 
 ## 원본 보호 경계
 
 Research Library가 수행하는 파일 작업에는 다음 경계를 적용합니다.
 
-- Luna/Sol 전용 에이전트는 읽기 전용 기본값으로 등록됩니다.
+- Luna/Sol 전용 에이전트는 읽기 전용 기본값으로 등록됩니다. 다만 호출할 때
+  부모 Codex 세션이 선택한 현재 권한 모드와 `/permissions`, `--yolo` 같은 실행
+  중 변경이 이 기본값보다 우선할 수 있습니다.
 - 개인 명령 규칙은 Research Library의 고정된 실행 파일만 허용합니다.
 - 그 실행 파일은 별도 권한 경계로 다시 들어가 전체 파일을 읽기 전용으로
   두고, `research-agent`의 `.research-store`와 `knowledge`만 쓰기 가능하게
@@ -82,14 +84,20 @@ Research Library가 수행하는 파일 작업에는 다음 경계를 적용합�
 - 설치 경로의 심볼릭 링크·하드 링크를 거부하고, 실제 Python이 프로젝트
   내부에 설치됐는지 확인합니다.
 
-개인 스킬은 현재 Codex 대화 자체가 이미 가진 권한을 회수할 수는 없습니다.
-원본 연구 폴더를 쓰기 가능한 Codex 프로젝트로 연 경우 그 대화의 일반 작업은
-여전히 해당 권한을 가집니다. `Full access`를 가진 사용자 세션의 권한이 호출된
-Research Agent에 자동으로 확대되지는 않지만, 그 사용자 세션 자체는 Research
-Agent를 거치지 않고 원본을 수정할 수 있습니다. 원본 폴더에서 일반 Codex
-작업까지 물리적으로 보호하려면 사용자 세션에 `Full access`를 주지 않습니다.
-Research Library의 저장 명령 자체는 현재 프로젝트 권한과 분리된 위 경계
-안에서 실행되므로 원본에는 쓸 수 없습니다.
+개인 스킬은 현재 Codex 대화가 이미 가진 권한을 회수할 수 없습니다. Codex는
+하위 에이전트에 부모 턴의 현재 권한 모드를 적용하며, 실행 중 선택한 권한 변경도
+사용자 정의 에이전트의 기본값보다 우선해 다시 적용할 수 있습니다. 따라서 부모
+세션이 `Full access`이면 Research Agent의 원본 보호를 보장할 수 없습니다.
+Research Library를 사용할 때는 **호출하기 전에 부모 Codex 세션을 읽기 전용으로
+설정해야 합니다.** 앱·IDE에서는 입력창 아래 권한 메뉴를, CLI에서는
+`/permissions`를 사용해 읽기 전용 프로필을 선택합니다. 자세한 동작은 공식
+[하위 에이전트 문서](https://learn.chatgpt.com/docs/agent-configuration/subagents)를
+참고합니다.
+
+정상 Research Library 흐름에서 저장 명령은 부모 프로젝트 설정과 분리된 제한
+권한 프로필로 다시 실행됩니다. 이 경계는 내부 저장만 허용하고 원본과 실행 코드
+쓰기를 차단하는 실제 통합 테스트를 통과했습니다. 그러나 Full access 부모는 이
+명령을 우회하거나 설치 파일을 바꿀 수 있으므로 같은 보호 범위로 보지 않습니다.
 
 원본에서 파일이 사라지면 SQLite에 `missing` 상태만 기록합니다. 생성된
 Markdown이나 다른 원본을 대신 삭제하지 않습니다.
@@ -127,6 +135,15 @@ bash "$HOME/research-agent/add-source.sh"
 ```
 
 ## 증분 동기화
+
+실제 PDF를 처리하지 않고 진행 표시만 먼저 확인하려면 다음 명령을 실행합니다.
+
+```sh
+bash "$HOME/research-agent/demo-progress.sh"
+```
+
+1/3 원본 위치 확인, 2/3 문서 정리, 3/3 그림·수식 확인 순서가 약 3초 동안
+표시됩니다. 이 미리 보기는 원본 PDF, 변환 결과와 SQLite를 변경하지 않습니다.
 
 ```sh
 "$HOME/research-agent/research-store" sync

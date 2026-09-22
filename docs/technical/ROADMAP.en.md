@@ -12,7 +12,7 @@ made; this roadmap contains only status, limitations, and completion criteria.
 
 ```mermaid
 flowchart LR
-    M1[1. Source protection and permissions<br/>Validated] --> M2[2. PDF conversion reliability<br/>Under validation]
+    M1[1. Source protection and permissions<br/>Validated with read-only parent] --> M2[2. PDF conversion reliability<br/>Under validation]
     M2 --> M3[3. Subscription usage and efficiency<br/>Experiment not started]
     M3 --> M4[4. Retrieval quality<br/>Review planned]
     M4 --> M5[5. Conversation storage and management<br/>Implementation validated]
@@ -21,28 +21,34 @@ flowchart LR
 
 | Area | Current state | Next development item |
 | --- | --- | --- |
-| Source protection and permissions | Validated | Maintain permission regression tests |
+| Source protection and permissions | Validated with a read-only parent | Maintain permission regression tests |
 | PDF conversion and visual review | Under validation | Establish accuracy criteria with representative PDFs |
-| Subscription usage and efficiency | Experiment not started | Measure identical workloads on Plus and Pro 5x |
+| Subscription usage and efficiency | Preliminary measurement started | Measure identical workloads on Plus and Pro 5x |
 | Retrieval | Implemented; design review pending | Validate retrieval quality and evidence labels |
 | Conversation storage and management | Implemented and technically validated | Validate natural-language UX and retrieval usefulness |
-| Installation and removal | Implemented; design review pending | Validate the installation experience for non-developers |
+| Installation and removal | Validated with an empty temporary HOME | Validate the non-developer experience on a physically new Mac |
 | User documentation | File structure only | Write the real usage flow and FAQ |
 
 ## Milestone 1. Source Protection and Permission Management
 
-**Status: Validated**
+**Status: Validated with a read-only parent**
 
 ### Completed Outcomes
 
-- Research Agent custom agents run in read-only mode.
+- Research Agent custom agents declare read-only defaults. The parent session
+  must also be read-only because its active mode and live overrides take
+  precedence.
 - The storage command can write only to `knowledge/` and `.research-store/`.
 - A source path and the Research Agent store cannot contain one another.
 - Writes through external paths, symbolic links, and hard links are rejected.
-- A real constrained permission profile is tested to confirm that writes to an
-  original source are denied.
-- Full access in the parent Codex session is documented as outside the Research
-  Agent guarantee.
+- A real constrained permission profile confirmed that internal storage writes
+  succeed while source and project-code writes are denied and source content
+  remains unchanged.
+- Dedicated `CODEX_HOME` and working directories isolate the configuration
+  stack so a project's legacy `sandbox_mode` cannot disable the storage
+  permission profile.
+- A Full access parent can have that access reapplied to its subagent, so
+  Research Agent does not guarantee source protection in that mode.
 
 ### Maintenance Conditions
 
@@ -50,6 +56,9 @@ flowchart LR
   new storage path is introduced.
 - Preserve the real sandbox integration test when the installation mechanism
   changes.
+- Recheck the beta permission-profile format and subagent inheritance behavior
+  against official documentation and the live integration test after Codex
+  upgrades.
 - Do not add a feature that modifies original files.
 
 ## Milestone 2. Validate PDF Conversion Reliability
@@ -63,8 +72,17 @@ flowchart LR
 - Candidate selection for possible tables, equations, figures, and extraction
   failures
 - 220 DPI rendering for selected pages
-- Sol high visual review with explicit uncertainty states
+- Sol ultra visual review with explicit uncertainty states
 - Rejection of stale review results when the PDF hash changes
+- A `document_operations` journal for PDF synchronization and page-review writes
+- `sync.lock` serialization between synchronization runs and a project write
+  lock for page reviews
+- Automatic roll-forward of Markdown and SQLite state after injected
+  child-process `os._exit`
+- Cleanup on the next synchronization of project-owned PDF copies left by an
+  abruptly exited process
+- Fail-closed recovery when file or database state matches neither the
+  journal's prior nor target state
 
 ### Confirmed Limitations
 
@@ -74,7 +92,12 @@ flowchart LR
   figure meaning.
 - Rule-based page selection can miss an important page.
 - `verified` records completion of AI review rather than human certification.
-- Visual review for the current local samples is still in the `pending` state.
+- A live Codex run completed primary → Luna → primary → Sol → primary → Luna.
+  The primary session coordinates because Luna cannot invoke Sol as a nested
+  agent in its custom-agent environment.
+- Forced-exit recovery has been validated with injected child-process
+  `os._exit`; a physical Mac power loss or storage-device failure has not been
+  tested.
 
 ### Next Development Items
 
@@ -83,7 +106,7 @@ flowchart LR
 2. Have a person label the pages that require visual review to create a
    comparison baseline.
 3. Measure whether the current selection rules miss important pages.
-4. Compare base extraction and Sol high review results with the original pages.
+4. Compare base extraction and Sol ultra review results with the original pages.
 5. Check whether 220 DPI is insufficient for small equations or dense tables.
 6. Use the results to decide whether OCR, better selection rules, or a parser
    replacement is necessary.
@@ -110,7 +133,7 @@ files is not itself a milestone.
 
 ## Milestone 3. Validate Subscription Usage and Processing Efficiency
 
-**Status: Experiment not started**
+**Status: Preliminary measurement started**
 
 [Subscription usage experiment record](./experiments/subscription-usage.en.md)
 
@@ -123,7 +146,9 @@ files is not itself a milestone.
 - Actual usage depends on the model, reasoning effort, context, tool calls, and
   caching, so it cannot be calculated from PDF page count or prompt length
   alone.
-- The project does not yet have task-level usage measurements.
+- Preliminary task-level token counts now exist for one synthetic progress turn
+  and one real one-page PDF integration path, but no before-and-after allowance
+  measurement or Plus-to-Pro comparison exists yet.
 
 ### Next Development Items
 

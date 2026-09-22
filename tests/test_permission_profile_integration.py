@@ -54,6 +54,7 @@ class PermissionProfileIntegrationTests(unittest.TestCase):
                 environment["CODEX_HOME"] = str(
                     home / ".codex/research-library-sandbox"
                 )
+                sandbox_directory = home / ".codex/research-library-sandbox"
 
                 permitted = subprocess.run(
                     [
@@ -62,7 +63,7 @@ class PermissionProfileIntegrationTests(unittest.TestCase):
                         "-P",
                         "research-store",
                         "-C",
-                        str(ROOT),
+                        str(sandbox_directory),
                         "--",
                         "/bin/sh",
                         "-c",
@@ -79,7 +80,7 @@ class PermissionProfileIntegrationTests(unittest.TestCase):
                         "-P",
                         "research-store",
                         "-C",
-                        str(ROOT),
+                        str(sandbox_directory),
                         "--",
                         "/bin/sh",
                         "-c",
@@ -96,7 +97,7 @@ class PermissionProfileIntegrationTests(unittest.TestCase):
                         "-P",
                         "research-store",
                         "-C",
-                        str(ROOT),
+                        str(sandbox_directory),
                         "--",
                         "/bin/sh",
                         "-c",

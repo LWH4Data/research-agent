@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 
+import research_store.conversations as conversation_module
 from research_store.config import Config, load_config
 from research_store.conversations import (
     delete_conversation,
@@ -110,6 +111,79 @@ def transcript_block(text: str) -> str:
     return text[text.index(marker) :]
 
 
+def exact_text(path: Path) -> str:
+    with path.open("r", encoding="utf-8", newline="") as file:
+        return file.read()
+
+
+def legacy_conversation_markdown(
+    *,
+    schema_version: int,
+    conversation_id: str,
+    created_at: str,
+    updated_at: str,
+) -> str:
+    metadata: list[tuple[str, object]] = [
+        ("schema_version", schema_version),
+        ("id", conversation_id),
+        ("type", "conversation"),
+        ("title", "첫 번째 연구 대화"),
+        ("created_at", created_at),
+    ]
+    if schema_version >= 2:
+        metadata.extend((("updated_at", updated_at), ("revision", 1)))
+    metadata.extend(
+        (
+            ("language", ["ko"]),
+            ("scope", "current-topic"),
+            ("tags", ["initial-tag"]),
+            ("aliases", ["initial alias"]),
+            ("status", ["research-note"]),
+            ("related_documents", ["papers:paper.pdf"]),
+            ("transcript_capture", "complete"),
+            ("capture_note", ""),
+        )
+    )
+    frontmatter_lines = ["---"] + [
+        f"{key}: {json.dumps(value, ensure_ascii=False)}"
+        for key, value in metadata
+    ]
+    frontmatter_lines.extend(("---", ""))
+    body = """# 첫 번째 연구 대화
+
+## 검색용 요약
+
+첫 번째 연구 대화의 최초 요약
+
+## 사용자의 생각
+
+- 최초 사용자 생각
+
+## 결정된 사항
+
+- 최초 결정
+
+## 검증되지 않은 생각
+
+- 최초 미검증 내용
+
+## 미해결 질문
+
+- 최초 질문
+
+## 선택 범위 원문
+
+### 사용자
+
+> 첫 번째 원문은 수정되면 안 됩니다.
+
+### Codex
+
+> 선택한 범위를 그대로 보존합니다.
+"""
+    return "\n".join(frontmatter_lines) + body
+
+
 class ConversationManagementTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -168,6 +242,646 @@ class ConversationManagementTests(unittest.TestCase):
             second_path,
             str(ids_by_path[str(first_path.relative_to(self.project))]),
             str(ids_by_path[str(second_path.relative_to(self.project))]),
+        )
+
+    def test_conversation_get_round_trips_v3_without_returning_transcript(
+        self,
+    ) -> None:
+        payload = conversation_payload(
+            title="구조화된 대화 # 기록",
+            created_at="2026-09-21T11:00:00+09:00",
+            transcript_text="TRANSCRIPT_SECRET_MUST_NOT_BE_RETURNED",
+        )
+        payload.update(
+            {
+                "capture_status": "partial",
+                "capture_note": "마지막 응답 뒤 내용은 제외됨\n## 참고용 제목",
+                "summary": (
+                    "첫 줄\n\n## 결정된 사항\n\n- 요약 안의 제목 같은 문자열"
+                    "\u2028Unicode 줄 구분 문자도 그대로 보존"
+                ),
+                "tags": ["광소자", "RAG"],
+                "aliases": ["별칭 첫 줄\n## 별칭 내부 제목", "optical retrieval"],
+                "user_points": ["생각 첫 줄\n\n## 선택 범위 원문\n\n본문처럼 보이는 값"],
+                "decisions": ["결정 첫 줄\n- 목록처럼 보이는 둘째 줄"],
+                "unverified": ["미검증 첫 줄\n### 사용자\n> 인용처럼 보이는 값"],
+                "open_questions": ["질문 첫 줄\n\n## 검색용 요약\n\n제목처럼 보이는 값"],
+                "related_documents": [
+                    "papers:optics/laser.pdf",
+                    "notes:첫 줄\n## 문서 제목처럼 보이는 값",
+                ],
+            }
+        )
+        output = save_conversation(self.config, payload)
+        record = next(
+            item
+            for item in list_conversations(self.config)
+            if item["path"] == str(output.relative_to(self.project))
+        )
+        conversation_id = str(record["conversation_id"])
+        expected_editable = {
+            key: payload[key]
+            for key in (
+                "title",
+                "summary",
+                "tags",
+                "aliases",
+                "user_points",
+                "decisions",
+                "unverified",
+                "open_questions",
+                "related_documents",
+            )
+        }
+        markdown_before = output.read_bytes()
+        markdown_mtime_before = output.stat().st_mtime_ns
+        database_before = self.config.state.read_bytes()
+        database_mtime_before = self.config.state.stat().st_mtime_ns
+
+        result = conversation_module.get_conversation(self.config, conversation_id)
+
+        self.assertEqual(
+            set(result),
+            {
+                "conversation_id",
+                "path",
+                "revision",
+                "updated_at",
+                "editable",
+                "immutable",
+            },
+        )
+        self.assertEqual(result["conversation_id"], conversation_id)
+        self.assertEqual(result["path"], str(output.relative_to(self.project)))
+        self.assertEqual(result["revision"], 1)
+        self.assertEqual(result["updated_at"], payload["created_at"])
+        self.assertEqual(set(result["editable"]), set(expected_editable))
+        self.assertEqual(result["editable"], expected_editable)
+        self.assertEqual(
+            result["immutable"],
+            {
+                "scope": "current-topic",
+                "created_at": payload["created_at"],
+                "transcript_capture": "partial",
+                "capture_note": payload["capture_note"],
+            },
+        )
+        serialized = json.dumps(result, ensure_ascii=False)
+        self.assertNotIn("transcript", result)
+        self.assertNotIn("TRANSCRIPT_SECRET_MUST_NOT_BE_RETURNED", serialized)
+        self.assertEqual(output.read_bytes(), markdown_before)
+        self.assertEqual(output.stat().st_mtime_ns, markdown_mtime_before)
+        self.assertEqual(self.config.state.read_bytes(), database_before)
+        self.assertEqual(self.config.state.stat().st_mtime_ns, database_mtime_before)
+        title_matches = [
+            match
+            for match in search_library(self.config, [str(payload["title"])])["matches"]
+            if match["type"] == "conversation" and match["path"] == result["path"]
+        ]
+        self.assertEqual(len(title_matches), 1)
+
+    def test_transcript_trailing_whitespace_survives_update(self) -> None:
+        payload = conversation_payload(
+            title="원문 공백 보존",
+            created_at="2026-09-21T11:30:00+09:00",
+            transcript_text="끝 공백  \n\n",
+        )
+        output = save_conversation(self.config, payload)
+        record = next(
+            item
+            for item in list_conversations(self.config)
+            if item["path"] == str(output.relative_to(self.project))
+        )
+        conversation_id = str(record["conversation_id"])
+        transcript_before = transcript_block(output.read_text(encoding="utf-8"))
+        self.assertIn("> 끝 공백  \n>\n>\n\n### Codex", transcript_before)
+
+        update_conversation(
+            self.config,
+            conversation_id,
+            update_payload("TRANSCRIPT_WHITESPACE_UPDATE"),
+            expected_revision=1,
+        )
+
+        self.assertEqual(
+            transcript_block(output.read_text(encoding="utf-8")),
+            transcript_before,
+        )
+
+    def test_crlf_and_lone_cr_round_trip_in_all_editable_fields_and_transcript(
+        self,
+    ) -> None:
+        payload = conversation_payload(
+            title="원본 제목\r\n둘째 줄\r셋째 줄",
+            created_at="2026-09-21T11:45:00+09:00",
+            transcript_text="원문 CRLF\r\n다음 줄\r마지막 줄",
+        )
+        payload.update(
+            {
+                "summary": "요약 CRLF\r\n다음 줄\r마지막 줄",
+                "tags": ["태그\r\n둘째", "태그\r셋째"],
+                "aliases": ["별칭\r\n둘째", "별칭\r셋째"],
+                "user_points": ["생각\r\n둘째\r셋째"],
+                "decisions": ["결정\r\n둘째\r셋째"],
+                "unverified": ["미검증\r\n둘째\r셋째"],
+                "open_questions": ["질문\r\n둘째\r셋째"],
+                "related_documents": ["papers:첫째\r\n둘째\r셋째.pdf"],
+            }
+        )
+        output = save_conversation(self.config, payload)
+        record = next(
+            item
+            for item in list_conversations(self.config)
+            if item["path"] == str(output.relative_to(self.project))
+        )
+        conversation_id = str(record["conversation_id"])
+        editable_before = {
+            key: payload[key] for key in conversation_module.EDITABLE_FIELDS
+        }
+        markdown_before = exact_text(output)
+        transcript_before = conversation_module._transcript_block(markdown_before)
+
+        self.assertIn("> 원문 CRLF\r\n> 다음 줄\r마지막 줄", transcript_before)
+        self.assertEqual(
+            conversation_module.get_conversation(self.config, conversation_id)[
+                "editable"
+            ],
+            editable_before,
+        )
+
+        revised = {
+            "title": "수정 제목\r\n둘째\r셋째",
+            "summary": "수정 요약\r\n둘째\r셋째",
+            "tags": ["수정 태그\r\n둘째\r셋째"],
+            "aliases": ["수정 별칭\r\n둘째\r셋째"],
+            "user_points": ["수정 생각\r\n둘째\r셋째"],
+            "decisions": ["수정 결정\r\n둘째\r셋째"],
+            "unverified": ["수정 미검증\r\n둘째\r셋째"],
+            "open_questions": ["수정 질문\r\n둘째\r셋째"],
+            "related_documents": ["papers:수정\r\n둘째\r셋째.pdf"],
+        }
+        update_conversation(
+            self.config,
+            conversation_id,
+            revised,
+            expected_revision=1,
+        )
+
+        markdown_after = exact_text(output)
+        self.assertEqual(
+            conversation_module._transcript_block(markdown_after),
+            transcript_before,
+        )
+        self.assertEqual(
+            conversation_module.get_conversation(self.config, conversation_id)[
+                "editable"
+            ],
+            revised,
+        )
+
+    def test_idempotent_save_fully_validates_v3_and_immutable_identity(self) -> None:
+        payload = conversation_payload(
+            title="동일 저장 검증",
+            created_at="2026-09-21T12:00:00+09:00",
+            transcript_text="동일 저장 원문",
+        )
+        output = save_conversation(self.config, payload)
+        markdown_before = output.read_bytes()
+        database_before = self.config.state.read_bytes()
+
+        self.assertEqual(save_conversation(self.config, payload), output)
+        self.assertEqual(output.read_bytes(), markdown_before)
+        self.assertEqual(self.config.state.read_bytes(), database_before)
+
+        mismatched_scope = dict(payload)
+        mismatched_scope["scope"] = "entire-conversation"
+        with self.assertRaisesRegex(ValueError, "scope.*동일 저장 요청"):
+            save_conversation(self.config, mismatched_scope)
+        self.assertEqual(output.read_bytes(), markdown_before)
+
+        tampered = exact_text(output).replace(
+            "동일 저장 검증의 최초 요약",
+            "Markdown 본문만 변조됨",
+            1,
+        )
+        output.write_text(tampered, encoding="utf-8", newline="")
+        with self.assertRaisesRegex(ValueError, "본문.*editable.*일치"):
+            save_conversation(self.config, payload)
+        self.assertEqual(exact_text(output), tampered)
+
+    def test_idempotent_save_retains_valid_legacy_record_without_rewriting(
+        self,
+    ) -> None:
+        payload = conversation_payload(
+            title="첫 번째 연구 대화",
+            created_at="2026-09-21T12:15:00+09:00",
+            transcript_text="첫 번째 원문은 수정되면 안 됩니다.",
+        )
+        output = save_conversation(self.config, payload)
+        record = next(
+            item
+            for item in list_conversations(self.config)
+            if item["path"] == str(output.relative_to(self.project))
+        )
+        conversation_id = str(record["conversation_id"])
+        legacy = legacy_conversation_markdown(
+            schema_version=2,
+            conversation_id=conversation_id,
+            created_at=str(record["created_at"]),
+            updated_at=str(record["updated_at"]),
+        )
+        output.write_text(legacy, encoding="utf-8", newline="")
+        before = output.read_bytes()
+
+        self.assertEqual(save_conversation(self.config, payload), output)
+        self.assertEqual(output.read_bytes(), before)
+
+    def test_legacy_promotion_rejects_ambiguous_or_malformed_transcript(self) -> None:
+        output, _, conversation_id, _ = self.save_two_conversations()
+        record = next(
+            item
+            for item in list_conversations(self.config)
+            if item["conversation_id"] == conversation_id
+        )
+        legacy = legacy_conversation_markdown(
+            schema_version=2,
+            conversation_id=conversation_id,
+            created_at=str(record["created_at"]),
+            updated_at=str(record["updated_at"]),
+        )
+        malformed_cases = {
+            "ambiguous-heading": (
+                legacy.replace(
+                    "첫 번째 연구 대화의 최초 요약",
+                    "첫 번째 연구 대화의 최초 요약\n\n## 선택 범위 원문\n\n가짜",
+                    1,
+                ),
+                "원문 구역이 모호",
+            ),
+            "unknown-role": (
+                legacy.replace("### 사용자", "### 시스템", 1),
+                "원문 역할 블록",
+            ),
+            "unquoted-content": (
+                legacy.replace(
+                    "> 첫 번째 원문은 수정되면 안 됩니다.",
+                    "첫 번째 원문은 수정되면 안 됩니다.",
+                    1,
+                ),
+                "원문 역할 블록",
+            ),
+        }
+
+        for label, (malformed, message) in malformed_cases.items():
+            with self.subTest(case=label):
+                output.write_text(malformed, encoding="utf-8", newline="")
+                before = output.read_bytes()
+                with self.assertRaisesRegex(ValueError, message):
+                    update_conversation(
+                        self.config,
+                        conversation_id,
+                        update_payload(f"REJECT_{label}"),
+                        expected_revision=1,
+                        confirm_legacy_promotion=True,
+                    )
+                self.assertEqual(output.read_bytes(), before)
+                database_record = self._database_record(conversation_id)
+                self.assertIsNotNone(database_record)
+                assert database_record is not None
+                self.assertEqual(database_record[6], 1)
+
+    def test_cli_conversation_get_requires_exact_positional_id(self) -> None:
+        output, _, conversation_id, _ = self.save_two_conversations()
+        before = output.read_bytes()
+
+        received = self.run_cli("conversation-get", conversation_id)
+
+        self.assertEqual(received.returncode, 0, received.stderr)
+        result = json.loads(received.stdout)
+        self.assertEqual(result["conversation_id"], conversation_id)
+        self.assertEqual(result["path"], str(output.relative_to(self.project)))
+        self.assertEqual(result["revision"], 1)
+        self.assertEqual(
+            set(result["editable"]),
+            {
+                "title",
+                "summary",
+                "tags",
+                "aliases",
+                "user_points",
+                "decisions",
+                "unverified",
+                "open_questions",
+                "related_documents",
+            },
+        )
+        self.assertNotIn("첫 번째 원문은 수정되면 안 됩니다.", received.stdout)
+
+        partial_id = self.run_cli("conversation-get", conversation_id[:-1])
+        self.assertEqual(partial_id.returncode, 1)
+        self.assertIn("찾을 수 없습니다", partial_id.stderr)
+        missing_id = self.run_cli("conversation-get")
+        self.assertEqual(missing_id.returncode, 2)
+        self.assertEqual(output.read_bytes(), before)
+
+    def test_conversation_get_rejects_path_link_id_schema_and_revision_mismatch(
+        self,
+    ) -> None:
+        output, _, conversation_id, _ = self.save_two_conversations()
+        original = output.read_text(encoding="utf-8")
+        metadata = frontmatter(original)
+        relative = str(output.relative_to(self.project))
+
+        with self.subTest(mismatch="path"):
+            with sqlite3.connect(self.config.state) as database:
+                database.execute(
+                    "UPDATE conversations SET output_path = ? WHERE conversation_id = ?",
+                    ("../source/paper.pdf", conversation_id),
+                )
+            try:
+                with self.assertRaisesRegex(ValueError, "올바른 상대 경로"):
+                    conversation_module.get_conversation(self.config, conversation_id)
+            finally:
+                with sqlite3.connect(self.config.state) as database:
+                    database.execute(
+                        "UPDATE conversations SET output_path = ? "
+                        "WHERE conversation_id = ?",
+                        (relative, conversation_id),
+                    )
+
+        if hasattr(os, "symlink"):
+            with self.subTest(mismatch="link"):
+                victim = self.source / "external-conversation.md"
+                victim.write_text("external content\n", encoding="utf-8")
+                output.unlink()
+                output.symlink_to(victim)
+                try:
+                    with self.assertRaisesRegex(
+                        ValueError, "심볼릭 링크|프로젝트 내부"
+                    ):
+                        conversation_module.get_conversation(
+                            self.config, conversation_id
+                        )
+                    self.assertEqual(
+                        victim.read_text(encoding="utf-8"), "external content\n"
+                    )
+                finally:
+                    output.unlink(missing_ok=True)
+                    output.write_text(original, encoding="utf-8")
+
+        with self.subTest(mismatch="id"):
+            output.write_text(
+                original.replace(
+                    f'id: {json.dumps(conversation_id)}',
+                    'id: "conversation-tampered"',
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            try:
+                with self.assertRaisesRegex(ValueError, "ID.*일치하지 않습니다"):
+                    conversation_module.get_conversation(self.config, conversation_id)
+            finally:
+                output.write_text(original, encoding="utf-8")
+
+        with self.subTest(mismatch="schema"):
+            output.write_text(
+                original.replace(
+                    f"schema_version: {metadata['schema_version']}\n",
+                    "schema_version: 999\n",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            try:
+                with self.assertRaisesRegex(
+                    ValueError, "새로운 대화 Markdown 스키마"
+                ):
+                    conversation_module.get_conversation(self.config, conversation_id)
+            finally:
+                output.write_text(original, encoding="utf-8")
+
+        with self.subTest(mismatch="revision"):
+            output.write_text(
+                original.replace("revision: 1\n", "revision: 2\n", 1),
+                encoding="utf-8",
+            )
+            try:
+                with self.assertRaisesRegex(ValueError, "revision.*일치"):
+                    conversation_module.get_conversation(self.config, conversation_id)
+            finally:
+                output.write_text(original, encoding="utf-8")
+
+        with self.subTest(mismatch="editable-body"):
+            output.write_text(
+                original.replace(
+                    "\n# 첫 번째 연구 대화\n",
+                    "\n# 본문만 변조된 대화\n",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            try:
+                with self.assertRaisesRegex(ValueError, "본문.*editable.*일치"):
+                    conversation_module.get_conversation(self.config, conversation_id)
+            finally:
+                output.write_text(original, encoding="utf-8")
+
+        with self.subTest(mismatch="transcript-hash"):
+            output.write_text(
+                original.replace(
+                    "첫 번째 원문은 수정되면 안 됩니다.",
+                    "변조된 원문입니다.",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            try:
+                with self.assertRaisesRegex(ValueError, "원문 해시.*일치"):
+                    conversation_module.get_conversation(self.config, conversation_id)
+            finally:
+                output.write_text(original, encoding="utf-8")
+
+    def test_conversation_get_reads_v1_v2_and_update_promotes_each_to_v3(
+        self,
+    ) -> None:
+        expected_legacy_editable = {
+            "title": "첫 번째 연구 대화",
+            "summary": "첫 번째 연구 대화의 최초 요약",
+            "tags": ["initial-tag"],
+            "aliases": ["initial alias"],
+            "user_points": ["최초 사용자 생각"],
+            "decisions": ["최초 결정"],
+            "unverified": ["최초 미검증 내용"],
+            "open_questions": ["최초 질문"],
+            "related_documents": ["papers:paper.pdf"],
+        }
+        for schema_version in (1, 2):
+            with self.subTest(schema_version=schema_version):
+                created_at = f"2026-09-{21 + schema_version:02d}T10:00:00+09:00"
+                output = save_conversation(
+                    self.config,
+                    conversation_payload(
+                        title="첫 번째 연구 대화",
+                        created_at=created_at,
+                        transcript_text="첫 번째 원문은 수정되면 안 됩니다.",
+                    ),
+                )
+                record = next(
+                    item
+                    for item in list_conversations(self.config)
+                    if item["path"] == str(output.relative_to(self.project))
+                )
+                conversation_id = str(record["conversation_id"])
+                output.write_text(
+                    legacy_conversation_markdown(
+                        schema_version=schema_version,
+                        conversation_id=conversation_id,
+                        created_at=created_at,
+                        updated_at=created_at,
+                    ),
+                    encoding="utf-8",
+                )
+
+                legacy_result = conversation_module.get_conversation(
+                    self.config, conversation_id
+                )
+
+                self.assertEqual(legacy_result["revision"], 1)
+                self.assertEqual(legacy_result["updated_at"], created_at)
+                self.assertEqual(legacy_result["schema_version"], schema_version)
+                self.assertIs(legacy_result["migration_required"], True)
+                self.assertNotIn("editable", legacy_result)
+                self.assertEqual(
+                    legacy_result["editable_candidate"],
+                    expected_legacy_editable,
+                )
+                self.assertEqual(
+                    legacy_result["immutable"],
+                    {
+                        "scope": "current-topic",
+                        "created_at": created_at,
+                        "transcript_capture": "complete",
+                        "capture_note": "",
+                    },
+                )
+                markdown_before_rejected_update = output.read_bytes()
+                database_before_rejected_update = self.config.state.read_bytes()
+                database_mtime_before_rejected_update = (
+                    self.config.state.stat().st_mtime_ns
+                )
+                with self.assertRaisesRegex(ValueError, "confirm_legacy_promotion"):
+                    update_conversation(
+                        self.config,
+                        conversation_id,
+                        update_payload(f"REJECTED_V{schema_version}_MEMORY"),
+                        expected_revision=1,
+                    )
+                self.assertEqual(output.read_bytes(), markdown_before_rejected_update)
+                self.assertEqual(
+                    self.config.state.read_bytes(),
+                    database_before_rejected_update,
+                )
+                self.assertEqual(
+                    self.config.state.stat().st_mtime_ns,
+                    database_mtime_before_rejected_update,
+                )
+                update_conversation(
+                    self.config,
+                    conversation_id,
+                    update_payload(f"PROMOTED_V{schema_version}_MEMORY"),
+                    expected_revision=1,
+                    confirm_legacy_promotion=True,
+                )
+                promoted_metadata = frontmatter(
+                    output.read_text(encoding="utf-8")
+                )
+                self.assertEqual(promoted_metadata["schema_version"], 3)
+                promoted_result = conversation_module.get_conversation(
+                    self.config, conversation_id
+                )
+                self.assertEqual(promoted_result["revision"], 2)
+                self.assertEqual(
+                    promoted_result["editable"],
+                    update_payload(f"PROMOTED_V{schema_version}_MEMORY"),
+                )
+
+    def test_legacy_delete_does_not_parse_ambiguous_editable_body(self) -> None:
+        output, _, conversation_id, _ = self.save_two_conversations()
+        record = next(
+            item
+            for item in list_conversations(self.config)
+            if item["conversation_id"] == conversation_id
+        )
+        ambiguous = legacy_conversation_markdown(
+            schema_version=2,
+            conversation_id=conversation_id,
+            created_at=str(record["created_at"]),
+            updated_at=str(record["updated_at"]),
+        ).replace(
+            "첫 번째 연구 대화의 최초 요약\n\n## 사용자의 생각",
+            (
+                "첫 번째 연구 대화의 최초 요약\n\n"
+                "## 결정된 사항\n\n- 요약 속 제목 같은 목록\n\n"
+                "## 사용자의 생각"
+            ),
+            1,
+        )
+        output.write_text(ambiguous, encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "결정된 사항 구역이 모호"):
+            conversation_module.get_conversation(self.config, conversation_id)
+
+        result = delete_conversation(
+            self.config,
+            conversation_id,
+            expected_revision=1,
+        )
+
+        self.assertEqual(result["deleted_markdown"], record["path"])
+        self.assertFalse(output.exists())
+        self.assertIsNone(self._database_record(conversation_id))
+
+    def test_cli_legacy_promotion_requires_explicit_review_flag(self) -> None:
+        output, _, conversation_id, _ = self.save_two_conversations()
+        record = next(
+            item
+            for item in list_conversations(self.config)
+            if item["conversation_id"] == conversation_id
+        )
+        output.write_text(
+            legacy_conversation_markdown(
+                schema_version=2,
+                conversation_id=conversation_id,
+                created_at=str(record["created_at"]),
+                updated_at=str(record["updated_at"]),
+            ),
+            encoding="utf-8",
+        )
+        before = output.read_bytes()
+
+        rejected = self.run_cli(
+            "conversation-update",
+            conversation_id,
+            "--expected-revision",
+            "1",
+            input_payload=update_payload("CLI_LEGACY_REJECTED"),
+        )
+        self.assertEqual(rejected.returncode, 1)
+        self.assertIn("confirm_legacy_promotion", rejected.stderr)
+        self.assertEqual(output.read_bytes(), before)
+
+        promoted = self.run_cli(
+            "conversation-update",
+            conversation_id,
+            "--expected-revision",
+            "1",
+            "--confirm-legacy-promotion",
+            input_payload=update_payload("CLI_LEGACY_PROMOTED"),
+        )
+        self.assertEqual(promoted.returncode, 0, promoted.stderr)
+        self.assertEqual(
+            frontmatter(output.read_text(encoding="utf-8"))["schema_version"],
+            3,
         )
 
     def test_cli_list_update_delete_lifecycle_preserves_unowned_and_immutable_data(
@@ -322,44 +1036,51 @@ class ConversationManagementTests(unittest.TestCase):
                 )
                 self.assertEqual(record["revision"], 1)
 
-    def test_update_promotes_v1_markdown_and_preserves_immutable_fields(self) -> None:
+    def test_update_promotes_v1_markdown_to_v3_and_preserves_immutable_fields(
+        self,
+    ) -> None:
         output, _, conversation_id, _ = self.save_two_conversations()
         current = output.read_text(encoding="utf-8")
         current_metadata = frontmatter(current)
-        current_transcript = transcript_block(current)
-        legacy = current.replace("schema_version: 2\n", "schema_version: 1\n", 1)
-        legacy = "\n".join(
-            line
-            for line in legacy.splitlines()
-            if not line.startswith("updated_at:") and not line.startswith("revision:")
-        ) + "\n"
-        output.write_text(legacy, encoding="utf-8")
+        output.write_text(
+            legacy_conversation_markdown(
+                schema_version=1,
+                conversation_id=conversation_id,
+                created_at=str(current_metadata["created_at"]),
+                updated_at=str(current_metadata["updated_at"]),
+            ),
+            encoding="utf-8",
+        )
+        legacy_transcript = transcript_block(output.read_text(encoding="utf-8"))
 
         result = update_conversation(
             self.config,
             conversation_id,
             update_payload("PROMOTED_V1_MEMORY"),
             expected_revision=1,
+            confirm_legacy_promotion=True,
         )
 
         promoted = output.read_text(encoding="utf-8")
         promoted_metadata = frontmatter(promoted)
         self.assertEqual(result["revision"], 2)
-        self.assertEqual(promoted_metadata["schema_version"], 2)
+        self.assertEqual(promoted_metadata["schema_version"], 3)
         self.assertEqual(promoted_metadata["revision"], 2)
         self.assertEqual(promoted_metadata["id"], current_metadata["id"])
         self.assertEqual(promoted_metadata["scope"], current_metadata["scope"])
         self.assertEqual(
             promoted_metadata["created_at"], current_metadata["created_at"]
         )
-        self.assertEqual(transcript_block(promoted), current_transcript)
+        self.assertEqual(transcript_block(promoted), legacy_transcript)
         self.assertEqual(result["path"], str(output.relative_to(self.project)))
         self.assertIn("PROMOTED_V1_MEMORY", promoted)
 
     def test_future_markdown_schema_blocks_update_and_delete(self) -> None:
         output, _, conversation_id, _ = self.save_two_conversations()
-        future = output.read_text(encoding="utf-8").replace(
-            "schema_version: 2\n", "schema_version: 999\n", 1
+        current = output.read_text(encoding="utf-8")
+        schema_version = frontmatter(current)["schema_version"]
+        future = current.replace(
+            f"schema_version: {schema_version}\n", "schema_version: 999\n", 1
         )
         output.write_text(future, encoding="utf-8")
         before = output.read_bytes()

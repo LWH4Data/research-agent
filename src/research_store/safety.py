@@ -126,12 +126,209 @@ def reject_linked_file(path: Path, root: Path, *, label: str) -> Path:
     return candidate
 
 
+def _entry_exists(directory_descriptor: int, name: str) -> bool:
+    try:
+        os.stat(name, dir_fd=directory_descriptor, follow_symlinks=False)
+    except FileNotFoundError:
+        return False
+    return True
+
+
+def _unlink_generated_file(
+    directory_descriptor: int,
+    name: str,
+    *,
+    tolerate_completed: bool = False,
+) -> None:
+    """Unlink a generated file, optionally accepting a completed-then-raised call."""
+    try:
+        os.unlink(name, dir_fd=directory_descriptor)
+    except FileNotFoundError:
+        return
+    except BaseException:
+        if not tolerate_completed or _entry_exists(directory_descriptor, name):
+            raise
+
+
+def _replace_generated_file(
+    directory_descriptor: int,
+    source_name: str,
+    target_name: str,
+    *,
+    tolerate_completed: bool = False,
+) -> None:
+    """Replace entries, optionally accepting a completed-then-raised call."""
+    try:
+        os.replace(
+            source_name,
+            target_name,
+            src_dir_fd=directory_descriptor,
+            dst_dir_fd=directory_descriptor,
+        )
+    except BaseException:
+        if not tolerate_completed:
+            raise
+        if _entry_exists(directory_descriptor, source_name):
+            raise
+        if not _entry_exists(directory_descriptor, target_name):
+            raise
+
+
+def _new_generated_file(
+    directory_descriptor: int, prefix: str
+) -> tuple[str, int]:
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    for _ in range(128):
+        name = f"{prefix}{secrets.token_hex(12)}"
+        try:
+            descriptor = os.open(
+                name,
+                flags,
+                0o600,
+                dir_fd=directory_descriptor,
+            )
+        except FileExistsError:
+            continue
+        return name, descriptor
+    raise RuntimeError("안전한 임시 파일 이름을 만들 수 없습니다")
+
+
+def _restore_from_descriptor(
+    directory_descriptor: int,
+    source_descriptor: int,
+    target_name: str,
+) -> None:
+    """Recreate a target from an open descriptor after its name was removed."""
+    temporary_name, descriptor = _new_generated_file(
+        directory_descriptor, ".restore-"
+    )
+    try:
+        os.fchmod(descriptor, stat.S_IMODE(os.fstat(source_descriptor).st_mode))
+        os.lseek(source_descriptor, 0, os.SEEK_SET)
+        while True:
+            chunk = os.read(source_descriptor, 1024 * 1024)
+            if not chunk:
+                break
+            view = memoryview(chunk)
+            while view:
+                written = os.write(descriptor, view)
+                view = view[written:]
+        os.fsync(descriptor)
+    except BaseException:
+        os.close(descriptor)
+        try:
+            _unlink_generated_file(
+                directory_descriptor,
+                temporary_name,
+                tolerate_completed=True,
+            )
+        except BaseException:
+            pass
+        raise
+    else:
+        os.close(descriptor)
+
+    try:
+        _replace_generated_file(
+            directory_descriptor,
+            temporary_name,
+            target_name,
+            tolerate_completed=True,
+        )
+    except BaseException:
+        try:
+            _unlink_generated_file(
+                directory_descriptor,
+                temporary_name,
+                tolerate_completed=True,
+            )
+        except BaseException:
+            pass
+        raise
+    os.fsync(directory_descriptor)
+
+
+def _copy_entry_to_generated_file(
+    directory_descriptor: int,
+    source_name: str,
+    prefix: str,
+) -> str:
+    """Create and fsync a private same-directory copy of a regular file."""
+    generated_name, output_descriptor = _new_generated_file(
+        directory_descriptor, prefix
+    )
+    source_descriptor: int | None = None
+    try:
+        source_descriptor = os.open(
+            source_name,
+            os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+            dir_fd=directory_descriptor,
+        )
+        source_info = os.fstat(source_descriptor)
+        if not stat.S_ISREG(source_info.st_mode) or source_info.st_nlink != 1:
+            raise ValueError(f"백업 대상이 안전한 일반 파일이 아닙니다: {source_name}")
+        os.fchmod(output_descriptor, stat.S_IMODE(source_info.st_mode))
+        while True:
+            chunk = os.read(source_descriptor, 1024 * 1024)
+            if not chunk:
+                break
+            view = memoryview(chunk)
+            while view:
+                written = os.write(output_descriptor, view)
+                view = view[written:]
+        os.fsync(output_descriptor)
+    except BaseException:
+        try:
+            _unlink_generated_file(
+                directory_descriptor,
+                generated_name,
+                tolerate_completed=True,
+            )
+        except BaseException:
+            pass
+        raise
+    finally:
+        if source_descriptor is not None:
+            os.close(source_descriptor)
+        os.close(output_descriptor)
+    return generated_name
+
+
+def _restore_staged_file(
+    directory_descriptor: int,
+    staged_name: str,
+    target_name: str,
+    recovery_descriptor: int | None,
+) -> None:
+    """Restore staged content by name, or by its still-open descriptor."""
+    if _entry_exists(directory_descriptor, staged_name):
+        _replace_generated_file(
+            directory_descriptor,
+            staged_name,
+            target_name,
+            tolerate_completed=True,
+        )
+        os.fsync(directory_descriptor)
+        return
+    if recovery_descriptor is None:
+        raise RuntimeError(
+            f"복구할 파일을 찾을 수 없습니다: {staged_name}"
+        )
+    _restore_from_descriptor(
+        directory_descriptor, recovery_descriptor, target_name
+    )
+
+
 def atomic_text(path: Path, text: str, root: Path) -> None:
     target = require_owned_path(path, root, label="쓰기 대상")
     parent_descriptor, _ = _open_owned_directory(
         target.parent, root, label="쓰기 폴더", create=True
     )
     temporary_name: str | None = None
+    backup_name: str | None = None
+    backup_descriptor: int | None = None
+    backup_ready = False
+    original_existed = False
     try:
         try:
             target_info = os.stat(
@@ -148,42 +345,146 @@ def atomic_text(path: Path, text: str, root: Path) -> None:
                 raise ValueError(f"쓰기 대상은 일반 파일이어야 합니다: {target}")
             if target_info.st_nlink != 1:
                 raise ValueError(f"쓰기 대상은 하드 링크일 수 없습니다: {target}")
+            original_existed = True
 
-        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
-        for _ in range(128):
-            temporary_name = f".tmp-{secrets.token_hex(12)}"
-            try:
-                descriptor = os.open(
-                    temporary_name,
-                    flags,
-                    0o600,
-                    dir_fd=parent_descriptor,
-                )
-                break
-            except FileExistsError:
-                temporary_name = None
-        else:
-            raise RuntimeError("안전한 임시 파일 이름을 만들 수 없습니다")
+        temporary_name, descriptor = _new_generated_file(
+            parent_descriptor, ".tmp-"
+        )
 
         with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as file:
             file.write(text)
             file.flush()
             os.fsync(file.fileno())
-        os.replace(
-            temporary_name,
-            target.name,
-            src_dir_fd=parent_descriptor,
-            dst_dir_fd=parent_descriptor,
+
+        if original_existed:
+            backup_name = _copy_entry_to_generated_file(
+                parent_descriptor, target.name, ".backup-"
+            )
+            backup_ready = True
+            backup_descriptor = os.open(
+                backup_name,
+                os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+                dir_fd=parent_descriptor,
+            )
+            os.fsync(parent_descriptor)
+
+        _replace_generated_file(
+            parent_descriptor, temporary_name, target.name
         )
         temporary_name = None
         os.fsync(parent_descriptor)
+
+        if backup_name is not None:
+            _unlink_generated_file(parent_descriptor, backup_name)
+            os.fsync(parent_descriptor)
+            backup_name = None
+            backup_ready = False
     except BaseException:
+        recovery_error: BaseException | None = None
+        try:
+            if backup_ready and backup_name is not None:
+                _restore_staged_file(
+                    parent_descriptor,
+                    backup_name,
+                    target.name,
+                    backup_descriptor,
+                )
+                backup_name = None
+                backup_ready = False
+            elif not original_existed and _entry_exists(
+                parent_descriptor, target.name
+            ):
+                _unlink_generated_file(parent_descriptor, target.name)
+                os.fsync(parent_descriptor)
+        except BaseException as error:
+            recovery_error = error
+
         if temporary_name is not None:
             try:
-                os.unlink(temporary_name, dir_fd=parent_descriptor)
+                _unlink_generated_file(
+                    parent_descriptor,
+                    temporary_name,
+                    tolerate_completed=True,
+                )
             except FileNotFoundError:
                 pass
+            except BaseException:
+                if recovery_error is None:
+                    recovery_error = RuntimeError(
+                        f"임시 파일을 정리하지 못했습니다: {temporary_name}"
+                    )
+        if (
+            backup_name is not None
+            and not backup_ready
+            and _entry_exists(parent_descriptor, backup_name)
+        ):
+            try:
+                _unlink_generated_file(
+                    parent_descriptor,
+                    backup_name,
+                    tolerate_completed=True,
+                )
+            except BaseException:
+                if recovery_error is None:
+                    recovery_error = RuntimeError(
+                        f"백업 준비 파일을 정리하지 못했습니다: {backup_name}"
+                    )
+        if recovery_error is not None:
+            raise RuntimeError(
+                "원자적 쓰기 실패 후 이전 내용을 완전히 복구하지 못했습니다: "
+                f"{target}; recovery={recovery_error}"
+            ) from recovery_error
         raise
+    finally:
+        if backup_descriptor is not None:
+            os.close(backup_descriptor)
+        os.close(parent_descriptor)
+
+
+def unlink_owned_file(
+    path: Path,
+    root: Path,
+    *,
+    label: str,
+    missing_ok: bool = False,
+) -> bool:
+    """Durably unlink one project-owned regular file.
+
+    Unlike :func:`staged_owned_file_removal`, this helper deliberately does
+    not try to undo a completed unlink. It is used only after the caller has
+    durably journaled the delete intent, so an interruption is recovered by
+    finishing the same deletion.
+    """
+    target = require_owned_path(path, root, label=label)
+    try:
+        parent_descriptor, _ = _open_owned_directory(
+            target.parent, root, label=f"{label} 폴더", create=False
+        )
+    except FileNotFoundError:
+        if missing_ok:
+            return False
+        raise ValueError(f"{label} 파일이 없습니다: {target}") from None
+    try:
+        try:
+            target_info = os.stat(
+                target.name,
+                dir_fd=parent_descriptor,
+                follow_symlinks=False,
+            )
+        except FileNotFoundError:
+            if missing_ok:
+                return False
+            raise ValueError(f"{label} 파일이 없습니다: {target}") from None
+        if stat.S_ISLNK(target_info.st_mode):
+            raise ValueError(f"{label}는 심볼릭 링크일 수 없습니다: {target}")
+        if not stat.S_ISREG(target_info.st_mode):
+            raise ValueError(f"{label}는 일반 파일이어야 합니다: {target}")
+        if target_info.st_nlink != 1:
+            raise ValueError(f"{label}는 하드 링크일 수 없습니다: {target}")
+
+        os.unlink(target.name, dir_fd=parent_descriptor)
+        os.fsync(parent_descriptor)
+        return True
     finally:
         os.close(parent_descriptor)
 
@@ -199,6 +500,7 @@ def staged_owned_file_removal(
     )
     staged_name: str | None = None
     staged_is_placeholder = False
+    recovery_descriptor: int | None = None
     try:
         try:
             target_info = os.stat(
@@ -215,62 +517,104 @@ def staged_owned_file_removal(
         if target_info.st_nlink != 1:
             raise ValueError(f"{label}는 하드 링크일 수 없습니다: {target}")
 
-        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
-        for _ in range(128):
-            candidate = f".delete-{secrets.token_hex(12)}"
-            try:
-                descriptor = os.open(
-                    candidate,
-                    flags,
-                    0o600,
-                    dir_fd=parent_descriptor,
-                )
-            except FileExistsError:
-                continue
-            os.close(descriptor)
-            staged_name = candidate
-            staged_is_placeholder = True
-            break
-        else:
-            raise RuntimeError("안전한 삭제 준비 파일 이름을 만들 수 없습니다")
+        staged_name, descriptor = _new_generated_file(
+            parent_descriptor, ".delete-"
+        )
+        os.close(descriptor)
+        staged_is_placeholder = True
 
         try:
-            os.replace(
-                target.name,
-                staged_name,
-                src_dir_fd=parent_descriptor,
-                dst_dir_fd=parent_descriptor,
+            _replace_generated_file(
+                parent_descriptor, target.name, staged_name
             )
         except BaseException:
-            os.unlink(staged_name, dir_fd=parent_descriptor)
-            staged_name = None
-            staged_is_placeholder = False
+            if (
+                not _entry_exists(parent_descriptor, target.name)
+                and _entry_exists(parent_descriptor, staged_name)
+            ):
+                staged_is_placeholder = False
+                _restore_staged_file(
+                    parent_descriptor,
+                    staged_name,
+                    target.name,
+                    None,
+                )
+                staged_name = None
+            else:
+                _unlink_generated_file(
+                    parent_descriptor,
+                    staged_name,
+                    tolerate_completed=True,
+                )
+                staged_name = None
+                staged_is_placeholder = False
             raise
         staged_is_placeholder = False
-        os.fsync(parent_descriptor)
+        try:
+            recovery_descriptor = os.open(
+                staged_name,
+                os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+                dir_fd=parent_descriptor,
+            )
+        except BaseException:
+            _restore_staged_file(
+                parent_descriptor,
+                staged_name,
+                target.name,
+                None,
+            )
+            staged_name = None
+            raise
+        try:
+            os.fsync(parent_descriptor)
+        except BaseException:
+            _restore_staged_file(
+                parent_descriptor,
+                staged_name,
+                target.name,
+                recovery_descriptor,
+            )
+            staged_name = None
+            raise
 
         try:
             yield target
         except BaseException:
-            os.replace(
+            _restore_staged_file(
+                parent_descriptor,
                 staged_name,
                 target.name,
-                src_dir_fd=parent_descriptor,
-                dst_dir_fd=parent_descriptor,
+                recovery_descriptor,
             )
             staged_name = None
-            os.fsync(parent_descriptor)
             raise
         else:
-            os.unlink(staged_name, dir_fd=parent_descriptor)
-            staged_name = None
-            os.fsync(parent_descriptor)
+            try:
+                _unlink_generated_file(parent_descriptor, staged_name)
+                os.fsync(parent_descriptor)
+            except BaseException:
+                _restore_staged_file(
+                    parent_descriptor,
+                    staged_name,
+                    target.name,
+                    recovery_descriptor,
+                )
+                staged_name = None
+                raise
+            else:
+                staged_name = None
     finally:
         if staged_name is not None and staged_is_placeholder:
             try:
-                os.unlink(staged_name, dir_fd=parent_descriptor)
+                _unlink_generated_file(
+                    parent_descriptor,
+                    staged_name,
+                    tolerate_completed=True,
+                )
             except FileNotFoundError:
                 pass
+        if recovery_descriptor is not None:
+            os.close(recovery_descriptor)
         os.close(parent_descriptor)
 
 

@@ -4,7 +4,7 @@
 
 [Development roadmap](../ROADMAP.en.md)
 
-**Status: Experiment not started**
+**Status: Preliminary measurement started**
 
 ## Purpose
 
@@ -73,9 +73,70 @@ calculate the average per task.
 
 ## Run Log
 
+### Preliminary P0: Progress Delivery
+
+On September 21, 2026, a separate read-only Luna xhigh Codex session ran one
+synthetic JSONL progress stream exactly once. This was not a real PDF sync, a
+Plus-to-Pro comparison, or a before-and-after subscription-limit measurement,
+so it is not directly comparable to S1–S6.
+
+| Metric | Observed value |
+| --- | ---: |
+| Input tokens | 93,174 |
+| Cached input tokens | 65,280 |
+| Output tokens | 2,315 |
+| Reasoning output tokens | 1,720 |
+| Command executions | 1 |
+
+Phase `1/3` reached commentary before command completion. Phases `2/3`, `3/3`,
+and completion arrived together immediately after the command ended. These
+numbers cover the whole integration turn, including reading the long skill
+instructions, and must not be interpreted as the cost of progress events
+alone. They do show that even a simple progress UX validation can carry
+substantial context and reasoning cost.
+
 | Run ID | Date | Plan | Scenario | Model and reasoning | PDFs and pages | Visual review pages | Five-hour and weekly before | Five-hour and weekly after | Duration | Result or error |
 | --- | --- | --- | --- | --- | --- | ---: | --- | --- | ---: | --- |
-| Not run | — | — | — | — | — | — | — | — | — | Experiment not started |
+| P0 | 2026-09-21 | Not recorded | Synthetic progress display | Luna xhigh | No PDFs | 0 | Not measured | Not measured | Not measured | Partially live delivery |
+
+### Preliminary P1: Live One-Page PDF Route
+
+On September 21, 2026, an isolated installation synchronized one real page
+containing equations and a figure from *Attention Is All You Need*. The primary
+session used Luna low, the library manager used Luna xhigh, and the visual
+reviewer used Sol ultra. The models and efforts were verified from each
+isolated Codex session's `turn_context`, rather than from the self-reported
+model marker in Markdown.
+
+| Session | Input tokens | Cached input | Output tokens | Reasoning output | Uncached input + output |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Primary coordinator · Luna low | 514,739 | 472,832 | 1,595 | 192 | 43,502 |
+| Library manager · Luna xhigh | 87,286 | 60,672 | 2,131 | 1,431 | 28,745 |
+| Visual reviewer · Sol ultra | 267,066 | 209,280 | 3,744 | 1,979 | 61,530 |
+
+Synchronization ran once. Page rendering and review storage also ran once
+each. One PDF and one page were stored with a `verified` review and no remaining
+queue. The source PDF's SHA-256, size, and modification time were identical
+before and after the run.
+
+`Uncached input + output` is a comparison value derived from the session logs.
+It is not subscription-limit consumption, billable token usage, or a Plus/Pro
+measurement. The primary CLI's final `tokens used` value of 43,502 also covers
+only the coordinator session and must not be treated as the complete workflow's
+subscription cost. Because the usage windows were not captured before and
+after, P1 is still not a formal S1 or S2 result.
+
+The one-document synchronization finished too quickly for a continuously
+animated JSONL bar in the parent terminal. It showed the start, synchronization
+completion, visual-review step, and final result instead. Storage completed in
+about two and a half minutes, but one model-stream reconnect delayed the parent
+session's completion to roughly 19 minutes. This shows that subagent context,
+reasoning effort, and response retries can affect perceived latency and usage
+as much as document count.
+
+| Run ID | Date | Plan | Scenario | Model and reasoning | PDFs and pages | Visual review pages | Five-hour and weekly before | Five-hour and weekly after | Duration | Result or error |
+| --- | --- | --- | --- | --- | --- | ---: | --- | --- | ---: | --- |
+| P1 | 2026-09-21 | Not recorded | Live one-page PDF sync and visual review | Primary Luna low · manager Luna xhigh · reviewer Sol ultra | 1 PDF · 1 page | 1 | Not measured | Not measured | About 19 min | Passed · one response-stream reconnect |
 
 If raw `/status` output or dashboard captures are retained, check that they do
 not contain personal account information. Store only the comparison values and
