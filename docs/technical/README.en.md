@@ -178,11 +178,57 @@ Installation and removal also passed with an empty temporary HOME on the
 current Mac. This reproduces an unconfigured user environment; it does not yet
 validate a non-developer's experience on a physically new Mac.
 
+### Uninstallation and Source Protection
+
+The public `uninstall.sh` command shows the installation path and data scope
+before asking for confirmation. By default, it moves the owned Codex registrations
+and the entire installation into a uniquely named folder in the user's Trash.
+`--keep-files` unregisters only; `--yes` skips confirmation. The internal
+`personal_registration.py uninstall` retains its registration-only behavior for
+installation and registration checks.
+
+```mermaid
+flowchart LR
+    A[Confirm removal scope] --> B[Check active jobs, source boundaries and ownership]
+    B --> C[Stage registrations inside the installation]
+    C --> D[Move installation to Trash]
+    C -->|Move fails| E[Restore registrations]
+```
+
+Preflight reads the current configuration and legacy `config.toml`, including
+disabled sources. It stops if a source overlaps the installation, registration
+paths, or Trash, or if the configuration cannot be read safely. It never follows
+links to delete their original targets. Arbitrary custom configuration files are
+not inventoried; source-boundary checks cover the current and legacy default
+configurations.
+
+The storage launcher and direct CLI hold a shared lock on the installation
+directory for the whole command. Removal holds an exclusive lock on that directory
+alongside the existing sync and conversation locks, and stops when a library job
+is active. Registration changes also use the existing user registration lock.
+These locks do not cover installation updates or direct edits by external programs.
+
+Only fixed, ownership-checked registration paths are staged, with a recovery
+journal. A failed Trash move restores registrations. If the process exits while
+staging registrations, rerunning removal recovers them before retrying. Conflicting
+recovery destinations or damaged journals stop recovery rather than overwrite
+files. Removal never recursively deletes the installation or falls back to a
+cross-volume copy-and-delete operation. Currently, the installation must be on the
+same volume as the home Trash; Finder's automatic Put Back feature is not provided.
+
+Disposable installations with temporary HOME and Trash directories verify full
+removal, cancellation, file retention, source preservation, ownership collisions,
+concurrent operations, move failures, and retry after actual process termination.
+Deleting one saved conversation with `conversation-delete` remains a separate
+operation.
+
 ### Implementation Responsibilities
 
 | Responsibility | Source files |
 | --- | --- |
 | Install personal agents, command rules, and the constrained permission profile | [`scripts/personal_registration.py`](../../scripts/personal_registration.py) |
+| Remove an installation and recover failed removal | [`uninstall.sh`](../../uninstall.sh), [`uninstall_project.py`](../../scripts/uninstall_project.py), [`test_full_uninstall.py`](../../tests/test_full_uninstall.py) |
+| Exclude installation removal from active commands | [`operation_guard.py`](../../src/research_store/operation_guard.py), [`test_operation_guard.py`](../../tests/test_operation_guard.py) |
 | Define each agent's read-only default and behavioral limits | [`research-library-manager.toml`](../../resources/agents/research-library-manager.toml), [`research-paper-converter.toml`](../../resources/agents/research-paper-converter.toml) |
 | Re-enter through the constrained storage command | [`research-store` launcher](../../resources/skills/research-library/scripts/research-store) |
 | Validate storage and source boundaries | [`config.py`](../../src/research_store/config.py), [`safety.py`](../../src/research_store/safety.py) |

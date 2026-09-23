@@ -246,6 +246,11 @@ incomplete scan as an empty successful result.
 
 This project installs only one personal skill link, two custom-agent files, one
 exact launcher rule, and one isolated permission profile outside the project.
-Run `bash ./uninstall.sh` to remove those five owned registrations before moving
-this project folder to Trash. It never writes into sources. Never include a
-configured source in a deletion command.
+Run `bash ./uninstall.sh` to confirm removal of those five owned registrations
+and move this entire installation, including generated documents and saved
+conversations, into the user's Trash. `--keep-files` removes registrations only;
+`--yes` skips the confirmation when removal was already explicitly authorized.
+Never uninstall a real installation merely to test removal: use disposable
+copies with a temporary HOME and Trash. Never include a configured source in a
+deletion command. Stop on ownership conflicts, active library operations, source
+overlap, or unsupported cross-volume moves; do not bypass these checks.

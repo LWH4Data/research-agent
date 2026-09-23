@@ -158,11 +158,51 @@ Agent 내부 저장은 허용되고, 외부 원본 파일과 프로젝트 실행
 환경을 재현한 결과이며, 실제 새 Mac에서 비개발자가 겪는 설치 UX까지 검증했다는
 뜻은 아니다.
 
+### 설치 제거와 원본 보호
+
+공개 제거 명령 `uninstall.sh`는 제거할 설치 경로와 자료 범위를 보여 주고 확인을
+받는다. 기본 동작은 소유권이 확인된 Codex 등록과 설치 폴더 전체를 사용자
+휴지통의 고유한 하위 폴더로 옮기는 것이다. `--keep-files`는 등록만 해제하고,
+`--yes`는 확인을 생략한다. 내부 `personal_registration.py uninstall`은
+설치·등록 검증용으로 기존의 등록 해제 동작을 유지한다.
+
+```mermaid
+flowchart LR
+    A[제거 범위 확인] --> B[진행 중 작업·원본 경계·등록 소유권 검사]
+    B --> C[등록을 설치 폴더 안에 임시 보관]
+    C --> D[설치 폴더를 휴지통으로 이동]
+    C -->|이동 실패| E[원래 등록 복구]
+```
+
+현재 설정과 이전 형식의 `config.toml`에서 비활성 자료원까지 검사한다. 원본
+경로가 설치 폴더·등록 경로·휴지통과 겹치거나 설정을 안전하게 읽을 수 없으면
+중단한다. 링크 대상의 원본 파일을 따라가서 삭제하지 않는다. 별도로 작성한
+사용자 지정 설정 파일들을 모두 발견하는 기능은 없으므로, 경계 검사는 기본
+설정과 이전 기본 설정에 기록된 자료원을 대상으로 한다.
+
+저장 실행기와 직접 CLI는 명령 전체에 설치 디렉터리의 공유 잠금을 유지한다.
+제거는 같은 디렉터리의 배타 잠금과 기존 동기화·대화 잠금을 함께 확보하므로
+라이브러리 작업과 겹치면 중단한다. 등록 변경에는 기존 사용자 등록 잠금도
+사용한다. 설치 업데이트나 외부 프로그램의 직접 파일 편집까지 막는 잠금은 아니다.
+
+등록은 소유권을 확인한 고정 경로만 임시 보관하고 복구 기록을 남긴다. 휴지통
+이동에 실패하면 등록을 되돌린다. 등록 이동 중 프로세스가 종료된 경우에는 같은
+제거 명령을 다시 실행해 복구한 뒤 재시도한다. 복구 경로에 다른 파일이 생겼거나
+복구 기록이 손상되면 덮어쓰지 않고 중단한다. 설치 폴더를 재귀 삭제하거나
+다른 볼륨으로 복사한 뒤 지우는 대체 동작은 없다. 현재는 홈 휴지통과 같은 볼륨의
+설치만 지원하며 Finder의 자동 원위치 복원 기능은 제공하지 않는다.
+
+임시 설치 사본과 임시 HOME·휴지통에서 전체 제거, 취소, 자료 보관, 원본 보존,
+소유권 충돌, 동시 실행, 이동 실패 복구, 실제 프로세스 종료 후 재시도를 검증한다.
+개별 대화 기록을 삭제하는 `conversation-delete`의 동작은 이 설치 제거와 별개다.
+
 ### 책임별 구현 파일
 
 | 책임 | 구현 파일 |
 | --- | --- |
 | 개인 에이전트, 명령 규칙, 제한 권한 프로필 설치 | [`scripts/personal_registration.py`](../../scripts/personal_registration.py) |
+| 설치 전체 제거와 실패 복구 | [`uninstall.sh`](../../uninstall.sh), [`uninstall_project.py`](../../scripts/uninstall_project.py), [`test_full_uninstall.py`](../../tests/test_full_uninstall.py) |
+| 작업 실행과 설치 제거의 동시 접근 제한 | [`operation_guard.py`](../../src/research_store/operation_guard.py), [`test_operation_guard.py`](../../tests/test_operation_guard.py) |
 | 에이전트의 읽기 전용 기본값과 행동 제한 | [`research-library-manager.toml`](../../resources/agents/research-library-manager.toml), [`research-paper-converter.toml`](../../resources/agents/research-paper-converter.toml) |
 | 제한된 저장 명령으로 다시 진입 | [`research-store` launcher](../../resources/skills/research-library/scripts/research-store) |
 | 저장 경로와 원본 경로의 경계 검증 | [`config.py`](../../src/research_store/config.py), [`safety.py`](../../src/research_store/safety.py) |

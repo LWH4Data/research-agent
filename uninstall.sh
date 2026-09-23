@@ -1,6 +1,22 @@
 #!/bin/sh
 set -eu
 
+case " $* " in
+    *" --help "*|*" -h "*)
+        echo '사용법: bash uninstall.sh [--keep-files] [--yes]'
+        echo '기본값: Codex 등록 해제 및 설치 폴더 전체를 휴지통으로 이동'
+        echo '--keep-files: Codex 등록만 해제하고 설치 폴더와 자료 보관'
+        echo '--yes: 제거 확인 생략'
+        exit 0
+        ;;
+esac
+for argument in "$@"; do
+    case "$argument" in
+        --keep-files|--yes) ;;
+        *) echo "알 수 없는 옵션: $argument" >&2; exit 2 ;;
+    esac
+done
+[ ! -L "$0" ] || { echo '오류: 실제 설치 폴더의 uninstall.sh를 실행하세요.' >&2; exit 1; }
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 : "${HOME:?사용자 홈 경로를 확인할 수 없습니다}"
 
@@ -17,11 +33,5 @@ else
     exit 1
 fi
 
-"$PYTHON" -I -B "$ROOT/scripts/personal_registration.py" \
-    uninstall --root "$ROOT" --home "$HOME"
-
-echo
-echo "Research Library 개인 등록을 제거했습니다."
-echo "원본 연구 파일과 research-agent 안의 저장 자료는 그대로 남아 있습니다."
-echo "완전히 제거하려면 이제 이 폴더만 휴지통으로 옮기세요:"
-echo "$ROOT"
+exec "$PYTHON" -I -B "$ROOT/scripts/uninstall_project.py" \
+    --root "$ROOT" --home "$HOME" "$@"

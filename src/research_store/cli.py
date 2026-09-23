@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import ExitStack
 from dataclasses import asdict
 import json
 from pathlib import Path
@@ -14,9 +15,11 @@ from .conversations import (
     update_conversation,
 )
 from .config import load_config
+from .operation_guard import operation_guard
 from .picker import choose_source
 from .progress import progress_renderer
 from .search import search_library
+from .safety import find_project_root
 from .sources import (
     add_sources,
     default_config_path,
@@ -178,8 +181,10 @@ def _config_path(value: Path | None) -> Path:
 
 def main() -> None:
     args = _parser().parse_args()
+    guards = ExitStack()
     try:
         config_path = _config_path(args.config)
+        guards.enter_context(operation_guard(find_project_root(config_path.parent)))
         if args.command == "init":
             initialized = initialize_config(config_path)
             config = load_config(initialized)
@@ -324,6 +329,8 @@ def main() -> None:
     except (OSError, RuntimeError, ValueError) as error:
         print(f"오류: {error}", file=sys.stderr)
         raise SystemExit(1) from error
+    finally:
+        guards.close()
 
 
 if __name__ == "__main__":

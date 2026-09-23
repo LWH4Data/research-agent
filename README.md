@@ -413,18 +413,26 @@ git -C "$HOME/research-agent" pull --ff-only && bash "$HOME/research-agent/insta
 
 ## 제거
 
-먼저 다음 명령을 실행합니다.
+진행 중인 Research Agent 작업을 끝낸 뒤 다음 명령을 실행합니다.
 
 ```sh
 bash "$HOME/research-agent/uninstall.sh"
 ```
 
-이 명령은 Research Agent가 Codex에 등록한 항목만 제거합니다. 연결했던 원본
-폴더와 PDF는 건드리지 않습니다.
+화면에 표시된 설치 폴더를 확인하고 `y`를 입력하면 Codex 등록을 해제하고,
+**그 설치 폴더 전체를 휴지통으로 옮깁니다.** 변환한 문서와 저장한 대화도 함께
+옮겨집니다. 연결했던 원본 폴더와 PDF는 건드리지 않습니다.
 
-변환된 문서와 저장한 대화까지 모두 지우고 싶다면 제거 명령이 끝난 뒤
-`~/research-agent` 폴더만 휴지통으로 옮기세요. 원본 PDF 폴더는 삭제하지
-마세요.
+설치 폴더와 저장 자료를 남기고 Codex 연결만 해제하려면 다음 명령을 사용합니다.
+
+```sh
+bash "$HOME/research-agent/uninstall.sh" --keep-files
+```
+
+다른 위치에 설치했다면 위 경로를 실제 설치 위치로 바꿉니다. 다른 설치본이
+Codex에 연결되어 있거나 휴지통으로 옮길 수 없는 경우에는 이유를 표시하고
+중단합니다. 외장 디스크처럼 사용자 홈과 다른 볼륨에 있는 설치본의 자동 제거는
+아직 지원하지 않습니다. 제거 후에는 Codex를 완전히 종료했다가 다시 여세요.
 
 ## 더 자세히 알아보기
 

@@ -409,7 +409,8 @@ def install(root_value: Path, home_value: Path) -> None:
     print(f"저장 명령 샌드박스 등록: {sandbox_config_target}")
 
 
-def uninstall(root_value: Path, home_value: Path) -> None:
+def owned_uninstall_targets(root_value: Path, home_value: Path) -> list[Path]:
+    """Validate the complete removal scope before returning any owned targets."""
     root = _canonical_project_root(root_value)
     home = _canonical_home(home_value)
     skill_source = (root / SKILL_SOURCE).resolve(strict=True)
@@ -431,7 +432,7 @@ def uninstall(root_value: Path, home_value: Path) -> None:
         for path in agent_targets
     ]
     rule_owned = _owned_registration_file(rule_target, root, "명령 허용 규칙")
-    sandbox_config_owned = _owned_registration_file(
+    _owned_registration_file(
         sandbox_config_target, root, "저장 명령 샌드박스 설정"
     )
     sandbox_directory_exists = _lexists(sandbox_directory)
@@ -448,19 +449,24 @@ def uninstall(root_value: Path, home_value: Path) -> None:
             sandbox_directory, "저장 명령 샌드박스"
         )
 
-    for path, owned in owned_agents:
-        if owned:
-            path.unlink()
-            print(f"개인 에이전트 등록 제거: {path}")
+    targets = [path for path, owned in owned_agents if owned]
     if skill_owned:
-        skill_target.unlink()
-        print(f"개인 스킬 등록 제거: {skill_target}")
+        targets.append(skill_target)
     if rule_owned:
-        rule_target.unlink()
-        print(f"제한 명령 규칙 제거: {rule_target}")
+        targets.append(rule_target)
     if sandbox_owner_owned:
-        shutil.rmtree(sandbox_directory)
-        print(f"저장 명령 샌드박스 제거: {sandbox_directory}")
+        targets.append(sandbox_directory)
+    return targets
+
+
+def uninstall(root_value: Path, home_value: Path) -> None:
+    # Internal registration-only API. The public uninstall.sh also trashes files.
+    for path in owned_uninstall_targets(root_value, home_value):
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
+        print(f"개인 등록 제거: {path}")
 
 
 def _parser() -> argparse.ArgumentParser:
