@@ -30,12 +30,14 @@ jobs:
           else
             python scripts/check_release_version.py
           fi
-      - name: Install test dependencies
-        run: python -m pip install .
+      - name: Prepare the project test environment
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install .
       - name: Run unit tests
         env:
           PYTHONDONTWRITEBYTECODE: '1'
-        run: python -B -m unittest discover -s tests -v
+        run: .venv/bin/python -B -m unittest discover -s tests -v
       - name: Assemble runtime bundle from the explicit file list
         id: bundle
         shell: bash
@@ -108,7 +110,7 @@ jobs:
         env:
           RESEARCH_AGENT_RELEASE_ARCHIVE: ${{ steps.bundle.outputs.archive }}
           PYTHONDONTWRITEBYTECODE: '1'
-        run: python -B -m unittest discover -s tests -p 'test_release_bundle.py' -v
+        run: .venv/bin/python -B -m unittest discover -s tests -p 'test_release_bundle.py' -v
       - name: Keep the checked release files
         uses: actions/upload-artifact@v7.0.1
         with:
