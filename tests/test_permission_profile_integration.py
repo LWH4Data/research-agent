@@ -29,6 +29,7 @@ class PermissionProfileIntegrationTests(unittest.TestCase):
         )
         source = source_directory / "original.txt"
         allowed = ROOT / ".research-store/.permission-profile-probe.txt"
+        review_allowed = ROOT / ".research-store/.review-profile-probe.txt"
         code_probe = ROOT / ".permission-profile-root-probe.txt"
         source.write_text("original\n", encoding="utf-8")
         try:
@@ -108,12 +109,37 @@ class PermissionProfileIntegrationTests(unittest.TestCase):
                     text=True,
                 )
 
+                review_permitted = subprocess.run(
+                    [
+                        codex, "sandbox", "-P", "research-review-worker", "-C",
+                        str(sandbox_directory), "--", "/bin/sh", "-c",
+                        "printf allowed > " + shlex.quote(str(review_allowed)),
+                    ],
+                    env=environment,
+                    capture_output=True,
+                    text=True,
+                )
+                review_denied = subprocess.run(
+                    [
+                        codex, "sandbox", "-P", "research-review-worker", "-C",
+                        str(sandbox_directory), "--", "/bin/sh", "-c",
+                        "printf changed > " + shlex.quote(str(source)),
+                    ],
+                    env=environment,
+                    capture_output=True,
+                    text=True,
+                )
+
                 self.assertEqual(permitted.returncode, 0, permitted.stderr)
                 self.assertEqual(allowed.read_text(encoding="utf-8"), "allowed")
                 self.assertNotEqual(denied.returncode, 0)
                 self.assertEqual(source.read_text(encoding="utf-8"), "original\n")
                 self.assertNotEqual(code_denied.returncode, 0)
                 self.assertFalse(code_probe.exists())
+                self.assertEqual(review_permitted.returncode, 0, review_permitted.stderr)
+                self.assertEqual(review_allowed.read_text(encoding="utf-8"), "allowed")
+                self.assertNotEqual(review_denied.returncode, 0)
+                self.assertEqual(source.read_text(encoding="utf-8"), "original\n")
                 removed = subprocess.run(
                     [
                         sys.executable,
@@ -137,6 +163,8 @@ class PermissionProfileIntegrationTests(unittest.TestCase):
         finally:
             if allowed.exists():
                 allowed.unlink()
+            if review_allowed.exists():
+                review_allowed.unlink()
             if code_probe.exists():
                 code_probe.unlink()
             shutil.rmtree(source_directory)

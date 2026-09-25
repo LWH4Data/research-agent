@@ -1,0 +1,86 @@
+#!/bin/sh
+set -eu
+umask 077
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../../../.." && pwd -P)
+MARKER="$ROOT/.research-agent-root"
+SANDBOX_HOME="${HOME:?사용자 홈 경로를 확인할 수 없습니다}/.codex/research-library-sandbox"
+SANDBOX_CONFIG="$SANDBOX_HOME/config.toml"
+SANDBOX_OWNER="$SANDBOX_HOME/.research-agent-owner"
+
+# This is the only public entry point. The private worker subcommand is started
+# by the controller with inherited lock descriptors, never by a model task.
+case "${1-}" in
+    start|status) ;;
+    *) echo '오류: research-review start 또는 status를 사용하세요.' >&2; exit 2 ;;
+esac
+
+if [ -L "$ROOT/.venv" ] || [ ! -x "$ROOT/.venv/bin/python" ]; then
+    echo '오류: Research Agent 설치를 확인할 수 없습니다.' >&2
+    exit 1
+fi
+
+if [ -L "$MARKER" ] || [ ! -f "$MARKER" ] || \
+   [ "$(cat "$MARKER")" != "research-agent-owned-root-v1" ]; then
+    echo '오류: Research Agent 설치 표시를 확인할 수 없습니다.' >&2
+    exit 1
+fi
+if [ -L "$SANDBOX_HOME" ] || [ ! -d "$SANDBOX_HOME" ] || \
+   [ "$(CDPATH= cd -- "$SANDBOX_HOME" 2>/dev/null && pwd -P)" != "$SANDBOX_HOME" ]; then
+    echo '오류: Research Agent 전용 권한 설정 폴더가 안전하지 않습니다.' >&2
+    exit 1
+fi
+for owned_file in "$SANDBOX_CONFIG" "$SANDBOX_OWNER"; do
+    if [ -L "$owned_file" ] || [ ! -f "$owned_file" ]; then
+        echo '오류: Research Agent 전용 권한 설정을 확인할 수 없습니다.' >&2
+        exit 1
+    fi
+    if stat -f '%l' "$owned_file" >/dev/null 2>&1; then
+        links=$(stat -f '%l' "$owned_file")
+    else
+        links=$(stat -c '%h' "$owned_file")
+    fi
+    if [ "$links" != "1" ] || \
+       [ "$(sed -n '1p' "$owned_file")" != '# research-agent-registration-v1' ] || \
+       [ "$(sed -n '2p' "$owned_file")" != "# research-agent-root: $ROOT" ]; then
+        echo '오류: Research Agent 전용 권한 설정의 소유권이 다릅니다.' >&2
+        exit 1
+    fi
+done
+
+CODEX=$(command -v codex 2>/dev/null || true)
+if [ -z "$CODEX" ] || [ ! -x "$CODEX" ]; then
+    echo '오류: Codex 실행 파일을 찾을 수 없습니다.' >&2
+    exit 1
+fi
+
+# Enter the separate worker profile before running any controller Python.
+# Original PDF locations remain read-only even if the parent task can edit them.
+if [ "${1-}" = "start" ]; then
+    # Record the new job before starting its watcher. A previous completed job
+    # must not make the new watcher exit during a slow controller startup.
+    if env CODEX_HOME="$SANDBOX_HOME" "$CODEX" sandbox \
+        -P research-review-worker -C "$SANDBOX_HOME" -- \
+        "$ROOT/.venv/bin/python" -I -S -B \
+        "$ROOT/scripts/background_review.py" --root "$ROOT" "$@"; then
+        :
+    else
+        exit $?
+    fi
+
+    # The supervisor checks the detached watcher's readiness and records any
+    # startup error. Its own Seatbelt profile remains store-only for writes.
+    if "$ROOT/.venv/bin/python" -I -S -B \
+       "$ROOT/scripts/background_review.py" --root "$ROOT" --launch-notifier; then
+        :
+    else
+        echo '안내: macOS 알림 상태를 기록할 수 없습니다. 시각 검토는 계속됩니다.' >&2
+    fi
+    exit 0
+fi
+
+exec env CODEX_HOME="$SANDBOX_HOME" "$CODEX" sandbox \
+    -P research-review-worker -C "$SANDBOX_HOME" -- \
+    "$ROOT/.venv/bin/python" -I -S -B \
+    "$ROOT/scripts/background_review.py" --root "$ROOT" "$@"

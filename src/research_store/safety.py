@@ -16,6 +16,16 @@ def is_within(path: Path, parent: Path) -> bool:
     return path == parent or path.is_relative_to(parent)
 
 
+def reject_codex_runtime_source(path: Path) -> None:
+    """Keep Codex's own runtime files outside every read-only PDF source."""
+    codex_runtime = (Path.home() / ".codex").resolve(strict=False)
+    if is_within(path, codex_runtime) or is_within(codex_runtime, path):
+        raise ValueError(
+            "Codex 내부 폴더와 겹치는 위치는 원본 자료원으로 등록할 수 없습니다: "
+            f"source={path}, codex={codex_runtime}"
+        )
+
+
 def require_project_root(path: Path) -> Path:
     root = path.expanduser().resolve()
     marker = root / PROJECT_MARKER

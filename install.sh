@@ -263,30 +263,17 @@ echo "research-agent 설치가 완료되었습니다."
 echo "원본에는 파일을 만들거나 수정하지 않습니다."
 echo "개인 스킬과 전용 에이전트 등록을 완료했습니다."
 
-if [ "$FIRST_SETUP" = "1" ] && [ -t 0 ]; then
-    while :; do
-        printf '\nPDF를 찾아볼 폴더를 선택하시겠습니까? [Y/n] '
-        IFS= read -r answer
-        case "$answer" in
-            n|N|no|NO) break ;;
-        esac
-        if ! "$ROOT/research-store" source-add; then
-            echo "폴더를 추가하지 못했습니다. 나중에 add-source.sh를 다시 실행할 수 있습니다." >&2
-            break
-        fi
-        printf '\n다른 폴더도 추가하시겠습니까? [y/N] '
-        IFS= read -r answer
-        case "$answer" in
-            y|Y|yes|YES) ;;
-            *) break ;;
-        esac
-    done
+if [ "$FIRST_SETUP" = "1" ]; then
+    if ! "$VENV/bin/python" -I -B "$ROOT/scripts/install_onboarding.py" --root "$ROOT"; then
+        echo "폴더 연결을 마치지 못했지만 설치는 완료되었습니다."
+        echo "나중에 아래의 위치 추가 명령으로 폴더를 연결할 수 있습니다."
+    fi
 fi
 
 echo
 "$ROOT/research-store" source-list --plain
 echo
 echo "열려 있던 Codex 앱·CLI·IDE를 완전히 종료한 뒤 다시 여세요."
-echo "그다음 @Research Library를 선택하세요."
+echo "그다음 @ 메뉴에서 Research Agent를 선택하세요."
 echo "CLI·IDE에서는 /skills 또는 \$research-library를 사용하세요."
 echo "위치 추가: bash $ROOT/add-source.sh"

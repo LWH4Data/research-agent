@@ -5,7 +5,12 @@ from pathlib import Path
 import re
 import tomllib
 
-from .safety import find_project_root, is_within, require_owned_path
+from .safety import (
+    find_project_root,
+    is_within,
+    reject_codex_runtime_source,
+    require_owned_path,
+)
 
 
 SOURCE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
@@ -74,6 +79,7 @@ def _load_source(
         raise ValueError(f"심볼릭 링크는 원본 경로로 등록할 수 없습니다: {source_path}")
     exists = source_path.exists()
     resolved = source_path.resolve(strict=exists)
+    reject_codex_runtime_source(resolved)
     if is_within(resolved, root) or is_within(root, resolved):
         raise ValueError(
             "원본 경로와 research-agent 프로젝트는 서로 포함될 수 없습니다: "

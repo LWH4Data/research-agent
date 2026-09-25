@@ -2,7 +2,7 @@
 
 [한국어](./safety-routing-validation.md) | [English](./safety-routing-validation.en.md)
 
-Validation date: 2026-09-22
+Validation dates: 2026-09-22; background-review follow-up: 2026-09-24
 
 This record captures the live validation performed for storage recovery,
 permissions, prompt injection, and model routing issues found before prototype
@@ -40,13 +40,31 @@ release.
   not change.
 - The live Codex sequence completed as **primary Codex → Luna manager → primary
   Codex → Sol converter → primary Codex → Luna manager**. A Luna manager cannot
-  invoke Sol as a nested agent in this custom-agent environment, so the primary
-  session now coordinates both agents directly.
+  invoke Sol as a nested agent in this custom-agent environment. This was the
+  direct-routing experiment before background review.
 - A separate Luna xhigh Codex session ran the JSONL progress stream exactly
   once. Phase `1/3` reached commentary before command completion; the more
   closely spaced `2/3`, `3/3`, and completion events arrived together just
   after that same command finished. Instructions now prohibit replaying work to
   observe progress or fabricating live milestones for a fast command.
+
+## 2026-09-24 Background-Review Follow-Up
+
+- Within the constrained `research-review-worker` profile, Sol high returned
+  a schema-conforming review for one synthetic image. This does not establish
+  equation or table accuracy on real research papers.
+- Fake-model integration tests covered detached start, document-scope merging,
+  status, retry after a partially saved batch, temporary rendered-image
+  cleanup, and preservation of unrelated folders.
+- On macOS, starting a second `codex sandbox` inside the reviewer profile
+  failed with `sandbox_apply: Operation not permitted`. The reviewer now enters
+  one profile and invokes the project-owned store command inside it. Status on
+  the installed copy succeeded; its existing 33 pending pages were preserved
+  without starting a review.
+- The full automated suite passed 292 tests with 4 skips. A live permission
+  integration test also denied source writes. Fresh-task loading of the new
+  execution rule, visual accuracy on real papers, and subscription usage at
+  scale remain to be checked separately.
 
 ## Reproduce the Automated Checks
 
@@ -73,7 +91,11 @@ store copy.
 Subagents can inherit the parent turn's active permission mode and have live
 overrides such as `/permissions` or `--yolo` reapplied. The `read-only` default
 in an agent TOML is therefore not an enforcement boundary under a Full access
-parent. The parent session that invokes Research Library must be read-only. See
+parent. The recorded permission results cover the constrained storage command
+and workflows with a read-only parent. The current usage policy allows Ask for
+approval and Approve for me and prohibits Full access; a read-only parent is an
+optional stronger restriction. This experiment did not validate all effective
+parent and child permissions or approval exceptions in both approval modes. See
 the official
 [Codex subagent documentation](https://learn.chatgpt.com/docs/agent-configuration/subagents)
 for this behavior.

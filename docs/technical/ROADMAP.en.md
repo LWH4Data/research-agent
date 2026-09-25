@@ -12,32 +12,35 @@ made; this roadmap contains only status, limitations, and completion criteria.
 
 ```mermaid
 flowchart LR
-    M1[1. Source protection and permissions<br/>Validated with read-only parent] --> M2[2. PDF conversion reliability<br/>Under validation]
+    M1[1. Source protection and permissions<br/>Storage boundary validated; mode checks pending] --> M2[2. PDF conversion reliability<br/>Under validation]
     M2 --> M3[3. Subscription usage and efficiency<br/>Experiment not started]
-    M3 --> M4[4. Retrieval quality<br/>Review planned]
+    M3 --> M4[4. Retrieval quality<br/>Starvation fix and development evaluation complete]
     M4 --> M5[5. Conversation storage and management<br/>Implementation validated]
     M5 --> M6[6. Installation, removal, and user docs<br/>Review planned]
 ```
 
 | Area | Current state | Next development item |
 | --- | --- | --- |
-| Source protection and permissions | Validated with a read-only parent | Maintain permission regression tests |
+| Source protection and permissions | Constrained storage and read-only-parent workflow validated | Verify effective parent and child permissions by approval mode |
 | PDF conversion and visual review | Under validation | Establish accuracy criteria with representative PDFs |
 | Subscription usage and efficiency | Preliminary measurement started | Measure identical workloads on Plus and Pro 5x |
-| Retrieval | Implemented; design review pending | Validate retrieval quality and evidence labels |
+| Retrieval | Scope, diversity, continuation, and fixed development evaluation implemented | Expand validation with real research questions |
 | Conversation storage and management | Implemented and technically validated | Validate natural-language UX and retrieval usefulness |
 | Installation and removal | Validated with an empty temporary HOME | Validate the non-developer experience on a physically new Mac |
 | User documentation | File structure only | Write the real usage flow and FAQ |
 
 ## Milestone 1. Source Protection and Permission Management
 
-**Status: Validated with a read-only parent**
+**Status: Constrained storage and read-only-parent workflow validated; approval-mode checks pending**
 
 ### Completed Outcomes
 
-- Research Agent custom agents declare read-only defaults. The parent session
-  must also be read-only because its active mode and live overrides take
-  precedence.
+- Research Agent custom agents declare read-only defaults, and installation
+  sets `approval_policy = "never"`. Parent runtime settings can take precedence,
+  so child defaults and launcher restrictions are documented separately.
+- The usage policy allows Ask for approval and Approve for me and prohibits
+  Full access. A read-only parent is an optional stronger restriction, not
+  evidence that every approval mode has been validated.
 - The storage command can write only to `knowledge/` and `.research-store/`.
 - A source path and the Research Agent store cannot contain one another.
 - Writes through external paths, symbolic links, and hard links are rejected.
@@ -49,6 +52,20 @@ flowchart LR
   permission profile.
 - A Full access parent can have that access reapplied to its subagent, so
   Research Agent does not guarantee source protection in that mode.
+
+### Next Checks and Completion Criteria
+
+- Record effective parent and child permissions under Ask for approval and
+  Approve for me separately.
+- Use temporary fixtures to distinguish direct child writes from launcher
+  writes, confirming internal storage access and denied source writes. Cover
+  sources inside and outside the parent workspace and distinguish approval
+  exceptions.
+- If effective permissions differ from expectations, adjust the implementation
+  or supported conditions. Do not extend guarantees to untested modes.
+- Confirm that source registration, listing, and disconnection agree with the
+  delegation rules, and that registration and disconnection change only internal
+  configuration while preserving originals and existing Markdown.
 
 ### Maintenance Conditions
 
@@ -72,7 +89,8 @@ flowchart LR
 - Candidate selection for possible tables, equations, figures, and extraction
   failures
 - 220 DPI rendering for selected pages
-- Sol ultra visual review with explicit uncertainty states
+- Sol high visual review with explicit uncertainty states
+- Separate visual-review jobs after text storage, document scoping, and page-level resume
 - Rejection of stale review results when the PDF hash changes
 - A `document_operations` journal for PDF synchronization and page-review writes
 - `sync.lock` serialization between synchronization runs and a project write
@@ -92,9 +110,11 @@ flowchart LR
   figure meaning.
 - Rule-based page selection can miss an important page.
 - `verified` records completion of AI review rather than human certification.
-- A live Codex run completed primary → Luna → primary → Sol → primary → Luna.
-  The primary session coordinates because Luna cannot invoke Sol as a nested
-  agent in its custom-agent environment.
+- An earlier direct-routing experiment completed primary → Luna → primary →
+  Sol → primary → Luna. The current default starts an independent reviewer from
+  the primary session because Luna could not invoke Sol as a nested agent.
+- Detached execution and resume have been tested, while Sol high accuracy on
+  real papers through this new path and Plus/Pro limit impact remain under review.
 - Forced-exit recovery has been validated with injected child-process
   `os._exit`; a physical Mac power loss or storage-device failure has not been
   tested.
@@ -106,7 +126,7 @@ flowchart LR
 2. Have a person label the pages that require visual review to create a
    comparison baseline.
 3. Measure whether the current selection rules miss important pages.
-4. Compare base extraction and Sol ultra review results with the original pages.
+4. Compare base extraction and Sol high review results with the original pages.
 5. Check whether 220 DPI is insufficient for small equations or dense tables.
 6. Use the results to decide whether OCR, better selection rules, or a parser
    replacement is necessary.
@@ -172,3 +192,20 @@ files is not itself a milestone.
 - Describe an approximate usage range per PDF and per visually reviewed page.
 - Decide whether low remaining allowance should complete only base extraction or
   defer visual review in smaller batches.
+
+
+## Milestone 4. Retrieval Quality and Ongoing Evaluation
+
+**Status: Starvation regression fixes and fixed development evaluation implemented**
+
+- Implemented PDF/conversation scopes, per-document candidate retention and
+  diversity, passage grouping, and version-checked continuation while preserving
+  original-path checks, recovery, and locking.
+- Use the [synthetic dataset and runner](./experiments/search-evaluation.en.md) to
+  compare identical queries, evidence labels, and result budgets.
+- Next: a separate validation set from real research, Codex query selection, and
+  large-library scan and lock latency. Development scores are not a general
+  search-quality guarantee.
+- Distinguish matching evidence crowded out of results from semantically related
+  evidence with different wording. Evaluate hybrid keyword/vector retrieval when
+  the latter recurs. Vectors, FTS5, and LangChain are not currently introduced.

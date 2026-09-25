@@ -16,6 +16,12 @@ The primary metric is the **change in subscription usage before and after a
 run**, not raw token count. Record task-level token counts when Codex exposes
 them, but do not infer unreported tokens from a usage percentage.
 
+The user reports that reviewing about 240 pages with Sol high on Pro 5x moved
+the displayed usage by about 3%. The usage window, page composition,
+before-and-after captures, and possible concurrent work were not recorded.
+Treat this as an **informal observation**, not a measured Plus result or a
+per-page raw-token estimate.
+
 ## Current Plan Baseline
 
 As of September 18, 2026, the official estimates for local messages per

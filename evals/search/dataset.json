@@ -1,0 +1,489 @@
+{
+  "version": "search-v1",
+  "description": "Synthetic PDF and conversation fixtures; fixed lexical query expansion, no model calls.",
+  "pdfs": [
+    {
+      "id": "optics",
+      "filename": "a-optics.pdf",
+      "pages": [
+        [
+          "Laser alignment checklist item 01.",
+          "Laser alignment checklist item 02.",
+          "Laser alignment checklist item 03.",
+          "Laser alignment checklist item 04.",
+          "Laser alignment checklist item 05.",
+          "Laser alignment checklist item 06.",
+          "Laser alignment checklist item 07.",
+          "Laser alignment checklist item 08.",
+          "Laser alignment checklist item 09.",
+          "Laser alignment checklist item 10.",
+          "Laser alignment checklist item 11.",
+          "Laser alignment checklist item 12.",
+          "Laser alignment checklist item 13.",
+          "Laser alignment checklist item 14.",
+          "Laser alignment checklist item 15.",
+          "Laser alignment checklist item 16.",
+          "Laser alignment checklist item 17.",
+          "Laser alignment checklist item 18.",
+          "Laser alignment checklist item 19.",
+          "Laser alignment checklist item 20.",
+          "Laser alignment checklist item 21.",
+          "Laser alignment checklist item 22.",
+          "Laser alignment checklist item 23.",
+          "Laser alignment checklist item 24.",
+          "Laser alignment checklist item 25.",
+          "Laser alignment checklist item 26.",
+          "Laser alignment checklist item 27.",
+          "Laser alignment checklist item 28.",
+          "Laser alignment checklist item 29.",
+          "Laser alignment checklist item 30.",
+          "Laser alignment checklist item 31.",
+          "Laser alignment checklist item 32.",
+          "Laser alignment checklist item 33.",
+          "Laser alignment checklist item 34.",
+          "Laser alignment checklist item 35.",
+          "Laser alignment checklist item 36.",
+          "Laser alignment checklist item 37.",
+          "Laser alignment checklist item 38.",
+          "Laser alignment checklist item 39.",
+          "Laser alignment checklist item 40.",
+          "Laser alignment checklist item 41.",
+          "Laser alignment checklist item 42.",
+          "Laser alignment checklist item 43.",
+          "Laser alignment checklist item 44.",
+          "Laser alignment checklist item 45.",
+          "Laser alignment checklist item 46.",
+          "Laser alignment checklist item 47.",
+          "Laser alignment checklist item 48.",
+          "Laser alignment checklist item 49.",
+          "Laser alignment checklist item 50.",
+          "Laser alignment checklist item 51.",
+          "Laser alignment checklist item 52.",
+          "Laser alignment checklist item 53.",
+          "Laser alignment checklist item 54.",
+          "Laser alignment checklist item 55.",
+          "Laser alignment checklist item 56.",
+          "Laser alignment checklist item 57.",
+          "Laser alignment checklist item 58.",
+          "Laser alignment checklist item 59.",
+          "Laser alignment checklist item 60."
+        ],
+        [
+          "Thermal drift changes the laser wavelength.",
+          "A temperature-controlled mount reduces thermal drift.",
+          "Coupling efficiency measures transferred optical power."
+        ],
+        [
+          "A DBR uses alternating refractive-index layers.",
+          "Reflectivity depends on the DBR layer design."
+        ]
+      ]
+    },
+    {
+      "id": "ai",
+      "filename": "b-ai.pdf",
+      "pages": [
+        [
+          "Self-attention relates positions within a sequence.",
+          "Transformers process token representations with attention."
+        ],
+        [
+          "Normalization improves training stability.",
+          "Positional encoding represents token order."
+        ]
+      ]
+    },
+    {
+      "id": "systems",
+      "filename": "c-systems.pdf",
+      "pages": [
+        [
+          "A Docker container packages an application and its dependencies.",
+          "A volume persists data after a container is removed."
+        ],
+        [
+          "A read-only mount prevents writes to the mounted files.",
+          "Checksums help detect file content changes."
+        ]
+      ]
+    }
+  ],
+  "conversations": [
+    {
+      "id": "drift",
+      "title": "온도에 따른 파장 변화",
+      "summary": "laser thermal drift: 온도가 오를 때 파장이 이동했다. 온도를 고정하고 다시 측정하기로 했다."
+    },
+    {
+      "id": "dbr",
+      "title": "DBR 비교 실험 계획",
+      "summary": "DBR 실험에서는 적층 수를 바꾸고 나머지 조건은 유지하기로 했다."
+    },
+    {
+      "id": "attention",
+      "title": "어텐션 스터디",
+      "summary": "self-attention은 문장 안에서 어떤 단어를 참고할지 정하는 과정으로 정리했다."
+    },
+    {
+      "id": "docker",
+      "title": "실험 환경 보관",
+      "summary": "Docker volume에 결과를 보관하고 container를 다시 만들어도 남는지 확인하기로 했다."
+    },
+    {
+      "id": "coupling",
+      "title": "결합 효율 측정",
+      "summary": "coupling efficiency 측정 전에 입력 광파워를 기록하기로 했다."
+    },
+    {
+      "id": "normalization",
+      "title": "측정값 정규화",
+      "summary": "normalization은 이번 실험에서는 최대 입력값으로 나누는 것으로 정했다."
+    }
+  ],
+  "queries": [
+    {
+      "id": "q01",
+      "category": "exact",
+      "question": "laser",
+      "terms": [
+        "laser"
+      ],
+      "scope": "all",
+      "gold": [
+        {
+          "document": "optics",
+          "evidence_contains": "Thermal drift changes"
+        },
+        {
+          "document": "drift",
+          "evidence_contains": "온도를 고정"
+        }
+      ]
+    },
+    {
+      "id": "q02",
+      "category": "exact",
+      "question": "DBR",
+      "terms": [
+        "DBR"
+      ],
+      "scope": "all",
+      "gold": [
+        {
+          "document": "optics",
+          "evidence_contains": "alternating refractive-index"
+        },
+        {
+          "document": "dbr",
+          "evidence_contains": "적층 수"
+        }
+      ]
+    },
+    {
+      "id": "q03",
+      "category": "exact",
+      "question": "self-attention",
+      "terms": [
+        "self-attention"
+      ],
+      "scope": "all",
+      "gold": [
+        {
+          "document": "ai",
+          "evidence_contains": "relates positions"
+        },
+        {
+          "document": "attention",
+          "evidence_contains": "어떤 단어"
+        }
+      ]
+    },
+    {
+      "id": "q04",
+      "category": "exact",
+      "question": "Docker",
+      "terms": [
+        "Docker"
+      ],
+      "scope": "all",
+      "gold": [
+        {
+          "document": "systems",
+          "evidence_contains": "packages an application"
+        },
+        {
+          "document": "docker",
+          "evidence_contains": "결과를 보관"
+        }
+      ]
+    },
+    {
+      "id": "q05",
+      "category": "bilingual",
+      "question": "온도 때문에 파장이 바뀌는 자료",
+      "terms": [
+        "열 드리프트",
+        "thermal drift"
+      ],
+      "scope": "all",
+      "gold": [
+        {
+          "document": "optics",
+          "evidence_contains": "Thermal drift changes"
+        },
+        {
+          "document": "drift",
+          "evidence_contains": "온도를 고정"
+        }
+      ]
+    },
+    {
+      "id": "q06",
+      "category": "bilingual",
+      "question": "결합 효율 설명",
+      "terms": [
+        "결합 효율",
+        "coupling efficiency"
+      ],
+      "scope": "all",
+      "gold": [
+        {
+          "document": "optics",
+          "evidence_contains": "transferred optical power"
+        },
+        {
+          "document": "coupling",
+          "evidence_contains": "입력 광파워"
+        }
+      ]
+    },
+    {
+      "id": "q07",
+      "category": "bilingual",
+      "question": "단어 순서를 표현하는 방법",
+      "terms": [
+        "위치 인코딩",
+        "positional encoding"
+      ],
+      "scope": "pdf",
+      "gold": [
+        {
+          "document": "ai",
+          "evidence_contains": "represents token order"
+        }
+      ]
+    },
+    {
+      "id": "q08",
+      "category": "bilingual",
+      "question": "읽기 전용 마운트",
+      "terms": [
+        "읽기 전용",
+        "read-only mount"
+      ],
+      "scope": "pdf",
+      "gold": [
+        {
+          "document": "systems",
+          "evidence_contains": "prevents writes"
+        }
+      ]
+    },
+    {
+      "id": "q09",
+      "category": "memory",
+      "question": "내가 온도를 어떻게 하기로 했지",
+      "terms": [
+        "laser",
+        "thermal drift",
+        "온도"
+      ],
+      "scope": "conversation",
+      "gold": [
+        {
+          "document": "drift",
+          "evidence_contains": "온도를 고정"
+        }
+      ]
+    },
+    {
+      "id": "q10",
+      "category": "memory",
+      "question": "DBR 비교에서 내가 바꾸기로 한 것",
+      "terms": [
+        "DBR"
+      ],
+      "scope": "conversation",
+      "gold": [
+        {
+          "document": "dbr",
+          "evidence_contains": "적층 수"
+        }
+      ]
+    },
+    {
+      "id": "q11",
+      "category": "memory",
+      "question": "내가 정리한 어텐션 설명",
+      "terms": [
+        "어텐션",
+        "self-attention"
+      ],
+      "scope": "conversation",
+      "gold": [
+        {
+          "document": "attention",
+          "evidence_contains": "어떤 단어"
+        }
+      ]
+    },
+    {
+      "id": "q12",
+      "category": "memory",
+      "question": "측정 전에 내가 기록하기로 한 것",
+      "terms": [
+        "coupling efficiency",
+        "입력 광파워"
+      ],
+      "scope": "conversation",
+      "gold": [
+        {
+          "document": "coupling",
+          "evidence_contains": "입력 광파워"
+        }
+      ]
+    },
+    {
+      "id": "q13",
+      "category": "multi",
+      "question": "정규화 자료와 내 실험 정의",
+      "terms": [
+        "normalization"
+      ],
+      "scope": "all",
+      "gold": [
+        {
+          "document": "ai",
+          "evidence_contains": "training stability"
+        },
+        {
+          "document": "normalization",
+          "evidence_contains": "최대 입력값"
+        }
+      ]
+    },
+    {
+      "id": "q14",
+      "category": "multi",
+      "question": "데이터 보존 설명과 내 계획",
+      "terms": [
+        "volume"
+      ],
+      "scope": "all",
+      "gold": [
+        {
+          "document": "systems",
+          "evidence_contains": "persists data"
+        },
+        {
+          "document": "docker",
+          "evidence_contains": "결과를 보관"
+        }
+      ]
+    },
+    {
+      "id": "q15",
+      "category": "multi",
+      "question": "결합 효율 자료와 내 메모",
+      "terms": [
+        "coupling efficiency"
+      ],
+      "scope": "all",
+      "gold": [
+        {
+          "document": "optics",
+          "evidence_contains": "transferred optical power"
+        },
+        {
+          "document": "coupling",
+          "evidence_contains": "입력 광파워"
+        }
+      ]
+    },
+    {
+      "id": "q16",
+      "category": "multi",
+      "question": "온도 제어 자료와 지난번 결론",
+      "terms": [
+        "thermal drift"
+      ],
+      "scope": "all",
+      "gold": [
+        {
+          "document": "optics",
+          "evidence_contains": "temperature-controlled mount"
+        },
+        {
+          "document": "drift",
+          "evidence_contains": "온도를 고정"
+        }
+      ]
+    },
+    {
+      "id": "q17",
+      "category": "paraphrase",
+      "question": "온도 잡고 다시 재자고 했던 이야기",
+      "terms": [
+        "온도",
+        "다시 측정"
+      ],
+      "scope": "conversation",
+      "gold": [
+        {
+          "document": "drift",
+          "evidence_contains": "온도를 고정"
+        }
+      ]
+    },
+    {
+      "id": "q18",
+      "category": "paraphrase",
+      "question": "컨테이너를 없애도 결과를 남기는 법",
+      "terms": [
+        "container",
+        "volume"
+      ],
+      "scope": "all",
+      "gold": [
+        {
+          "document": "systems",
+          "evidence_contains": "persists data"
+        },
+        {
+          "document": "docker",
+          "evidence_contains": "결과를 보관"
+        }
+      ]
+    },
+    {
+      "id": "q19",
+      "category": "no-answer",
+      "question": "양자 오류 정정 기록",
+      "terms": [
+        "quantum error correction"
+      ],
+      "scope": "all",
+      "gold": []
+    },
+    {
+      "id": "q20",
+      "category": "no-answer",
+      "question": "혈액형 검사 자료",
+      "terms": [
+        "blood typing"
+      ],
+      "scope": "all",
+      "gold": []
+    }
+  ]
+}

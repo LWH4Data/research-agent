@@ -21,6 +21,7 @@ PROJECT_MARKER = "research-agent-owned-root-v1"
 REGISTRATION_HEADER = "# research-agent-registration-v1"
 ROOT_HEADER = "# research-agent-root: "
 SKILL_SOURCE = Path("resources/skills/research-library")
+RUNTIME_INSTRUCTIONS = Path("resources/AGENTS.runtime.md")
 SKILL_TARGET = Path(".agents/skills/research-library")
 RULE_TARGET = Path(".codex/rules/research-library.rules")
 SANDBOX_CONFIG_TARGET = Path(".codex/research-library-sandbox/config.toml")
@@ -80,6 +81,10 @@ def _canonical_project_root(value: Path) -> Path:
     _require_regular_file(marker, "프로젝트 표시")
     if marker.read_text(encoding="utf-8").strip() != PROJECT_MARKER:
         raise RegistrationError("research-agent 프로젝트 루트를 확인할 수 없습니다")
+    _require_regular_file(
+        _reject_linked_components(root, RUNTIME_INSTRUCTIONS, "제품 실행 지침"),
+        "제품 실행 지침",
+    )
     skill_source = _reject_linked_components(root, SKILL_SOURCE, "개인 스킬 리소스")
     try:
         skill_info = skill_source.lstat()
@@ -200,13 +205,13 @@ def _render_agent(template: Path, root: Path, skill_link: Path) -> str:
     instructions = instructions.replace("./research-store", launcher_command)
     instructions = instructions.replace("bash ./add-source.sh", add_source_command)
     instructions = instructions.replace(
-        "Read AGENTS.md before acting.",
-        f"Read {root / 'AGENTS.md'} before acting.",
+        "Read resources/AGENTS.runtime.md before acting.",
+        f"Read {root / RUNTIME_INSTRUCTIONS} before acting.",
     )
     prefix = (
         f"The research-agent store root is {root}. Use only the personal launcher "
         f"at {launcher} for library operations, regardless of the current working "
-        f"directory. Read {root / 'AGENTS.md'} and {skill_link / 'SKILL.md'} before "
+        f"directory. Read {root / RUNTIME_INSTRUCTIONS} and {skill_link / 'SKILL.md'} before "
         "acting. This agent is read-only. Never write to the current project or any "
         "configured source; invoke the launcher directly for every permitted store "
         "change. A narrow Codex rule permits only that launcher, which immediately "
@@ -234,6 +239,11 @@ def _render_agent(template: Path, root: Path, skill_link: Path) -> str:
 def _render_rule(skill_link: Path, root: Path) -> str:
     root_launcher = skill_link / "scripts/research-root"
     store_launcher = skill_link / "scripts/research-store"
+    review_launcher = skill_link / "scripts/research-review"
+    # Codex may surface the skill through its physical repository path instead
+    # of the personal symlink. Both names refer to the same owned launcher.
+    resource_launcher = root / SKILL_SOURCE / "scripts/research-store"
+    resource_review_launcher = root / SKILL_SOURCE / "scripts/research-review"
     return "\n".join(
         [
             REGISTRATION_HEADER,
@@ -251,17 +261,50 @@ def _render_rule(skill_link: Path, root: Path) -> str:
             '    justification = "Use the constrained Research Library CLI",',
             ")",
             "",
+            "prefix_rule(",
+            f"    pattern = [{_toml_string(str(resource_launcher))}],",
+            '    decision = "allow",',
+            '    justification = "Use the constrained Research Library CLI",',
+            ")",
+            "",
+            "prefix_rule(",
+            f"    pattern = [{_toml_string(str(review_launcher))}],",
+            '    decision = "allow",',
+            '    justification = "Start or inspect the bounded Research Library background review",',
+            ")",
+            "",
+            "prefix_rule(",
+            f"    pattern = [{_toml_string(str(resource_review_launcher))}],",
+            '    decision = "allow",',
+            '    justification = "Start or inspect the bounded Research Library background review",',
+            ")",
+            "",
         ]
     )
 
 
-def _render_sandbox_config(root: Path) -> str:
+def _render_sandbox_config(root: Path, home: Path) -> str:
+    codex_runtime_databases = (
+        "state_5.sqlite",
+        "logs_2.sqlite",
+        "goals_1.sqlite",
+        "thread_history_1.sqlite",
+        "queue_1.sqlite",
+        "memories_1.sqlite",
+    )
+    codex_runtime_paths = [
+        f'{_toml_string(str(home / ".codex" / name) + suffix)} = "write"'
+        for name in codex_runtime_databases
+        for suffix in ("", "-wal", "-shm")
+    ]
     return "\n".join(
         [
             REGISTRATION_HEADER,
             ROOT_HEADER + str(root),
-            "# Isolated config used only by the Research Library command launcher.",
+            "# Isolated profiles used only by Research Library owned launchers.",
             'default_permissions = "research-store"',
+            "",
+            "[permissions]",
             "",
             "[permissions.research-store]",
             'description = "Read files and write only Research Library data."',
@@ -276,6 +319,25 @@ def _render_sandbox_config(root: Path) -> str:
             "",
             "[permissions.research-store.network]",
             "enabled = false",
+            "",
+            "# Model work needs a connection, but still cannot write original PDFs.",
+            "[permissions.research-review-worker]",
+            'description = "Run detached visual checks with original sources read-only."',
+            "",
+            "[permissions.research-review-worker.filesystem]",
+            '":root" = "read"',
+            '":minimal" = "read"',
+            '":tmpdir" = "deny"',
+            '":slash_tmp" = "deny"',
+            f"{_toml_string(str(root / '.research-store'))} = \"write\"",
+            f"{_toml_string(str(root / 'knowledge'))} = \"write\"",
+            "# Codex uses these state files even for ephemeral subscription tasks.",
+            *codex_runtime_paths,
+            f"{_toml_string(str(home / '.codex/tmp/arg0'))} = \"write\"",
+            f"{_toml_string(str(home / '.codex/installation_id'))} = \"write\"",
+            "",
+            "[permissions.research-review-worker.network]",
+            "enabled = true",
             "",
         ]
     )
@@ -363,7 +425,7 @@ def install(root_value: Path, home_value: Path) -> None:
     rendered_files = {
         **{agent_targets[name]: content for name, content in rendered_agents.items()},
         rule_target: _render_rule(skill_link, root),
-        sandbox_config_target: _render_sandbox_config(root),
+        sandbox_config_target: _render_sandbox_config(root, home),
         sandbox_owner_target: _render_owner_marker(root),
     }
     existed = {

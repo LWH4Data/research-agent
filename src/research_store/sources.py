@@ -6,7 +6,13 @@ from pathlib import Path
 import re
 
 from .config import Config, Source, load_config
-from .safety import atomic_text, find_project_root, is_within, require_owned_path
+from .safety import (
+    atomic_text,
+    find_project_root,
+    is_within,
+    reject_codex_runtime_source,
+    require_owned_path,
+)
 
 
 DEFAULT_CONFIG = """[store]
@@ -92,6 +98,7 @@ def add_sources(config_path: Path, paths: list[Path]) -> list[Source]:
         if requested.is_symlink():
             raise ValueError(f"심볼릭 링크는 등록할 수 없습니다: {requested}")
         path = requested.resolve(strict=True)
+        reject_codex_runtime_source(path)
         if not path.is_dir() and not (
             path.is_file() and path.suffix.casefold() == ".pdf"
         ):

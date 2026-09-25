@@ -16,7 +16,6 @@ from unittest import mock
 
 from research_store.config import load_config
 from research_store.conversations import save_conversation
-from research_store.picker import choose_source, macos_picker_script
 from research_store.safety import PROJECT_MARKER_CONTENT, atomic_text
 from research_store.sources import (
     add_sources,
@@ -148,47 +147,6 @@ class SyncLibraryTests(unittest.TestCase):
             self.assertEqual(config_path, project / ".research-store/config.toml")
             self.assertEqual(config.root, project)
             self.assertTrue(config_path.is_file())
-
-    def test_macos_picker_success_cancel_and_failure_are_clean(self) -> None:
-        with mock.patch("research_store.picker.sys.platform", "darwin"):
-            with mock.patch(
-                "research_store.picker.subprocess.run",
-                return_value=subprocess.CompletedProcess([], 0, "/tmp/Papers\n", ""),
-            ):
-                self.assertEqual(choose_source(), Path("/tmp/Papers"))
-            with mock.patch(
-                "research_store.picker.subprocess.run",
-                return_value=subprocess.CompletedProcess([], 0, "\n", ""),
-            ):
-                self.assertIsNone(choose_source())
-            with mock.patch(
-                "research_store.picker.subprocess.run",
-                side_effect=subprocess.CalledProcessError(
-                    1, ["osascript"], stderr="picker failed"
-                ),
-            ):
-                with self.assertRaisesRegex(RuntimeError, "picker failed"):
-                    choose_source()
-
-    @unittest.skipUnless(sys.platform == "darwin", "macOS-only picker compiler")
-    def test_macos_picker_script_compiles_without_opening_ui(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory) / "Picker.scpt"
-            result = subprocess.run(
-                [
-                    "osacompile",
-                    "-l",
-                    "JavaScript",
-                    "-e",
-                    macos_picker_script(),
-                    "-o",
-                    str(output),
-                ],
-                check=False,
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_pypdf_converts_text_and_flags_table_page(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -723,6 +681,60 @@ class SyncLibraryTests(unittest.TestCase):
             markdown = document_output(config, "documents:document.pdf")
             self.assertIn("표의 정렬을 확인", markdown.read_text(encoding="utf-8"))
 
+    def test_review_complete_cli_rejects_verified_without_visual_notes_stdin(
+        self,
+    ) -> None:
+        for status_arguments in ([], ["--status", "verified"]):
+            with self.subTest(status_arguments=status_arguments):
+                with tempfile.TemporaryDirectory() as directory:
+                    root = Path(directory)
+                    source = root / "source"
+                    project = make_project(root / "agent")
+                    source.mkdir()
+                    (source / "document.pdf").write_bytes(b"pdf")
+                    config_path = write_config(project, source)
+                    config = load_config(config_path)
+                    sync_library(
+                        config,
+                        lambda _: ConversionResult(
+                            "<!-- page: 1 -->\n\ncontent\n",
+                            {1: ["table-caption"]},
+                        ),
+                    )
+                    markdown = document_output(config, "documents:document.pdf")
+                    queue_before = pending_reviews(config)
+                    markdown_before = markdown.read_bytes()
+                    database_before = config.state.read_bytes()
+
+                    result = subprocess.run(
+                        [
+                            sys.executable,
+                            "-m",
+                            "research_store.cli",
+                            "--config",
+                            str(config_path),
+                            "review-complete",
+                            "documents:document.pdf",
+                            "--page",
+                            "1",
+                            "--sha256",
+                            hashlib.sha256(b"pdf").hexdigest(),
+                            "--notes",
+                            "Database-only summary cannot verify the page.",
+                            *status_arguments,
+                        ],
+                        input="",
+                        capture_output=True,
+                        text=True,
+                    )
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("verified", result.stderr)
+                    self.assertIn("--visual-notes-stdin", result.stderr)
+                    self.assertEqual(markdown.read_bytes(), markdown_before)
+                    self.assertEqual(config.state.read_bytes(), database_before)
+                    self.assertEqual(pending_reviews(config), queue_before)
+
     @unittest.skipUnless(
         importlib.util.find_spec("pypdfium2"), "pypdfium2 is required"
     )
@@ -777,6 +789,7 @@ class SyncLibraryTests(unittest.TestCase):
                     status="verified",
                     reviewer_model="gpt-5.6-sol",
                     notes=None,
+                    visual_notes="Original page reviewed before the PDF changed.",
                 )
 
     def test_tampered_database_output_path_cannot_escape_project(self) -> None:
@@ -807,6 +820,7 @@ class SyncLibraryTests(unittest.TestCase):
                     status="verified",
                     reviewer_model="gpt-5.6-sol",
                     notes=None,
+                    visual_notes="This note must not escape the project.",
                 )
             self.assertEqual(victim.read_text(encoding="utf-8"), "unchanged")
 

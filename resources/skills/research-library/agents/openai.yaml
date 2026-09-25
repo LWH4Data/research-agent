@@ -1,6 +1,6 @@
 interface:
-  display_name: "Research Library"
-  short_description: "PDF와 연구 대화를 안전하게 동기화하고 검색"
+  display_name: "Research Agent"
+  short_description: "첨부 PDF와 폴더의 자료, 선택한 연구 대화를 안전하게 저장하고 검색"
   default_prompt: "$research-library를 사용해 연구 PDF와 저장된 대화를 출처 페이지와 함께 검색해줘."
 
 policy:

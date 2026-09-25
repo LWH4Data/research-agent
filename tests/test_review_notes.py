@@ -12,7 +12,12 @@ from unittest.mock import patch
 
 from research_store.config import Config, load_config
 from research_store.safety import PROJECT_MARKER_CONTENT
-from research_store.sync import ConversionResult, complete_reviews, sync_library
+from research_store.sync import (
+    ConversionResult,
+    complete_reviews,
+    pending_reviews,
+    sync_library,
+)
 
 
 DOCUMENT_KEY = "papers:document.pdf"
@@ -136,6 +141,41 @@ def strip_empty_managed_review_section(
 
 
 class ReviewNoteTests(unittest.TestCase):
+    def test_verified_requires_nonempty_visual_notes_before_recovery(self) -> None:
+        for visual_notes in (None, "", " \t\n "):
+            with self.subTest(visual_notes=visual_notes):
+                with tempfile.TemporaryDirectory() as directory:
+                    config, digest, markdown = make_review_store(
+                        Path(directory), (1, 2)
+                    )
+                    queue_before = pending_reviews(config)
+                    markdown_before = markdown.read_bytes()
+                    database_before = config.state.read_bytes()
+                    rows_before = review_rows(config)
+
+                    with patch(
+                        "research_store.sync.recover_document_operation"
+                    ) as recover, self.assertRaises(ValueError) as error:
+                        complete_reviews(
+                            config,
+                            DOCUMENT_KEY,
+                            [1],
+                            expected_sha256=digest,
+                            status="verified",
+                            reviewer_model=MODEL,
+                            notes="Database-only summary is not a visual note.",
+                            visual_notes=visual_notes,
+                        )
+
+                    recover.assert_not_called()
+                    if visual_notes is None:
+                        self.assertIn("verified", str(error.exception))
+                        self.assertIn("--visual-notes-stdin", str(error.exception))
+                    self.assertEqual(markdown.read_bytes(), markdown_before)
+                    self.assertEqual(config.state.read_bytes(), database_before)
+                    self.assertEqual(review_rows(config), rows_before)
+                    self.assertEqual(pending_reviews(config), queue_before)
+
     def test_saving_same_page_twice_replaces_the_existing_block(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             config, digest, markdown = make_review_store(Path(directory), (1,))

@@ -66,5 +66,13 @@ if [ -z "$CODEX" ] || [ ! -x "$CODEX" ]; then
     exit 1
 fi
 
+# Keep attachment transfer inside the exact launcher covered by the narrow
+# execution rule. A caller-side shell pipeline does not match that rule as one
+# allowed invocation and can accidentally nest the macOS sandbox.
+if [ "$#" -eq 3 ] && [ "$1" = "import-pdf" ] && [ "$2" = "--attachment" ]; then
+    exec "$ROOT/.venv/bin/python" -I -S -B "$ROOT/scripts/import_attachment.py" \
+        --codex "$CODEX" --root "$ROOT" --sandbox-home "$SANDBOX_HOME" --path "$3"
+fi
+
 exec env CODEX_HOME="$SANDBOX_HOME" "$CODEX" sandbox \
     -P research-store -C "$SANDBOX_HOME" -- "$ROOT/research-store" "$@"

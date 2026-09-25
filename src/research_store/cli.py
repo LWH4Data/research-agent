@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import sys
 
+from . import __version__
 from .conversations import (
     delete_conversation,
     get_conversation,
@@ -15,8 +16,9 @@ from .conversations import (
     update_conversation,
 )
 from .config import load_config
+from .imports import import_pdf, import_pdf_path
 from .operation_guard import operation_guard
-from .picker import choose_source
+from .picker import choose_sources
 from .progress import progress_renderer
 from .search import search_library
 from .safety import find_project_root
@@ -73,6 +75,12 @@ def _parser() -> argparse.ArgumentParser:
         description="흩어진 PDF를 읽기 전용으로 찾아 Markdown 연구 저장소를 만듭니다.",
     )
     parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="설치된 프로그램의 버전 표시",
+    )
+    parser.add_argument(
         "--config",
         type=Path,
         help="설정 파일 경로 (기본값: 프로젝트의 .research-store/config.toml)",
@@ -83,7 +91,10 @@ def _parser() -> argparse.ArgumentParser:
     source_add = subparsers.add_parser(
         "source-add", help="읽기 전용 검색 위치 또는 PDF 등록"
     )
-    source_add.add_argument("paths", type=Path, nargs="*")
+    source_add.add_argument(
+        "paths", type=Path, nargs="*",
+        help="여러 폴더 또는 PDF 경로. 생략하면 폴더 선택창을 엽니다.",
+    )
     source_list = subparsers.add_parser(
         "source-list", help="등록된 읽기 전용 위치 목록"
     )
@@ -95,7 +106,15 @@ def _parser() -> argparse.ArgumentParser:
     )
     source_remove.add_argument("source_ids", nargs="+")
 
+    pdf_import = subparsers.add_parser(
+        "import-pdf", help="저장을 요청한 첨부 PDF의 사본 보관 (원본 위치는 등록하지 않음)"
+    )
+    pdf_import.add_argument("path", type=Path, nargs="?")
+    pdf_import.add_argument("--stdin", action="store_true", help="PDF 바이트를 EOF까지 읽기")
+    pdf_import.add_argument("--name", help="표준 입력 PDF의 원래 파일 이름")
+
     sync = subparsers.add_parser("sync", help="신규·변경 PDF를 Markdown으로 변환")
+    sync.add_argument("--imported-document", help="저장한 첨부 PDF의 정확한 문서 키 하나만 정리")
     sync.add_argument(
         "--progress",
         choices=("auto", "off", "jsonl"),
@@ -108,6 +127,9 @@ def _parser() -> argparse.ArgumentParser:
     )
     search.add_argument("queries", nargs="+", help="하나 이상의 검색어")
     search.add_argument("--limit", type=int, default=50, help="최대 결과 개수 (1-200)")
+    search.add_argument("--scope", choices=("all", "pdf", "conversation"), default="all")
+    search.add_argument("--offset", type=int, default=0, help="추가 결과의 시작 위치")
+    search.add_argument("--snapshot", help="이전 검색에서 받은 자료 버전")
     subparsers.add_parser("review-list", help="이미지 판독이 필요한 페이지 목록")
 
     render = subparsers.add_parser("render-review", help="검토할 PDF 페이지를 PNG로 렌더링")
@@ -132,12 +154,12 @@ def _parser() -> argparse.ArgumentParser:
         "--status", choices=("verified", "needs_review"), default="verified"
     )
     reviewed.add_argument("--model", default="gpt-5.6-sol")
-    reviewed.add_argument("--notes")
+    reviewed.add_argument("--notes", help="짧은 작업 메모(시각 검토 노트를 대체하지 않음)")
     reviewed.add_argument(
         "--visual-notes-stdin",
         action="store_true",
         help=(
-            "표준 입력의 Markdown 검토 노트를 안전하게 문서에 추가 "
+            "표준 입력의 Markdown 검토 노트를 상태와 함께 저장(verified 필수) "
             f"(종료 줄: {STDIN_SENTINEL})"
         ),
     )
@@ -196,9 +218,8 @@ def main() -> None:
         elif args.command == "source-add":
             paths = list(args.paths)
             if not paths:
-                selected = choose_source()
-                paths = [] if selected is None else [selected]
-            added = add_sources(config_path, paths)
+                paths = choose_sources()
+            added = add_sources(config_path, paths) if paths else []
             result = {
                 "added": [
                     {
@@ -210,6 +231,16 @@ def main() -> None:
                 ],
                 "cancelled": not paths,
             }
+        elif args.command == "import-pdf":
+            if args.stdin == (args.path is not None):
+                raise ValueError("PDF 경로 또는 --stdin 중 하나만 지정하세요")
+            if args.stdin and not args.name:
+                raise ValueError("--stdin에는 --name으로 PDF 파일 이름을 알려 주세요")
+            if not args.stdin and args.name:
+                raise ValueError("--name은 --stdin과 함께 사용하세요")
+            config = load_config(initialize_config(config_path))
+            result = (import_pdf(config, sys.stdin.buffer, name=args.name)
+                      if args.stdin else import_pdf_path(config, args.path))
         elif args.command == "source-list":
             initialize_config(config_path)
             rows = source_rows(config_path)
@@ -243,6 +274,7 @@ def main() -> None:
                     sync_library(
                         config,
                         progress=progress_renderer(args.progress),
+                        imported_document=args.imported_document,
                     )
                 )
                 if result["registered_sources"] == 0:
@@ -252,7 +284,10 @@ def main() -> None:
             elif args.command == "status":
                 result = library_status(config)
             elif args.command == "search":
-                result = search_library(config, args.queries, limit=args.limit)
+                result = search_library(
+                    config, args.queries, limit=args.limit, scope=args.scope,
+                    offset=args.offset, snapshot=args.snapshot,
+                )
             elif args.command == "review-list":
                 result = pending_reviews(config)
             elif args.command == "render-review":

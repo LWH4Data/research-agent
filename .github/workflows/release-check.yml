@@ -1,0 +1,140 @@
+name: Validate and release
+
+# Only a pushed version tag publishes. Other events validate and rehearse packaging.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: macos-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Check package, lock, and optional tag versions
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            python scripts/check_release_version.py --tag "$GITHUB_REF_NAME"
+          else
+            python scripts/check_release_version.py
+          fi
+      - name: Install test dependencies
+        run: python -m pip install .
+      - name: Run unit tests
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python -B -m unittest discover -s tests -v
+      - name: Assemble runtime bundle from the explicit file list
+        id: bundle
+        shell: bash
+        run: |
+          python - <<'PY'
+          import gzip
+          import hashlib
+          import io
+          import os
+          from pathlib import Path, PurePosixPath
+          import shutil
+          import stat
+          import subprocess
+          import tarfile
+          import tomllib
+
+          root = Path.cwd().resolve()
+          version = tomllib.loads((root / 'pyproject.toml').read_text())['project']['version']
+          output = root / 'dist'
+          output.mkdir(exist_ok=True)
+          archive = output / f'research-agent-{version}.tar.gz'
+          epoch = int(subprocess.check_output(['git', 'show', '-s', '--format=%ct', 'HEAD'], text=True))
+          excluded = {'.git', '.github', '.agents', '.research-store', 'knowledge', 'tests', 'evals', 'packaging', '.venv', '.tools', '.python', '__pycache__'}
+          entries = {}
+          for line in (root / 'packaging/runtime-files.txt').read_text().splitlines():
+              if not line.strip() or line.lstrip().startswith('#'):
+                  continue
+              columns = line.split()
+              if len(columns) not in (1, 2):
+                  raise SystemExit(f'Invalid manifest entry: {line}')
+              source, destination = columns[0], columns[-1]
+              for value in (source, destination):
+                  path = PurePosixPath(value)
+                  if path.is_absolute() or any(part in ('', '.', '..') for part in value.split('/')):
+                      raise SystemExit(f'Unsafe manifest path: {value}')
+              if destination in entries or any(part in excluded for part in PurePosixPath(destination).parts) or destination.startswith('docs/technical/'):
+                  raise SystemExit(f'Duplicate or development-only destination: {destination}')
+              if destination == 'AGENTS.md' and source != 'resources/AGENTS.runtime.md':
+                  raise SystemExit('The runtime root guide must be the canonical product rules')
+              path = root / source
+              if path.resolve() != path or not stat.S_ISREG(path.lstat().st_mode) or path.stat().st_nlink != 1:
+                  raise SystemExit(f'Expected one regular source file: {source}')
+              entries[destination] = path
+          expected_modules = {p.relative_to(root).as_posix() for p in (root / 'src/research_store').glob('*.py')}
+          if not expected_modules.issubset(entries):
+              raise SystemExit('A runtime module is missing from the file list')
+          if entries['AGENTS.md'].read_bytes() != entries['resources/AGENTS.runtime.md'].read_bytes():
+              raise SystemExit('Runtime guides differ')
+          with archive.open('wb') as raw, gzip.GzipFile(filename='', fileobj=raw, mode='wb', mtime=epoch) as zipped:
+              with tarfile.open(fileobj=zipped, mode='w', format=tarfile.USTAR_FORMAT) as bundle:
+                  directory = tarfile.TarInfo('research-agent/')
+                  directory.type, directory.mode, directory.mtime = tarfile.DIRTYPE, 0o755, epoch
+                  bundle.addfile(directory)
+                  for destination, path in sorted(entries.items()):
+                      content = path.read_bytes()
+                      info = tarfile.TarInfo('research-agent/' + destination)
+                      info.mode = 0o755 if path.stat().st_mode & 0o111 else 0o644
+                      info.mtime, info.size = epoch, len(content)
+                      bundle.addfile(info, io.BytesIO(content))
+          shutil.copyfile(root / 'install-release.sh', output / 'install-release.sh')
+          assets = (archive, output / 'install-release.sh')
+          (output / 'SHA256SUMS').write_text(''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n' for p in assets))
+          shutil.copyfile(root / 'packaging/RELEASE_NOTES.md', output / 'RELEASE_NOTES.md')
+          if os.environ.get('GITHUB_OUTPUT'):
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+                  stream.write(f'archive={archive}\n')
+          print(f'Created {archive.name}: {len(entries)} product files')
+          PY
+      - name: Test the actual bundle in a disposable macOS home
+        env:
+          RESEARCH_AGENT_RELEASE_ARCHIVE: ${{ steps.bundle.outputs.archive }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python -B -m unittest discover -s tests -p 'test_release_bundle.py' -v
+      - name: Keep the checked release files
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: runtime-release
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 3
+
+  publish:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && github.repository == 'LWH4Data/research-agent'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8.0.1
+        with:
+          name: runtime-release
+          path: dist
+      - name: Publish the checked prototype release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --prerelease \
+            --title "Research Agent $GITHUB_REF_NAME (Prototype)" \
+            --notes-file dist/RELEASE_NOTES.md \
+            dist/research-agent-*.tar.gz dist/install-release.sh dist/SHA256SUMS

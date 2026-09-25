@@ -16,6 +16,9 @@ Agent by topic.
 5. [Conversation Storage and the Research Memory Lifecycle](#5-conversation-storage-and-the-research-memory-lifecycle)
 6. [Progress in the Codex Task and Interrupted-Run Recovery](#6-progress-in-the-codex-task-and-interrupted-run-recovery)
 
+Related extensions: [PDF Attachment Storage and Installation Onboarding](./attachment-import.en.md) ·
+[Versioning and End-User Releases](./releases.en.md)
+
 ## 1. Protecting Original User Directories and Managing Permissions
 
 ### Design Goal
@@ -29,36 +32,56 @@ Original PDFs and their directories are used only as input sources. Converted
 Markdown, search state, and temporary files are stored entirely within
 directories owned by Research Agent.
 
-### Permission Flow
+### Usage Policy and Permission Flow
+
+Research Agent is the installed store, skill, and tool bundle. The user invokes
+Research Library from an existing Codex conversation, and the primary session
+delegates library management and starts a separate visual-review job when
+needed. No new user conversation is required.
+
+The usage policy matches the top-level README: Ask for approval and Approve for
+me are allowed; Full access is not. A read-only parent is an optional stronger
+restriction, not an installation prerequisite. It is particularly useful when
+originals are inside the parent's writable workspace. Approval-mode labels
+alone do not establish filesystem access or prove that every mode was tested.
 
 ```mermaid
 flowchart TD
-    U[User Codex Session<br/>read-only required] --> S[Research Library Skill]
-    S --> A[Research Agent<br/>inherits parent permission mode]
-    A -->|Read only| P[Original User Directories]
-    A -->|Calls only when storage is required| L[Constrained Storage Command]
+    U[Existing User Codex Conversation<br/>Do not use Full access] --> S[Research Library Skill]
+    S --> A[Manager and Optional Converter<br/>read-only defaults]
+    S --> B[Background Visual Reviewer<br/>separate constrained profile]
+    U -.->|Parent runtime settings can override defaults| A
+    A -->|Library operations| L[Dedicated Launcher<br/>Isolated Permission Profile]
+    B --> L
+    L -->|Read| P[Original User Directories]
     L -->|Write allowed| K[knowledge/]
     L -->|Write allowed| D[.research-store/]
     L -.->|Write denied| P
 ```
 
-The custom-agent files declare a `read-only` default. That value is not an
-enforcement boundary independent of the parent session. Codex subagents inherit
-the permission mode selected for the parent turn, and live overrides such as
-`/permissions` or `--yolo` can be reapplied over a custom agent's defaults.
-The parent Codex session must therefore be set to read-only before it invokes
-Research Agent.
+Both custom subagents declare `read-only` defaults, and personal registration also sets
+`approval_policy = "never"`. When these settings apply, direct writes by the
+agent are blocked; internal storage goes through the approved launcher. Parent
+runtime settings can take precedence, so the child defaults and the launcher's
+permission profile are distinct protection layers.
 
-When Markdown or SQLite state must be saved, the agent invokes an approved
-storage command. This command runs within a separate, constrained permission
-profile.
+The following table describes **commands run through the dedicated launcher**.
+It does not describe the parent Codex session as a whole or arbitrary commands
+that bypass the launcher.
 
 | Location | Permission | Purpose |
 | --- | --- | --- |
-| Original user directories | Read only when the parent is also read-only | PDF discovery and conversion input |
+| Original user directories | Read only | PDF discovery and conversion input |
 | `knowledge/` | Read and write | Converted Markdown and saved conversations |
 | `.research-store/` | Read and write | Configuration, SQLite state, and temporary files |
 | Other locations | Read or denied | Not used as Research Agent storage |
+
+Background visual review uses a separate `research-review-worker` profile. It
+keeps original sources read-only while allowing model connectivity. Only the
+Codex state files and temporary location needed to start the subscription CLI
+receive additional write access under `~/.codex`. Registration rejects
+`~/.codex` and any parent as an original source. Codex upgrades require a new
+permission integration check for this narrow allowlist.
 
 ### Protection Layers
 
@@ -66,9 +89,10 @@ Original file protection does not depend on agent instructions alone.
 
 1. **Agent permissions**
    Both the library management agent and the PDF visual review agent declare a
-   read-only default. Because the parent turn's active permission mode and live
-   overrides can take precedence, this boundary applies only when the parent
-   session is also read-only.
+   read-only default; installation also sets `approval_policy = "never"`.
+   The parent turn's active permission mode and live overrides can take
+   precedence. These defaults are not an unconditional boundary independent
+   of the parent.
 
 2. **Storage command permissions**
    The agents do not create or modify files directly. They use a dedicated
@@ -103,10 +127,29 @@ reapplied, can perform the following actions:
 - Modify Research Agent installation files or configuration.
 - Run other commands that Research Agent does not provide.
 
-The parent session must therefore be switched to read-only before Research
-Library is invoked. See the official
+Even without Full access, originals inside the parent's workspace can remain
+writable by the parent. Allowing Ask for approval and Approve for me is not a
+guarantee that direct writes by the parent and every child are always blocked.
+Choose read-only when the parent also needs to be restricted. Research Library
+must never request source writes or broader source permissions in any mode;
+access failures require stopping or deferring the work and reporting the cause.
+See the official
 [Codex subagent documentation](https://learn.chatgpt.com/docs/agent-configuration/subagents)
-for the permission-inheritance behavior.
+for the inheritance behavior.
+
+### Allowed Work by Role
+
+| Role | Allowed work | Mutation scope |
+| --- | --- | --- |
+| Primary Codex session | Understand the request, confirm conversation capture scope, delegate work, and present results | Delegate library changes through dedicated tools |
+| Library manager | `source-list`, `source-add`, `source-remove`, sync, status, retrieval, and conversation save/list/get/update/delete | Internal configuration, knowledge, and state through the launcher |
+| Paper converter | Explicit single-page correction or re-review | Internal images and review records through the launcher |
+| Background reviewer | Review queued page batches and save results | Separate constrained profile, internal records, and required Codex runtime files |
+
+Source registration records a user-supplied or user-selected path in internal
+configuration. Disconnection stops future discovery while retaining the source
+mapping, original files, and existing Markdown. It does not authorize deletion
+of the original directory.
 
 ### Isolating the Storage Command's Configuration Stack
 
@@ -126,26 +169,40 @@ selects the profile with top-level
 `-P research-store`, while the actual storage program is executed by absolute
 path. A legacy `sandbox_mode` in the current project's
 `.codex/config.toml` is therefore excluded from the storage command's
-configuration stack. Because permission profiles are beta, Codex upgrades must
-revalidate both this isolation and the live permission integration test.
+configuration stack. The repository's `.codex/config.toml` is the project
+configuration used when opening this repository directly; it is distinct from
+the installed launcher's permission profile. Because permission profiles are
+beta, Codex upgrades must revalidate this isolation and the live integration
+test.
+
+The background reviewer enters `research-review-worker` once at startup. Inside
+that profile it invokes the project-owned `research-store` command directly
+instead of creating a second macOS sandbox. Nested Seatbelt activation can
+fail with `sandbox_apply: Operation not permitted`. The outer profile continues
+to deny source writes, and the store command retains its path and ownership
+checks.
 
 ### Scope of the Guarantee
 
-When the parent Codex session is read-only and the normal Research Library
-workflow is followed, the current design guarantees the following:
+When the dedicated launcher runs with its current constrained permission
+profile and its installation and configuration remain intact, the confirmed
+protection is:
 
-> Operations performed through Research Agent do not write to original user
-> directories.
+> The storage command can write only to `knowledge/` and `.research-store/`.
+> It cannot write to original directories.
 
-The current design alone cannot guarantee the following:
+Direct writes by a subagent depend on its effective sandbox policy. Read-only
+agent defaults are already implemented, but parent runtime settings can replace
+them. Neither these defaults nor the storage command's protection is a guarantee
+covering the whole parent Codex session. Do not use Full access. Restricting
+direct parent writes additionally requires a read-only parent task or
+operating-system access controls.
 
-> A Full access parent Codex session, or a Research Agent to which that access
-> is reapplied, cannot modify an original user directory.
-
-Research Agent does not guarantee source protection under a Full access parent.
-The parent session must be read-only. Environments requiring stronger isolation
-must use an external protection boundary, such as operating-system file
-permissions, a separate user account, or a read-only mount.
+Existing validation records cover the constrained storage command and workflows
+with a read-only parent. They do not establish every child's effective
+permissions or approval exceptions under both Ask for approval and Approve for
+me. Mode-specific verification remains on the
+[permission roadmap](./ROADMAP.en.md#milestone-1-source-protection-and-permission-management).
 
 ### Verification Criteria
 
@@ -164,6 +221,10 @@ The permission design is verified through the following behaviors:
 - Registering or removing an original path changes only configuration owned by
   Research Agent.
 - Removing Research Agent leaves every registered original file untouched.
+- Further checks must distinguish parent and child effective permissions from
+  launcher write boundaries under both Ask for approval and Approve for me.
+  Untested combinations must remain marked as untested; the usage policy itself
+  is not evidence of a passing test.
 
 The first live permission E2E exposed a missing `default_permissions` selection
 and a configuration-stack collision with the project's legacy `sandbox_mode`.
@@ -258,9 +319,11 @@ flowchart TD
     T --> H{Detect possible tables, equations,<br/>figures, or extraction failure}
     H -->|Not detected| N[not-needed]
     H -->|Detected| Q[pending review queue]
-    Q --> R[Render selected pages at 220 DPI<br/>with pypdfium2]
-    R --> V[Sol ultra compares page images<br/>with base Markdown]
-    V -->|Clear| OK[verified notes]
+    M --> A[Base text can be searched]
+    Q --> B[Start separate background job]
+    B --> R[Render selected pages at 220 DPI<br/>with pypdfium2]
+    R --> V[Sol high compares page images<br/>with base Markdown]
+    V -->|Clear| OK[Save nonempty final notes<br/>and verified state]
     V -->|Uncertain| NR[needs-review status]
     OK --> M
     NR --> M
@@ -309,7 +372,18 @@ diagrams or equations whose fonts were not recognized. `not-needed` therefore
 means that the current rules did not detect a need for review; it does not mean
 that the page's accuracy was verified.
 
-### Sol Ultra Visual Review
+### Sol High Visual Review
+
+The current visual-review default is Sol high. References to ultra in earlier experiments preserve the conditions used in those runs.
+
+After text synchronization, `research-review start` launches a separate job
+and the primary conversation remains available. The reviewer sends up to four
+pages from one document, with images and extracted text, to Sol high. It
+validates the response schema and page numbers before saving each page through
+the existing `review-complete` command. An attachment request passes only the
+keys just saved, so unrelated queued documents stay outside that request.
+Requests arriving during a job merge their keys into its scope. A
+`needs_review` page is not retried in an automatic loop.
 
 Only selected pages are rendered as 220 DPI PNG images. The visual review agent
 compares each page image with the base Markdown and records:
@@ -353,6 +427,15 @@ as the PDF hash. Before saving, document identity and PDF version are checked
 across the SQLite document row, Markdown frontmatter, and the current original
 file's SHA-256.
 
+A `verified` completion requires a **nonempty final Markdown review note** for
+that page through `--visual-notes-stdin`. The short SQLite `--notes` memo cannot
+replace it. For `verified`, `complete_reviews` rejects `visual_notes=None`, an
+empty string, or whitespace-only notes before journal recovery or any storage
+mutation. A note does not bypass the existing document, page, and current PDF
+version checks.
+The final note and page state are saved through the same journaled operation
+described below.
+
 Reviewing the same page again replaces that page's existing block while leaving
 other page blocks unchanged. If an older document contains duplicate headings
 for the same single page, the next correction collapses those blocks into one.
@@ -372,11 +455,11 @@ section. A pre-boundary document is wrapped only when every legacy block is
 unambiguously authenticated by the current PDF SHA-256. Ambiguous legacy
 content is preserved and requires an explicit migration.
 
-Every `review-complete` call acquires the project write lock before reading the
-Markdown. Concurrent completions against the same store are therefore
-serialized, and SQLite commits the prepared journal state before file
-replacement. The last file write cannot discard a review block for a different
-page.
+Each `review-complete` call that passes input validation acquires the project
+write lock before reading the Markdown. Concurrent completions against the same
+store are therefore serialized, and SQLite commits the prepared journal state
+before file replacement. The last file write cannot discard a review block for
+a different page.
 
 The interval in which synchronization replaces generated PDF Markdown and its
 review-queue rows uses the same project write lock. PDF reading and conversion
@@ -389,10 +472,14 @@ PDF synchronization and page-review writes also use the SQLite
 the prior state and the target Markdown, document row, and page-review rows. It
 removes the journal only after both the file and SQLite reach the target state.
 If the process stops in between, the next `sync`, `status`, `search`,
-`review-list`, `render-review`, or `review-complete` rolls the operation forward.
-If the current file or database matches neither the recorded prior state nor the
-target state, recovery treats it as an external change and fails closed instead
-of overwriting it.
+`review-list`, `render-review`, or `review-complete` call that passes input
+validation rolls the operation forward. If the current file or database matches
+neither the recorded prior state nor the target state, recovery treats it as an
+external change and fails closed instead of overwriting it.
+
+Markdown replacement and the SQLite state commit are sequential writes. The
+journal and recovery protect consistency between the results; this is not one
+transaction that physically changes both stores at the same instant.
 
 Tests verified this behavior by stopping a child process with `os._exit`
 immediately after Markdown replacement. They did not physically power off the
@@ -416,7 +503,7 @@ time. The model name is a validated **audit label supplied by the caller**; it
 is not cryptographic proof that the named model actually ran. Confirming the
 Luna and Sol route also requires the Codex session record.
 
-### Why the Primary Codex Session Coordinates Agent Calls
+### Roles of the Primary Codex Session and Background Reviewer
 
 The initial design asked the Luna library manager to invoke the Sol visual
 reviewer after finding queued pages. In a live Codex run, Luna was itself a
@@ -427,27 +514,35 @@ remaining image tool.
 This was not prompt injection from document content. It was substitute execution,
 or role drift, caused by assigning a goal whose required tool was unavailable
 without defining a sufficiently explicit stop condition. Luna is now responsible
-only for synchronization and returning the exact review queue. It must not create
-a child agent, inspect images directly, or call `review-complete`; it returns the
-queue to the primary Codex session and stops.
+only for synchronization and returning the exact review queue. After that, the
+primary Codex session starts the independent reviewer without waiting for it
+to finish. The reviewer calls Sol high through the signed-in Codex CLI. The
+model returns structured notes without running storage commands; the reviewer
+validates and saves them.
 
 ```mermaid
 sequenceDiagram
     participant C as Primary Codex
     participant L as Luna xhigh
-    participant S as Sol ultra
+    participant B as Background reviewer
+    participant S as Sol high
 
     C->>L: Synchronize and return review queue
     L-->>C: Return document keys and pages
-    C->>S: Review only queued pages
-    S-->>C: Return review result
-    C->>L: Search and organize evidence
-    L-->>C: Return retrieval result
+    C->>B: Start review for selected documents
+    B-->>C: Return job ID and status
+    C-->>C: Continue text-based conversation
+    B->>S: Review up to four pending pages
+    S-->>B: Return structured page notes
+    B->>B: Validate and save each page
+    C->>B: Check status in a later request
+    B-->>C: Return completed, pending, and uncertain counts
 ```
 
-Session records confirmed Luna xhigh → Sol ultra → Luna xhigh and the tool work
-performed by each agent. The current role boundary is enforced through the
-orchestration path and agent instructions; Luna's image tool has not been removed
+Records from the earlier experiment confirmed Luna xhigh → Sol ultra → Luna xhigh and the tool work
+performed by each agent. The current path differs: it uses a separate Codex CLI
+call in the background. Role boundaries use the launcher profile and agent
+instructions; Luna's image tool has not been removed
 at the platform level. The experiment and its limits are recorded in
 [Safety and agent-routing validation](./experiments/safety-routing-validation.en.md).
 
@@ -457,12 +552,35 @@ at the platform level. The experiment and its limits are recorded in
 | --- | --- |
 | `not-needed` | The current selection rules found no review candidate |
 | `pending` | Selected for visual review but not yet completed |
-| `verified` | The visual review agent checked the selected page |
+| `verified` | A nonempty final note and completed-review state were stored for this page of the current PDF version |
 | `needs-review` | Visual review was performed, but uncertainty remains |
 
-`verified` records completion of AI review for the selected pages. It is not a
-human certification or a guarantee of mathematical identity for equations and
-numeric values.
+The current code enforces note presence, matching document, page, and version,
+and completed storage for `verified`. It cannot prove the note's semantic
+accuracy, that the reported model actually ran, or that an image was inspected.
+It is also not human certification or a guarantee of mathematical identity for
+equations and numeric values. Using a note as answer evidence follows
+[PDF Pages and Visual Review Evidence](#pdf-pages-and-visual-review-evidence).
+
+Records saved before this requirement may have a `verified` row without a
+Markdown note. The code change does not automatically repair them. Auditing
+stored data and any necessary migration or targeted page recheck are separate
+operations.
+
+The 2026-09-25 read-only audit of the personal installed store found 5 documents
+and 66 `verified` pages matched by 66 nonempty per-page Markdown notes. Stored
+document identity, SHA-256, state, model, and review time matched; managed
+sections were valid, and every current pending list was empty. Missing, empty,
+duplicate, mismatched, or orphan notes and unfinished document journals all
+numbered zero; SQLite `quick_check` passed. SHA-256 fingerprints of the database,
+configuration, and five Markdown files (seven files total) were unchanged after the audit.
+This store required no migration for this requirement.
+
+The audit compared only that personal installation's database and Markdown. It
+did not inspect older test or development copies, rehash source PDFs, establish
+actual image inspection, or assess the notes' semantic accuracy, and it made no
+new model calls. It does not establish that historical records in other stores
+are consistent.
 
 ### Reliability by Use Case
 
@@ -479,25 +597,29 @@ The current architecture is suitable for a research discovery prototype. Using
 Markdown alone as an exact source for scientific values, equations, and tables
 is outside its present guarantee.
 
-Page-review completions are serialized and recovered through the project write
-lock and `document_operations` journal. This protects storage consistency
-between Markdown and SQLite; it does not establish that the model interpreted
-an equation, table, or figure correctly. Forced-exit validation covers injected
-child-process `os._exit`, not a physical device power failure.
+Storage consistency and recovery limits are described in
+[Visual-Review Storage Schema and the Current Queue](#visual-review-storage-schema-and-the-current-queue);
+the guarantee provided by `verified` is defined in
+[Meaning of Review States](#meaning-of-review-states).
+
+2026-09-25 validation record: 313 of 318 tests passed, with five environmental
+skips. Three core regression tests also passed against the installed copy. This
+validation made no new model calls.
 
 ### Implementation Responsibilities
 
 | Responsibility | Source files |
 | --- | --- |
-| Discover PDFs, create temporary copies, extract text, select candidates, render pages, and save review results | [`sync.py`](../../src/research_store/sync.py) |
+| Discover, convert, and render PDFs; validate notes and the current version and save reviews (`complete_reviews`) | [`sync.py`](../../src/research_store/sync.py) |
 | Journal and recover document Markdown and SQLite replacement | [`operations.py`](../../src/research_store/operations.py) |
 | Manage document state and page-level review state | [`state.py`](../../src/research_store/state.py) |
-| Define how the primary Codex session sequences Luna and Sol | [`research-library/SKILL.md`](../../resources/skills/research-library/SKILL.md) |
+| Start and inspect background review after primary-session synchronization | [`research-library/SKILL.md`](../../resources/skills/research-library/SKILL.md) |
+| Run independent jobs, scope and resume work, and validate Sol responses | [`background_review.py`](../../scripts/background_review.py), [`research-review` launcher](../../resources/skills/research-library/scripts/research-review) |
 | Return synchronization, retrieval, and review-queue results | [`research-library-manager.toml`](../../resources/agents/research-library-manager.toml) |
 | Define image interpretation and uncertainty handling | [`research-paper-converter.toml`](../../resources/agents/research-paper-converter.toml) |
 | Verify conversion, queues, hash matching, and source preservation | [`test_sync.py`](../../tests/test_sync.py) |
-| Verify review-note replacement, legacy cleanup, and concurrent completion | [`test_review_notes.py`](../../tests/test_review_notes.py), [`test_review_concurrency.py`](../../tests/test_review_concurrency.py) |
-| Verify child-process forced-exit recovery for synchronization and page review | [`test_document_recovery.py`](../../tests/test_document_recovery.py) |
+| Verify empty-note rejection before recovery without mutation, note replacement, legacy cleanup, and concurrent completion | [`test_review_notes.py`](../../tests/test_review_notes.py), [`test_review_concurrency.py`](../../tests/test_review_concurrency.py) |
+| Verify child-process forced-exit recovery for synchronization and page review | [`test_document_recovery.py`](../../tests/test_document_recovery.py), [`test_background_review.py`](../../tests/test_background_review.py) |
 
 ## 3. Storage and Incremental Synchronization
 
@@ -678,10 +800,19 @@ the user Codex session for answering.
 
 ### Relationship Between Projects and Research Agent
 
-The default installation places the Research Agent repository at
-`~/research-agent`. The installer records the physical location of the repository
+The default installation places the Research Agent bundle at
+`~/research-agent`. The installer records the physical location of the installation
 from which it runs, so an installation made elsewhere continues to use that
 location.
+
+The source repository's root `AGENTS.md` contains development instructions.
+The canonical product rules are
+[`resources/AGENTS.runtime.md`](../../resources/AGENTS.runtime.md), which the skill
+and registered agents read explicitly. The end-user release excludes the
+development guide and also places the same product rules at the installation's
+root `AGENTS.md`. The source checkout and installed bundle therefore give that
+root file different roles. See the [release guide](./releases.en.md) for packaging
+and validation details.
 
 ```mermaid
 flowchart LR
@@ -729,8 +860,9 @@ flowchart TD
     Q --> T[Run the constrained search command]
     T --> P[Search PDF Markdown]
     T --> C[Search saved conversation Markdown]
-    P --> M[Return matching file, line, and excerpt]
-    C --> M
+    P --> G[Group passages, rank, and diversify]
+    C --> G
+    G --> M[Return evidence locations, snapshot, and continuation]
     M --> X[Read context around each matching line]
     X --> E[Classify evidence and locate PDF page]
     E --> O[Answer in the user Codex session]
@@ -758,31 +890,69 @@ of the question and passes them together in one search command.
 
 ### Current Retrieval Method
 
-The current implementation uses neither vectors nor embeddings. It reads each
-Markdown file line by line and performs case-insensitive substring matching. A
-result contains:
+Search uses case-insensitive substring matching without vectors, embeddings, or
+LangChain. `--scope all|pdf|conversation` selects the sources; multiple terms use
+OR semantics. Requests about prior discussion select the conversation scope.
 
-- Whether the match came from a PDF document or a saved conversation.
-- The project-relative Markdown path.
-- The matching line number and terms.
-- A short excerpt around the match.
+1. Recover interrupted writes, then read selected Markdown under the shared
+   write lock. Keep only the requested candidate prefix for each document.
+2. Merge at most four consecutive matching lines. Do not cross pages, headings,
+   conversation-role boundaries, or a nonmatching line. Bound each line excerpt.
+3. Remove equal content in the same page and section. Different complete text is
+   retained even if its shortened excerpt happens to look identical.
+4. Score ten points per distinct matched query, subtract two for a heading-only
+   hit and three for a metadata-only hit. Repetition adds no score. This is a
+   lexical heuristic, not semantic ranking or BM25.
+5. If both record types match, cover PDF and conversation in the first two
+   results. Thereafter divide each score by one plus the number already selected
+   from that document. This balances relevance and diversity without equal
+   quotas. A result limit of one cannot contain both types.
 
-When several terms are used, results are interleaved across the terms. This keeps
-a very common term from displacing every result for the other terms.
+Responses preserve `type`, `path`, `line`, `text`, and `matched_queries` and add
+`end_line`, `pages`, `section`, `evidence_kind`, `document_id`, `source_id`, and
+`source_path`. Base pages and visual-review pages remain distinct. These values
+are discovery hints, not a substitute for checking original evidence.
 
-The excerpt returned by the search command is a candidate location rather than
-the final evidence. The library manager reopens the Markdown around that line and
-decides whether the surrounding context is relevant. The system reads context
-adaptively instead of storing fixed chunks in advance.
+Duplicated frontmatter `title` and `editable` JSON and internal state are
+excluded. Tags, aliases, and source filenames remain searchable as `metadata`.
 
-Conversation schema v3 also keeps an `editable` JSON value in frontmatter for
-exact reconstruction. Because the readable body already contains the same
-content, search skips this machine-oriented line to avoid duplicate results and
-token use.
+### Continuation and Change Detection
+
+Start at `--offset 0` and use the returned `snapshot`, `has_more`, and
+`next_offset` for continuation. Additional pages require the same terms, scope,
+and previous snapshot. Paths, content hashes, search conditions, and the
+algorithm version bind the snapshot; changes require a fresh search. Changing
+the page size preserves the same ordered prefix.
+
+Each response still accepts 1–200 results; the maximum window is 10,000 results.
+If more remain, `window_exhausted` asks the caller to narrow the terms or scope.
+Candidate retention per file is bounded by `offset + limit + 1`. Deep pages
+rescan files, so large-library performance remains a separate concern.
+
+Search holds the same lock used for PDF commits and conversation changes.
+It serializes supported writers and checks for ordinary concurrent external
+file edits. Long scans can delay writes, so latency and lock duration need
+monitoring as the library grows.
+
+### Ongoing Retrieval Evaluation
+
+The [versioned dataset](../../evals/search/dataset.json) starts with three
+synthetic PDFs, six memories, and twenty queries. The
+[evaluation runner](../../scripts/evaluate-search.py) generates and parses actual
+PDFs in temporary storage, then measures Recall@10, MRR@10, Precision@10, scope
+violations, search latency, and returned text length with fixed query terms.
+
+A correct document must also return the required evidence text. Repeated
+evidence does not increase recall. Unanswerable questions have a separate empty
+result rate. This evaluates retrieval, not Codex query generation or final
+answer quality. These small development fixtures do not establish performance
+across real research materials. See the
+[search evaluation record](./experiments/search-evaluation.en.md) for reproduction,
+metric definitions, and remaining limits.
 
 ### Boundary Between Local Search and Model Tokens
 
-The current `search` command reads Markdown under both `knowledge/`
+The current `search` command reads Markdown under the selected `knowledge/`
 subdirectories with a local program for every query. Reading files and comparing
 strings uses disk and CPU, but it does not send the complete files to a Codex
 model and therefore consumes no model tokens.
@@ -902,6 +1072,18 @@ original page and identifies the PDF version and state behind the note. Because
 the model marker is an audit label supplied by the caller, the Codex session
 record is also required to verify which model actually ran.
 
+When an answer uses a figure, table, equation, or a value read from one, check
+only the relevant pages: inspect `visual_review_pending_pages`, find a matching
+current-version `verified` note, and read its body to confirm that it supports
+the **specific claim being cited**. A completed job, an absent queue entry, or a
+page's `verified` label alone does not validate every visual claim. If the note
+does not support the claim, or review is pending, needs further checking, or
+cannot be established, identify the unconfirmed visual evidence and answer from
+clearly labeled text evidence where possible. This is the skill's evidence-use
+rule; text-only retrieval does not need a visual-status lookup, and it does not
+trigger a library-wide recheck. For the storage guarantee, see
+[Meaning of Review States](#meaning-of-review-states).
+
 ### Distinguishing Information Types
 
 PDFs and saved conversations are searched together but are not treated as the
@@ -993,7 +1175,9 @@ retrieval, or collection boundaries are needed.
 | Skill entry point, query expansion, and evidence-labeling rules | [`research-library/SKILL.md`](../../resources/skills/research-library/SKILL.md) |
 | Locate the registered store | [`research-root`](../../resources/skills/research-library/scripts/research-root) |
 | Luna retrieval and contextual reading | [`research-library-manager.toml`](../../resources/agents/research-library-manager.toml) |
-| Discover Markdown, match strings, and distribute results | [`search.py`](../../src/research_store/search.py) |
+| Safely read Markdown and coordinate scope, version checks, and retrieval | [`search.py`](../../src/research_store/search.py) |
+| Build passages, rank matches, and diversify documents | [`search_results.py`](../../src/research_store/search_results.py) |
+| Reproduce versioned retrieval measurements | [`evaluate-search.py`](../../scripts/evaluate-search.py), [dataset](../../evals/search/dataset.json) |
 | Verify unified PDF and conversation retrieval | [`test_search.py`](../../tests/test_search.py) |
 
 ## 5. Conversation Storage and the Research Memory Lifecycle
@@ -1320,8 +1504,8 @@ appear only when the user requests technical details.
 ```mermaid
 flowchart LR
     A[1/3 Checking source locations] --> B[2/3 Organizing documents]
-    B --> C[3/3 Checking figures and equations]
-    C --> D[Complete or complete with problems]
+    B --> C[Text search ready · visual review continues separately]
+    C --> D[Check review status in a later request]
 ```
 
 With `--progress jsonl`, the synchronization command emits progress events.
@@ -1354,21 +1538,22 @@ the total is not known yet, it shows only the completed count rather than
 inventing a percentage. A document advances the count only after its result has
 been stored safely; a review page follows the status-specific rule below.
 
-During visual review, only a page stored as `verified` leaves the queue and
-advances the completed numerator. A stored `needs_review` result records an
-inspection attempt but appears as additional attention required and remains
-outstanding. If uncertain pages remain after every page was inspected once, the
-result says `Review finished, but N pages need additional checking` instead of
-claiming `100% complete`.
+Visual review runs in a separate process after text has been saved, leaving the
+primary conversation available. `research-review status` counts only confirmed
+page saves in `verified_pages`; `needs_review_pages` remains a separate count
+for follow-up. If the job stops, saved pages remain and the next start processes
+only the pending pages. Status also records raw input, cached-input, and output
+tokens, without translating them into subscription-plan percentages.
 
 ### Keeping the Conversation Compact
 
-Progress appears only at the start, on a phase change, after roughly another 10
-percent, for a problem that affects the result, on interruption or recovery,
-and at completion. It does not add one message for every document or page. The
-primary Codex session, which knows the full review queue, owns phase `3/3`. If
-no page requires visual review, it finishes with `No additional checking
-needed` instead of inventing work.
+Synchronization progress appears at the start, on a phase change, after roughly
+another 10 percent, or for a problem that affects the result. It does not add
+one message for every document or page. When visual review starts, the primary
+session reports the initial pending count and that the work continues in the
+background. A later user request or Research Library action can check status.
+Finishing the separate job does not inject an unsolicited message into the
+earlier conversation.
 
 The agent starts synchronization once, uses a short initial yield, and polls
 that same process until completion. It never reruns synchronization to replay
@@ -1425,6 +1610,6 @@ show that those estimates are trustworthy.
 | Roll interrupted document and review writes forward | [`operations.py`](../../src/research_store/operations.py) |
 | Define phases and wording shown in the Codex task | [`research-library/SKILL.md`](../../resources/skills/research-library/SKILL.md) |
 | Consume synchronization progress events | [`research-library-manager.toml`](../../resources/agents/research-library-manager.toml) |
-| Return visual-review completion counts | [`research-paper-converter.toml`](../../resources/agents/research-paper-converter.toml) |
+| Return background review progress and raw token counts | [`background_review.py`](../../scripts/background_review.py), [`test_background_review.py`](../../tests/test_background_review.py) |
 | Verify progress events, output separation, and post-commit counting | [`test_progress.py`](../../tests/test_progress.py) |
 | Verify child-process forced-exit recovery for document and page-review writes | [`test_document_recovery.py`](../../tests/test_document_recovery.py) |

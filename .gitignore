@@ -6,6 +6,7 @@
 /.research-install.*/
 __pycache__/
 *.py[cod]
+/dist/
 
 # User-specific paths and generated knowledge
 /config.toml

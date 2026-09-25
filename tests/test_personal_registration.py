@@ -23,7 +23,9 @@ AGENT_NAMES = (
 )
 
 
-def run_registration(action: str, home: Path) -> subprocess.CompletedProcess[str]:
+def run_registration(
+    action: str, home: Path, root: Path = ROOT,
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [
             sys.executable,
@@ -32,7 +34,7 @@ def run_registration(action: str, home: Path) -> subprocess.CompletedProcess[str
             str(SCRIPT),
             action,
             "--root",
-            str(ROOT),
+            str(root),
             "--home",
             str(home),
         ],
@@ -84,6 +86,13 @@ class PersonalRegistrationTests(unittest.TestCase):
                 self.assertNotIn("sandbox_workspace_write", parsed)
                 self.assertIn(str(skill_link / "scripts/research-store"), text)
                 self.assertIn(
+                    str(ROOT / "resources/AGENTS.runtime.md"),
+                    parsed["developer_instructions"],
+                )
+                self.assertNotIn(
+                    str(ROOT / "AGENTS.md"), parsed["developer_instructions"],
+                )
+                self.assertIn(
                     "untrusted research data",
                     parsed["developer_instructions"],
                 )
@@ -104,6 +113,9 @@ class PersonalRegistrationTests(unittest.TestCase):
             self.assertTrue(rule_text.startswith("# research-agent-registration-v1\n"))
             self.assertIn(str(skill_link / "scripts/research-root"), rule_text)
             self.assertIn(str(skill_link / "scripts/research-store"), rule_text)
+            self.assertIn(str(SKILL_SOURCE / "scripts/research-store"), rule_text)
+            self.assertIn(str(skill_link / "scripts/research-review"), rule_text)
+            self.assertIn(str(SKILL_SOURCE / "scripts/research-review"), rule_text)
             sandbox_config = home / ".codex/research-library-sandbox/config.toml"
             sandbox_owner = (
                 home / ".codex/research-library-sandbox/.research-agent-owner"
@@ -126,6 +138,32 @@ class PersonalRegistrationTests(unittest.TestCase):
                 profile["filesystem"][str(ROOT / "knowledge")], "write"
             )
             self.assertFalse(profile["network"]["enabled"])
+            review_profile = sandbox["permissions"]["research-review-worker"]
+            self.assertEqual(review_profile["filesystem"][":root"], "read")
+            self.assertEqual(
+                review_profile["filesystem"][str(ROOT / ".research-store")],
+                "write",
+            )
+            self.assertEqual(
+                review_profile["filesystem"][str(ROOT / "knowledge")],
+                "write",
+            )
+            self.assertTrue(review_profile["network"]["enabled"])
+            self.assertNotIn(str(source), review_profile["filesystem"])
+            self.assertEqual(
+                review_profile["filesystem"][str(home / ".codex/state_5.sqlite")],
+                "write",
+            )
+            self.assertEqual(
+                review_profile["filesystem"][str(home / ".codex/tmp/arg0")],
+                "write",
+            )
+            self.assertEqual(
+                review_profile["filesystem"][str(home / ".codex/installation_id")],
+                "write",
+            )
+            self.assertNotIn(str(home / ".codex/auth.json"),
+                             review_profile["filesystem"])
 
             manager = home / ".codex/agents/research-library-manager.toml"
             manager.write_text(manager.read_text(encoding="utf-8") + "\n", encoding="utf-8")
@@ -143,6 +181,38 @@ class PersonalRegistrationTests(unittest.TestCase):
             self.assertEqual((other_skill / "SKILL.md").read_text(), "other\n")
             self.assertEqual(other_agent.read_text(), "name = 'other'\n")
             self.assertEqual(snapshot(source), before)
+
+    def test_missing_or_linked_runtime_rules_are_rejected_before_registration(self) -> None:
+        for kind in ("missing", "symlink", "hardlink"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as directory:
+                fixture = Path(directory).resolve()
+                project = fixture / "store"
+                project.mkdir()
+                home = fixture / "home"
+                home.mkdir()
+                # Registration locks the existing Codex directory before its
+                # source preflight; assert no registration content is written.
+                (home / ".codex").mkdir(mode=0o700)
+                shutil.copy2(ROOT / ".research-agent-root", project / ".research-agent-root")
+                shutil.copytree(ROOT / "resources", project / "resources")
+                runtime_rules = project / "resources/AGENTS.runtime.md"
+                runtime_rules.unlink()
+                external = fixture / "external-instructions.md"
+                external.write_text("External instructions must not be loaded.\n")
+                if kind == "symlink":
+                    runtime_rules.symlink_to(external)
+                elif kind == "hardlink":
+                    os.link(external, runtime_rules)
+                before = snapshot(home)
+
+                result = run_registration("install", home, project)
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("제품 실행 지침", result.stderr)
+                self.assertEqual(snapshot(home), before)
+                self.assertEqual(
+                    external.read_text(), "External instructions must not be loaded.\n",
+                )
 
     def test_unmanaged_skill_collision_is_not_overwritten(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -406,6 +476,15 @@ exec "$@"
             self.assertEqual(allowed.returncode, 0, allowed.stderr)
             self.assertEqual(json.loads(allowed.stdout)["decision"], "allow")
 
+            physical_launcher = SKILL_SOURCE / "scripts/research-store"
+            physical = subprocess.run(
+                [codex, "execpolicy", "check", "--rules", str(rule), "--",
+                 str(physical_launcher), "import-pdf", "--attachment", "/tmp/paper.pdf"],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(physical.returncode, 0, physical.stderr)
+            self.assertEqual(json.loads(physical.stdout)["decision"], "allow")
+
             lookalike = subprocess.run(
                 [
                     codex,
@@ -424,6 +503,15 @@ exec "$@"
             self.assertNotEqual(
                 json.loads(lookalike.stdout).get("decision"), "allow"
             )
+            physical_lookalike = subprocess.run(
+                [codex, "execpolicy", "check", "--rules", str(rule), "--",
+                 str(physical_launcher) + "-other", "status"],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(physical_lookalike.returncode, 0,
+                             physical_lookalike.stderr)
+            self.assertNotEqual(json.loads(physical_lookalike.stdout).get("decision"),
+                                "allow")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,403 @@
+{
+  "dataset_version": "search-v1",
+  "dataset_sha256": "04d2263cb0872bf331a69d17b448ea39d8ff40e172e963ee97cdfe570b4279f6",
+  "synthetic": true,
+  "fixed_query_terms": true,
+  "model_calls": 0,
+  "supports_scope": true,
+  "repeats": 5,
+  "code_sha256": {
+    "search.py": "6abba817a0946b472dc35e58bcbd774a4c0b314c493df4083fe911f3c8c0ffac",
+    "search_results.py": "2d2a83e616b3d377fd359c02d6ab011a9d53f78c41069dad031dab93353c6192"
+  },
+  "originals_unchanged": true,
+  "overall": {
+    "queries": 20,
+    "recall_at_10": 0.972222,
+    "mrr_at_10": 1.0,
+    "precision_at_10": 0.155556,
+    "no_answer_empty_rate": 1.0,
+    "scope_violations": 0,
+    "mean_search_ms": 4.706,
+    "mean_text_chars": 148.3
+  },
+  "by_category": {
+    "bilingual": {
+      "queries": 4,
+      "recall_at_10": 1.0,
+      "mrr_at_10": 1.0,
+      "precision_at_10": 0.15,
+      "no_answer_empty_rate": null,
+      "scope_violations": 0,
+      "mean_search_ms": 3.975,
+      "mean_text_chars": 91
+    },
+    "exact": {
+      "queries": 4,
+      "recall_at_10": 0.875,
+      "mrr_at_10": 1.0,
+      "precision_at_10": 0.175,
+      "no_answer_empty_rate": null,
+      "scope_violations": 0,
+      "mean_search_ms": 5.334,
+      "mean_text_chars": 419
+    },
+    "memory": {
+      "queries": 4,
+      "recall_at_10": 1.0,
+      "mrr_at_10": 1.0,
+      "precision_at_10": 0.1,
+      "no_answer_empty_rate": null,
+      "scope_violations": 0,
+      "mean_search_ms": 3.878,
+      "mean_text_chars": 56.8
+    },
+    "multi": {
+      "queries": 4,
+      "recall_at_10": 1.0,
+      "mrr_at_10": 1.0,
+      "precision_at_10": 0.2,
+      "no_answer_empty_rate": null,
+      "scope_violations": 0,
+      "mean_search_ms": 5.338,
+      "mean_text_chars": 112.8
+    },
+    "no-answer": {
+      "queries": 2,
+      "recall_at_10": null,
+      "mrr_at_10": null,
+      "precision_at_10": null,
+      "no_answer_empty_rate": 1.0,
+      "scope_violations": 0,
+      "mean_search_ms": 5.389,
+      "mean_text_chars": 0
+    },
+    "paraphrase": {
+      "queries": 2,
+      "recall_at_10": 1.0,
+      "mrr_at_10": 1.0,
+      "precision_at_10": 0.15,
+      "no_answer_empty_rate": null,
+      "scope_violations": 0,
+      "mean_search_ms": 4.623,
+      "mean_text_chars": 124
+    }
+  },
+  "queries": [
+    {
+      "id": "q01",
+      "category": "exact",
+      "recall_at_10": 0.5,
+      "precision_at_10": 0.1,
+      "mrr_at_10": 1.0,
+      "returned": 10,
+      "documents": [
+        "drift",
+        "optics",
+        "optics",
+        "optics",
+        "optics",
+        "optics",
+        "optics",
+        "optics",
+        "optics",
+        "optics"
+      ],
+      "scope_violations": 0,
+      "search_ms": 5.507,
+      "text_chars": 1312
+    },
+    {
+      "id": "q02",
+      "category": "exact",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.2,
+      "mrr_at_10": 1.0,
+      "returned": 3,
+      "documents": [
+        "dbr",
+        "optics",
+        "dbr"
+      ],
+      "scope_violations": 0,
+      "search_ms": 5.309,
+      "text_chars": 144
+    },
+    {
+      "id": "q03",
+      "category": "exact",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.2,
+      "mrr_at_10": 1.0,
+      "returned": 2,
+      "documents": [
+        "attention",
+        "ai"
+      ],
+      "scope_violations": 0,
+      "search_ms": 5.226,
+      "text_chars": 100
+    },
+    {
+      "id": "q04",
+      "category": "exact",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.2,
+      "mrr_at_10": 1.0,
+      "returned": 2,
+      "documents": [
+        "docker",
+        "systems"
+      ],
+      "scope_violations": 0,
+      "search_ms": 5.294,
+      "text_chars": 120
+    },
+    {
+      "id": "q05",
+      "category": "bilingual",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.2,
+      "mrr_at_10": 1.0,
+      "returned": 2,
+      "documents": [
+        "drift",
+        "optics"
+      ],
+      "scope_violations": 0,
+      "search_ms": 5.304,
+      "text_chars": 158
+    },
+    {
+      "id": "q06",
+      "category": "bilingual",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.2,
+      "mrr_at_10": 1.0,
+      "returned": 3,
+      "documents": [
+        "coupling",
+        "optics",
+        "coupling"
+      ],
+      "scope_violations": 0,
+      "search_ms": 5.374,
+      "text_chars": 108
+    },
+    {
+      "id": "q07",
+      "category": "bilingual",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.1,
+      "mrr_at_10": 1.0,
+      "returned": 1,
+      "documents": [
+        "ai"
+      ],
+      "scope_violations": 0,
+      "search_ms": 2.597,
+      "text_chars": 43
+    },
+    {
+      "id": "q08",
+      "category": "bilingual",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.1,
+      "mrr_at_10": 1.0,
+      "returned": 1,
+      "documents": [
+        "systems"
+      ],
+      "scope_violations": 0,
+      "search_ms": 2.624,
+      "text_chars": 55
+    },
+    {
+      "id": "q09",
+      "category": "memory",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.1,
+      "mrr_at_10": 1.0,
+      "returned": 2,
+      "documents": [
+        "drift",
+        "drift"
+      ],
+      "scope_violations": 0,
+      "search_ms": 3.902,
+      "text_chars": 75
+    },
+    {
+      "id": "q10",
+      "category": "memory",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.1,
+      "mrr_at_10": 1.0,
+      "returned": 2,
+      "documents": [
+        "dbr",
+        "dbr"
+      ],
+      "scope_violations": 0,
+      "search_ms": 3.843,
+      "text_chars": 51
+    },
+    {
+      "id": "q11",
+      "category": "memory",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.1,
+      "mrr_at_10": 1.0,
+      "returned": 2,
+      "documents": [
+        "attention",
+        "attention"
+      ],
+      "scope_violations": 0,
+      "search_ms": 3.909,
+      "text_chars": 58
+    },
+    {
+      "id": "q12",
+      "category": "memory",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.1,
+      "mrr_at_10": 1.0,
+      "returned": 1,
+      "documents": [
+        "coupling"
+      ],
+      "scope_violations": 0,
+      "search_ms": 3.86,
+      "text_chars": 43
+    },
+    {
+      "id": "q13",
+      "category": "multi",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.2,
+      "mrr_at_10": 1.0,
+      "returned": 2,
+      "documents": [
+        "normalization",
+        "ai"
+      ],
+      "scope_violations": 0,
+      "search_ms": 5.366,
+      "text_chars": 87
+    },
+    {
+      "id": "q14",
+      "category": "multi",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.2,
+      "mrr_at_10": 1.0,
+      "returned": 2,
+      "documents": [
+        "docker",
+        "systems"
+      ],
+      "scope_violations": 0,
+      "search_ms": 5.306,
+      "text_chars": 108
+    },
+    {
+      "id": "q15",
+      "category": "multi",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.2,
+      "mrr_at_10": 1.0,
+      "returned": 2,
+      "documents": [
+        "coupling",
+        "optics"
+      ],
+      "scope_violations": 0,
+      "search_ms": 5.34,
+      "text_chars": 98
+    },
+    {
+      "id": "q16",
+      "category": "multi",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.2,
+      "mrr_at_10": 1.0,
+      "returned": 2,
+      "documents": [
+        "drift",
+        "optics"
+      ],
+      "scope_violations": 0,
+      "search_ms": 5.34,
+      "text_chars": 158
+    },
+    {
+      "id": "q17",
+      "category": "paraphrase",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.1,
+      "mrr_at_10": 1.0,
+      "returned": 2,
+      "documents": [
+        "drift",
+        "drift"
+      ],
+      "scope_violations": 0,
+      "search_ms": 3.91,
+      "text_chars": 75
+    },
+    {
+      "id": "q18",
+      "category": "paraphrase",
+      "recall_at_10": 1.0,
+      "precision_at_10": 0.2,
+      "mrr_at_10": 1.0,
+      "returned": 2,
+      "documents": [
+        "docker",
+        "systems"
+      ],
+      "scope_violations": 0,
+      "search_ms": 5.337,
+      "text_chars": 173
+    },
+    {
+      "id": "q19",
+      "category": "no-answer",
+      "recall_at_10": null,
+      "precision_at_10": 0.0,
+      "mrr_at_10": 0,
+      "returned": 0,
+      "documents": [],
+      "scope_violations": 0,
+      "search_ms": 5.414,
+      "text_chars": 0
+    },
+    {
+      "id": "q20",
+      "category": "no-answer",
+      "recall_at_10": null,
+      "precision_at_10": 0.0,
+      "mrr_at_10": 0,
+      "returned": 0,
+      "documents": [],
+      "scope_violations": 0,
+      "search_ms": 5.363,
+      "text_chars": 0
+    }
+  ],
+  "comparison": {
+    "baseline_code_sha256": {
+      "search.py": "a0b6d4fc753c1ace27d468db41d722ac64a0c390a101accf5d42c61ab9f6ce81"
+    },
+    "quality_regressions": [],
+    "overall_delta": {
+      "recall_at_10": 0.027778,
+      "mrr_at_10": 0.319444,
+      "precision_at_10": 0.005556,
+      "scope_violations": -12,
+      "mean_search_ms": 2.107,
+      "mean_text_chars": 23.9
+    }
+  }
+}

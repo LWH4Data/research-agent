@@ -13,6 +13,7 @@ import tempfile
 import unicodedata
 
 from .config import Config, Source
+from .imports import ImportedSource, library_sources, recover_imports
 from .locking import conversation_lock as project_write_lock, sync_lock
 from .operations import journaled_document_replace, recover_document_operation
 from .progress import (
@@ -187,6 +188,14 @@ def _frontmatter(
         "visual_review_pages": sorted(review_pages),
         "visual_review_pending_pages": sorted(review_pages),
     }
+    if isinstance(source, ImportedSource):
+        metadata.update({
+            "source_kind": "imported-pdf",
+            "original_filename": source.original_name,
+            "imported_at": source.imported_at,
+            "import_origin_path": source.origin_path,
+            "stored_pdf": str(source.path),
+        })
     lines = ["---"]
     for key, value in metadata.items():
         lines.append(f"{key}: {json.dumps(value, ensure_ascii=False)}")
@@ -954,13 +963,13 @@ def sync_library(
     config: Config,
     converter: Converter = pdf_converter,
     progress: ProgressCallback | None = None,
+    *,
+    imported_document: str | None = None,
 ) -> SyncStats:
-    stats = SyncStats(
-        registered_sources=sum(1 for source in config.sources if source.enabled)
-    )
+    stats = SyncStats()
     seen: set[str] = set()
     scanned_source_ids: set[str] = set()
-    enabled_sources = [source for source in config.sources if source.enabled]
+    enabled_sources: list[Source] = []
     inventory: list[tuple[Source, Path, Path, str]] = []
     processed = 0
     document_total = 0
@@ -972,6 +981,17 @@ def sync_library(
     ensure_owned_directory(config.temporary, config.root, label="임시 저장 폴더")
 
     with sync_lock(config.root):
+        recover_imports(config)
+        enabled_sources = [source for source in library_sources(config) if source.enabled]
+        if imported_document is not None:
+            enabled_sources = [
+                source for source in enabled_sources
+                if isinstance(source, ImportedSource)
+                and f"{source.id}:{source.original_name}" == imported_document
+            ]
+            if not enabled_sources:
+                raise ValueError("저장한 첨부 PDF의 정확한 문서 키를 찾을 수 없습니다")
+        stats.registered_sources = len(enabled_sources)
         _cleanup_stale_conversion_copies(config.temporary, config.root)
         # Sync is an explicit write operation and therefore the migration
         # boundary for a missing or older local store. Avoid opening a writer
@@ -1167,6 +1187,7 @@ def sync_library(
                         if (
                             previous
                             and not requires_conversion
+                            and not isinstance(source, ImportedSource)
                             and previous["size"] == file_stat.st_size
                             and previous["modified_ns"] == file_stat.st_mtime_ns
                             and previous["parser_version"] == PARSER_VERSION
@@ -1205,6 +1226,9 @@ def sync_library(
                         with _copy_for_conversion(
                             pdf, config.temporary, config.root
                         ) as (copied, digest):
+                            if (isinstance(source, ImportedSource)
+                                    and digest != source.content_sha256):
+                                raise ValueError("저장한 첨부 PDF 내용이 변경되었습니다")
                             if (
                                 previous
                                 and not requires_conversion
@@ -1521,7 +1545,7 @@ def library_status(config: Config) -> dict[str, object]:
 
 def pending_reviews(config: Config) -> list[dict[str, object]]:
     recover_document_operation(config)
-    sources = {source.id: source for source in config.sources}
+    sources = {source.id: source for source in library_sources(config)}
     with LibraryState(config.state, config.root) as state:
         reviews = state.pending_reviews()
     for review in reviews:
@@ -1544,7 +1568,7 @@ def render_review_pages(
     recover_document_operation(config)
     if dpi < 120 or dpi > 400:
         raise ValueError("DPI는 120에서 400 사이여야 합니다")
-    sources = {source.id: source for source in config.sources}
+    sources = {source.id: source for source in library_sources(config)}
     with LibraryState(config.state, config.root) as state:
         document = state.get_document(document_key)
         if document is None or document["present"] != 1:
@@ -1641,6 +1665,12 @@ def complete_reviews(
     if not re.fullmatch(r"[0-9a-f]{64}", expected_sha256):
         raise ValueError("검토한 문서의 SHA-256이 올바르지 않습니다")
     reviewer_model = validate_reviewer_model(reviewer_model)
+    if status == "verified" and visual_notes is None:
+        raise ValueError(
+            "verified로 저장하려면 --visual-notes-stdin으로 해당 페이지의 "
+            "최종 시각 검토 노트를 제출해야 합니다. --notes만으로는 "
+            "검증 완료로 저장할 수 없습니다"
+        )
     prepared_notes: str | None = None
     if visual_notes is not None:
         prepared_notes = visual_notes.strip()
@@ -1669,7 +1699,7 @@ def complete_reviews(
             raise ValueError(
                 "렌더링 후 문서 버전이 바뀌었습니다. 페이지를 다시 렌더링하세요"
             )
-        sources = {source.id: source for source in config.sources}
+        sources = {source.id: source for source in library_sources(config)}
         source_id = str(document["source_id"])
         if source_id not in sources:
             raise ValueError(f"등록되지 않은 source id입니다: {source_id}")
