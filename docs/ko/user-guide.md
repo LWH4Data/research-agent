@@ -1,5 +1,7 @@
 # Research Agent 사용 안내
 
+[웹 사용 가이드 열기](https://lwh4data.github.io/research-agent/?lang=ko#/overview)
+
 설치부터 PDF 정리, 검색, 대화 저장까지의 설명은
 [한국어 README](../../README.md)에 모아 두었습니다.
 

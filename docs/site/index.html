@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Research Agent 설치부터 PDF 정리, 검색, 대화 저장까지. Codex에서 연구 자료를 활용하는 한글·영문 사용 가이드입니다.">
+  <meta name="theme-color" content="#ffffff">
+  <title>Research Agent 사용 가이드</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="config.js" defer></script>
+  <script src="content-en.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+  <div class="app-shell" id="app-shell">
+  <aside class="sidebar" aria-label="가이드 메뉴">
+    <a class="brand" href="#/overview">Research Agent<span id="brand-subtitle">사용 가이드</span></a>
+    <button class="menu-toggle" aria-expanded="false" aria-controls="guide-nav">메뉴</button>
+    <nav id="guide-nav">
+      <a href="#/overview" data-route="overview">가이드 둘러보기</a>
+      <p id="nav-start-label">처음이라면</p>
+      <a href="#/start" data-route="start">시작하기</a>
+      <a href="#/connect" data-route="connect">PDF 폴더 연결하기</a>
+      <p id="nav-features-label">기능</p>
+      <a href="#/attach" data-route="attach">PDF 바로 첨부하기</a>
+      <a href="#/organize" data-route="organize">PDF 정리하기</a>
+      <a href="#/search" data-route="search">자료 검색하기</a>
+      <a href="#/save" data-route="save">대화 저장하기</a>
+      <a href="#/manage" data-route="manage">저장한 대화 관리하기</a>
+    </nav>
+    <div class="sidebar-bottom">사용 가이드 · v0.3.0<br>실제 작업은 Codex에서 진행해요.</div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <h1 id="page-title">가이드 둘러보기</h1>
+      <div class="topbar-actions">
+        <div class="toggle-group language-control" role="group" aria-label="언어 / Language"><button type="button" data-language="ko" aria-pressed="true" lang="ko">한국어</button><button type="button" data-language="en" aria-pressed="false" lang="en">English</button></div>
+        <a href="https://github.com/LWH4Data/research-agent" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </header>
+    <main id="main" tabindex="-1"><noscript>이 가이드는 JavaScript가 필요합니다. / This guide requires JavaScript. <a href="https://github.com/LWH4Data/research-agent#readme">README 사용 안내 / Read the README</a></noscript></main>
+    <footer class="composer-area" id="composer-area"><div class="composer-inner"><label id="prompt-label" for="prompt">Codex에서 사용할 문장</label><div class="composer"><textarea id="prompt" readonly rows="2" spellcheck="false"></textarea><button id="copy-prompt">복사</button></div><p id="composer-note">복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.</p><details class="invocation-help" id="invocation-help"><summary id="invocation-label">VS Code·CLI에서 사용하려면</summary><p id="invocation-note"></p></details></div></footer>
+    <div id="live-message" class="sr-only" role="status" aria-live="polite"></div>
+  </div>
+  </div>
+</body>
+</html>

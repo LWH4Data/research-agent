@@ -113,3 +113,17 @@ updater or migration of an existing research library. Do not tell existing users
 to delete their library to install a release. A future update flow needs separate
 design and validation for active operations, storage compatibility, data
 preservation, and recovery.
+
+## Publishing the web user guide
+
+The [web guide](https://lwh4data.github.io/research-agent/?lang=en#/overview) is
+published to GitHub Pages separately from product releases. Only the HTML, CSS,
+JavaScript, and approved screenshots in [`docs/site`](../site/) are uploaded;
+research data and development documentation are not part of the site.
+
+[`pages.yml`](../../.github/workflows/pages.yml) deploys guide changes pushed to
+`main`. Check **Deploy web guide** in Actions for the result. Both languages share
+the installation command in `docs/site/config.js`. When publishing a new product
+version, update this command and version labels along with the README. Feature
+copy lives in `app.js` and `content-en.js`; styling lives in `styles.css`. Empty
+frames mark real screenshots that are still being prepared, not simulated results.

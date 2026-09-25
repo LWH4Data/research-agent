@@ -1,5 +1,7 @@
 # Research Agent user guide
 
+[Open the web guide](https://lwh4data.github.io/research-agent/?lang=en#/overview)
+
 Research Agent helps you organize scattered PDFs and selected research
 conversations, then find them from your usual Codex conversation. macOS is the
 currently supported platform. You need a signed-in Codex subscription, not a

@@ -1,0 +1,47 @@
+name: Deploy web guide
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check guide scripts
+        run: |
+          node --check docs/site/config.js
+          node --check docs/site/content-en.js
+          node --check docs/site/app.js
+      - name: Configure Pages
+        uses: actions/configure-pages@v6.0.0
+      - name: Upload only the public guide
+        uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: docs/site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5.0.1

@@ -106,3 +106,16 @@ git push origin v0.3.1
 기존 사용자에게 설치를 위해 연구 저장소를 삭제하라고 안내하지 않는다.
 향후 업데이트는 실행 중인 작업과의 충돌, 저장 형식 호환성, 자료 보존과 복구를
 별도로 설계·검증한 뒤 제공해야 한다.
+
+## 웹 사용 가이드 배포
+
+[웹 가이드](https://lwh4data.github.io/research-agent/)는 제품 Release와 별도로
+GitHub Pages에 공개한다. [`docs/site`](../site/)에 있는 HTML·CSS·JavaScript와
+승인된 캡처만 게시하며, 연구 자료나 개발 문서는 사이트에 올리지 않는다.
+
+[`pages.yml`](../../.github/workflows/pages.yml)은 `main`에 웹 가이드 변경을
+푸시할 때 자동 배포한다. Actions의 **Deploy web guide**에서 결과를 확인한다.
+설치 명령은 `docs/site/config.js`에서 한글·영문 화면이 공유한다. 새 제품 버전을
+공개하면 README와 함께 이 명령과 가이드의 버전 안내도 갱신한다. 기능 설명은
+`app.js`와 `content-en.js`, 화면 스타일은 `styles.css`에서 관리한다. 빈 프레임은
+아직 준비 중인 실제 캡처 자리이며, 결과 화면을 만들어 보여주지 않는다.
