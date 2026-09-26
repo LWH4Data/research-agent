@@ -1,6 +1,6 @@
 # Retrieval evaluation: search-v1
 
-[한국어](./search-evaluation.md) | [English](./search-evaluation.en.md)
+[한국어](../../ko/experiments/search-evaluation.md) | [English](./search-evaluation.md)
 
 Measured: 2026-09-22
 
@@ -9,7 +9,7 @@ no vector model, LangChain, external API, or Codex model calls.
 
 ## Dataset and evaluation unit
 
-- [dataset.json](../../../evals/search/dataset.json) defines three synthetic PDFs
+- [dataset.json](../../../../evals/search/dataset.json) defines three synthetic PDFs
   covering optics, AI, and software, six synthetic memories, and twenty queries.
   It is not an accuracy study on published research papers.
 - The runner generates real PDFs in temporary storage, invokes the base parser,
@@ -74,8 +74,8 @@ write-lock waiting remain to be measured.
 Raw reports include per-query results, returned document IDs, and dataset and
 search-code hashes:
 
-- [Original report](../../../evals/search/results/baseline-v1.json)
-- [Improved report and comparison](../../../evals/search/results/passages-v1.json)
+- [Original report](../../../../evals/search/results/baseline-v1.json)
+- [Improved report and comparison](../../../../evals/search/results/passages-v1.json)
 
 ## Reproduce
 

@@ -2,20 +2,55 @@ window.RESEARCH_GUIDE_EN = {
   start: {
     title: 'Get started',
     question: 'How do I start using Research Agent?',
-    answer: 'Install it once on your Mac, then call Research Agent from the Codex conversations you already use. The command below installs the v0.3.0 prerelease.',
-    capture: 'Find Terminal in Spotlight (Korean macOS)',
-    captureCaptions: [
-      'Find Terminal in Spotlight (Korean macOS)',
-      'Terminal is open — ready for the installation command below.'
+    requirements: 'Use a Mac with Codex signed in. ChatGPT Pro 5x is recommended; Plus may reach usage limits sooner. You do not need a separate API key or a Git or Python installation.',
+    stageNav: 'Installation guide steps',
+    back: 'Previous step',
+    forward: 'Next step',
+    firstTask: 'Start by attaching a PDF',
+    folderTask: 'Connect existing PDF folders',
+    stages: [
+      {
+        label: 'Open Terminal',
+        question: 'Where do I start the installation?',
+        answer: 'Start in Terminal, an app that comes with your Mac. If Terminal is already open, go to the next step.',
+        steps: ['Press ⌘ + Space and type “Terminal.”', 'Select the Terminal app and press Enter.'],
+        captures: [
+          {key: 'spotlight', caption: 'Select Terminal in Spotlight. This example shows Korean macOS.'},
+          {key: 'terminal', caption: 'You are ready when a window like this opens. Its colors and text may differ.'}
+        ]
+      },
+      {
+        label: 'Install',
+        question: 'What do I enter in Terminal?',
+        answer: 'The command below installs the v0.3.0 prerelease. Run it once for a fresh installation.',
+        steps: ['Click “Copy” below, then paste into Terminal with ⌘ + V.', 'Press Enter and wait for “research-agent 설치가 완료되었습니다.” — the Korean installation-complete message.'],
+        captures: [{key: 'install-complete', caption: 'The installation-complete message in Terminal'}],
+        noteLabel: 'Already installed, or seeing an error?',
+        note: 'This command is for fresh installations. If it says the destination already exists, keep that folder and share the message with Codex. Normal installation does not ask for your Mac administrator password.',
+        composer: 'install'
+      },
+      {
+        label: 'Choose folders',
+        question: 'Can I continue without any PDFs ready?',
+        answer: 'Yes. In the dialog after installation, choose “나중에 하기” (Later). Installation is complete even if you do not connect any folders.',
+        steps: ['To connect PDF folders now, choose “폴더 선택하기” (Select folders). The installer currently shows these buttons in Korean.', 'Choose folders in the window that opens. Hold ⌘ to select several folders in the same view.'],
+        captures: [{key: 'folder-choice', caption: 'The dialog with “나중에 하기” (Later) and “폴더 선택하기” (Select folders)'}],
+        noteLabel: 'Closed the dialog, or did it not appear?',
+        note: 'Continue if Terminal showed the installation-complete message. Canceling folder selection does not undo installation. You can connect folders later or attach PDFs directly in a conversation. Connecting a folder alone does not start processing its PDFs.'
+      },
+      {
+        label: 'Try it in Codex',
+        question: 'How do I call Research Agent after installation?',
+        answer: 'Fully quit and reopen your Codex app, VS Code, or CLI. Continue in a conversation in the project you normally use.',
+        steps: ['In the Codex app, select Research Agent from the @ menu.', 'Ask about its features using the prompt below. You do not need a PDF yet.'],
+        captures: [{key: 'codex-invocation', caption: 'Selecting Research Agent and asking how to use it in Codex'}],
+        safety: 'Use Ask for approval or Approve for me. Do not use Full access with Research Agent.',
+        noteLabel: 'Cannot find it in the menu?',
+        note: 'Check that installation finished. Fully quit and reopen the Codex app or VS Code, rather than only starting a new conversation. If it still does not appear, share the installation messages with Codex.',
+        composer: 'prompt',
+        prompt: '@Research Agent What can you do, and how should I get started?'
+      }
     ],
-    steps: [
-      'Press ⌘ + Space, search for “Terminal,” then press Enter to open it.',
-      'Copy the entire installation command below, paste it into Terminal with ⌘ + V, then press Enter.',
-      'After installation, choose “Select folders” or “Later” in the dialog. If you see a message that the installation folder already exists, tell Codex instead of deleting it.',
-      'Fully quit and reopen your Codex app or VS Code. In the app, select Research Agent from the @ menu. In VS Code or the CLI, choose research-library from /skills.'
-    ],
-    note: 'Currently supports macOS. It uses your signed-in Codex subscription, so you do not need a separate API key. ChatGPT Pro 5x is recommended; Plus may reach usage limits sooner. Do not use Full access. This installer supports fresh installations only. An update option that preserves existing library data is not available yet.',
-    prompt: '',
     prev: 'overview',
     next: 'connect'
   },

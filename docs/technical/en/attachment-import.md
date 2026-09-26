@@ -1,6 +1,6 @@
 # PDF Attachment Storage and Installation Onboarding
 
-[한국어](./attachment-import.md) | [English](./attachment-import.en.md) | [Technical design contents](./README.en.md)
+[한국어](../ko/attachment-import.md) | [English](./attachment-import.md) | [Technical design contents](../README.en.md)
 
 Users can attach one or more PDFs to a Codex conversation and ask Research Agent
 to organize them immediately. That request adds the PDFs to the existing search
@@ -111,12 +111,12 @@ skip the dialog and print instructions for adding folders later.
 
 | Responsibility | File |
 | --- | --- |
-| Snapshots, metadata, deduplication, recovery | [imports.py](../../src/research_store/imports.py) |
-| Authorized attachment bytes in one launcher call | [import_attachment.py](../../scripts/import_attachment.py) |
-| Path and binary input commands | [cli.py](../../src/research_store/cli.py) |
-| Integration with conversion and review | [sync.py](../../src/research_store/sync.py) |
-| User intent and agent workflow | [SKILL.md](../../resources/skills/research-library/SKILL.md) |
-| Post-installation flow | [install_onboarding.py](../../scripts/install_onboarding.py) |
-| Native dialog and multiple-folder picker | [picker.py](../../src/research_store/picker.py) |
-| Storage and recovery checks | [test_pdf_import.py](../../tests/test_pdf_import.py) |
-| Actual launcher permissions | [test_import_permission_integration.py](../../tests/test_import_permission_integration.py) |
+| Snapshots, metadata, deduplication, recovery | [imports.py](../../../src/research_store/imports.py) |
+| Authorized attachment bytes in one launcher call | [import_attachment.py](../../../scripts/import_attachment.py) |
+| Path and binary input commands | [cli.py](../../../src/research_store/cli.py) |
+| Integration with conversion and review | [sync.py](../../../src/research_store/sync.py) |
+| User intent and agent workflow | [SKILL.md](../../../resources/skills/research-library/SKILL.md) |
+| Post-installation flow | [install_onboarding.py](../../../scripts/install_onboarding.py) |
+| Native dialog and multiple-folder picker | [picker.py](../../../src/research_store/picker.py) |
+| Storage and recovery checks | [test_pdf_import.py](../../../tests/test_pdf_import.py) |
+| Actual launcher permissions | [test_import_permission_integration.py](../../../tests/test_import_permission_integration.py) |

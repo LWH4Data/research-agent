@@ -1,8 +1,8 @@
 # Safety and Agent-Routing Validation
 
-[한국어](./safety-routing-validation.md) | [English](./safety-routing-validation.en.md)
+[한국어](../../ko/experiments/safety-routing-validation.md) | [English](./safety-routing-validation.md)
 
-Validation dates: 2026-09-22; background-review follow-up: 2026-09-24
+Validation dates: 2026-09-22; background-review follow-up: 2026-09-24; review-note storage audit: 2026-09-25
 
 This record captures the live validation performed for storage recovery,
 permissions, prompt injection, and model routing issues found before prototype
@@ -66,6 +66,68 @@ release.
   execution rule, visual accuracy on real papers, and subscription usage at
   scale remain to be checked separately.
 
+## 2026-09-25 Review-Note Storage Audit
+
+The 2026-09-25 read-only audit of the personal installed store found 5 documents
+and 66 `verified` pages matched by 66 nonempty per-page Markdown notes. Stored
+document identity, SHA-256, state, model, and review time matched; managed
+sections were valid, and every current pending list was empty. Missing, empty,
+duplicate, mismatched, or orphan notes and unfinished document journals all
+numbered zero; SQLite `quick_check` passed. SHA-256 fingerprints of the database,
+configuration, and five Markdown files (seven files total) were unchanged after the audit.
+This store required no migration for this requirement.
+
+The audit compared only that personal installation's database and Markdown. It
+did not inspect older test or development copies, rehash source PDFs, establish
+actual image inspection, or assess the notes' semantic accuracy, and it made no
+new model calls. It does not establish that historical records in other stores
+are consistent.
+
+2026-09-25 validation record: 313 of 318 tests passed, with five environmental
+skips. Three core regression tests also passed against the installed copy. This
+validation made no new model calls.
+
+## 2026-09-26 Development Instructions, Documentation, and Release Boundaries
+
+Validation followed separation of development/product settings and extraction
+of duplicated operating instructions into task-specific references. The version
+remains `0.3.0`; the archive below was built for local validation. This work did
+not publish a new Release or web deployment.
+
+| Check | Result |
+| --- | --- |
+| Full automated suite with the actual archive | 359 passed out of 364; 5 environment-dependent checks skipped |
+| Actual install, search, and removal in temporary HOME | Passed; checked skill/agent registration, original contents and modification time, and removal into temporary Trash |
+| Release contents | Archive matched all 52 allowed product files; development AGENTS, config, and checking tools excluded |
+| Product settings | Semantically identical TOML to the former product settings; only `resources/codex.runtime.toml` supplies the shipped config |
+| Korean, English, and web installation instructions | Command, download URL, and version checks passed, including deliberately inconsistent guide fixtures |
+| Documentation moves | Checked 488 local Markdown links, all former README heading anchors, and preservation of 22 code/diagram blocks per language |
+| Skill and agents | Official skill-format validation and registration tests passed; Luna xhigh and Sol high preserved |
+
+Skipped checks cover one nested macOS notification sandbox integration, two
+opt-in attachment/storage permission integrations, and two tests requiring a
+filesystem that preserves case-distinct filenames. These results do not establish
+permissions, notifications, or subscription model behavior on a new Mac. No real
+user installation or research originals were used. No new visual model calls,
+subscription usage measurements, or processing-speed measurements were made.
+
+An independent instruction review followed numeric comparison across two PDFs,
+same-title conversation updates with legacy/revision conflicts, and one invalid
+file among three attachments. It exposed a missing documented route for a
+verified page whose note lacks a required value; the existing `render-review
+--page` command is now documented. This was a written workflow review, not a
+measurement of actual Codex model behavior.
+
+To reproduce, assemble the archive using the allowlist step in the
+[release workflow](../../../../.github/workflows/release-check.yml), then set
+`RESEARCH_AGENT_RELEASE_ARCHIVE` to its absolute path when running the full suite.
+Without that variable, two archive tests also skip. Check versions and guides with:
+
+```sh
+.venv/bin/python -B scripts/check_release_version.py
+.venv/bin/python -B scripts/check_guides.py
+```
+
 ## Reproduce the Automated Checks
 
 From the repository root, run the following command to replay the core recovery,
@@ -120,4 +182,4 @@ PDF synchronization and visual-review writes. Forced-exit validation injected
 a storage-device failure. PDF equation, table, and figure accuracy and Plus/Pro
 usage measurement were outside this validation. The task-level token count from
 the progress integration run is recorded as a preliminary observation in the
-[subscription usage experiment](./subscription-usage.en.md).
+[subscription usage experiment](./subscription-usage.md).

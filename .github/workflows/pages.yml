@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - 'docs/site/**'
+      - 'README.md'
+      - 'docs/en/user-guide.md'
+      - 'pyproject.toml'
+      - 'scripts/check_guides.py'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -33,6 +37,7 @@ jobs:
           persist-credentials: false
       - name: Check guide scripts
         run: |
+          python3 scripts/check_guides.py
           node --check docs/site/config.js
           node --check docs/site/content-en.js
           node --check docs/site/app.js

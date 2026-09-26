@@ -103,11 +103,22 @@ class PersonalRegistrationTests(unittest.TestCase):
             manager_text = (
                 home / ".codex/agents/research-library-manager.toml"
             ).read_text(encoding="utf-8")
-            self.assertIn("conversation-get", manager_text)
-            self.assertIn("--confirm-legacy-promotion", manager_text)
-            self.assertIn("legacy deletion fallback", manager_text)
+            # Generated instructions must point to the actual installed resources;
+            # workflow details live there rather than being copied into each agent.
+            for reference in (
+                "sources-and-attachments.md", "sync-and-background.md",
+                "search-and-evidence.md", "conversations.md",
+                "conversation-payload.md",
+            ):
+                self.assertIn(reference, manager_text)
+                self.assertTrue((skill_link / "references" / reference).is_file())
+            converter_text = (
+                home / ".codex/agents/research-paper-converter.toml"
+            ).read_text(encoding="utf-8")
+            self.assertIn("references/visual-review.md", converter_text)
+            self.assertTrue((skill_link / "references/visual-review.md").is_file())
             self.assertIn("primary Codex session, not this manager", manager_text)
-            self.assertIn("Do not try to\\ncreate a nested agent", manager_text)
+            self.assertIn("Do not try to create a nested agent", manager_text)
             rule = home / ".codex/rules/research-library.rules"
             rule_text = rule.read_text(encoding="utf-8")
             self.assertTrue(rule_text.startswith("# research-agent-registration-v1\n"))

@@ -2,20 +2,55 @@ const pages={
   "start": {
     "title": "시작하기",
     "question": "Research Agent를 처음 써보려면 어떻게 하나요?",
-    "answer": "Mac에 한 번 설치하면, 평소 사용하던 Codex 대화에서 Research Agent를 불러올 수 있어요. 아래 명령으로 v0.3.0 사전 출시 버전을 설치하세요.",
-    "capture": "Spotlight에서 터미널 검색하기",
-    "captureCaptions": [
-      "Spotlight에서 터미널 검색하기",
-      "터미널이 열린 화면 — 아래 설치 명령을 입력할 준비가 됐어요."
+    "requirements": "Mac과 로그인한 Codex를 준비하세요. ChatGPT Pro 5x를 권장하며 Plus는 사용량 제한에 더 빨리 도달할 수 있어요. 별도 API 키나 Git·Python 설치는 필요 없어요.",
+    "stageNav": "설치 안내 단계",
+    "back": "이전 단계",
+    "forward": "다음 단계",
+    "firstTask": "PDF를 첨부해서 시작하기",
+    "folderTask": "기존 PDF 폴더 연결하기",
+    "stages": [
+      {
+        "label": "터미널 열기",
+        "question": "설치는 어디서 시작하나요?",
+        "answer": "터미널이라는 Mac 기본 앱에서 시작해요. 이미 터미널이 열려 있다면 다음 단계로 넘어가세요.",
+        "steps": ["키보드에서 ⌘ + Space를 누르고 “터미널”을 입력하세요.", "검색 결과의 터미널을 선택하고 Enter를 누르세요."],
+        "captures": [
+          {"key": "spotlight", "caption": "검색 결과에서 터미널 앱을 선택하세요."},
+          {"key": "terminal", "caption": "이런 창이 열리면 준비됐어요. 배경색과 글자는 다를 수 있어요."}
+        ]
+      },
+      {
+        "label": "설치하기",
+        "question": "터미널에 무엇을 입력하나요?",
+        "answer": "아래 명령으로 v0.3.0 사전 출시 버전을 설치해요. 처음 설치할 때 한 번만 실행하세요.",
+        "steps": ["아래 “복사”를 누르고, 터미널 창에서 ⌘ + V로 붙여 넣으세요.", "Enter를 누르고 “research-agent 설치가 완료되었습니다.”라는 안내가 나올 때까지 기다리세요."],
+        "captures": [{"key": "install-complete", "caption": "터미널에 설치 완료 안내가 표시된 화면"}],
+        "noteLabel": "기존 설치가 있거나 오류가 나타났나요?",
+        "note": "이 명령은 새 설치용이에요. 기존 폴더가 있다는 안내가 나오면 삭제하지 말고, 표시된 메시지를 Codex에 알려주세요. 정상 설치는 Mac 관리자 암호를 요구하지 않아요.",
+        "composer": "install"
+      },
+      {
+        "label": "폴더 선택",
+        "question": "아직 PDF를 준비하지 못했는데 괜찮나요?",
+        "answer": "괜찮아요. 설치 후 나타나는 안내창에서 “나중에 하기”를 누르세요. 폴더를 연결하지 않아도 설치는 완료돼요.",
+        "steps": ["지금 PDF 폴더를 연결하려면 “폴더 선택하기”를 누르세요.", "열리는 선택창에서 폴더를 고르세요. 같은 화면의 여러 폴더는 ⌘ 키를 누른 채 선택할 수 있어요."],
+        "captures": [{"key": "folder-choice", "caption": "“나중에 하기”와 “폴더 선택하기”가 보이는 안내창"}],
+        "noteLabel": "선택창을 닫았거나 창이 나타나지 않았나요?",
+        "note": "터미널에 설치 완료 안내가 있다면 계속 진행하세요. 폴더 선택을 취소해도 설치는 유지돼요. 나중에 폴더를 추가하거나 PDF를 대화에 바로 첨부할 수 있어요. 폴더 연결만으로 PDF 정리가 시작되지는 않아요."
+      },
+      {
+        "label": "Codex에서 확인",
+        "question": "설치한 Research Agent를 어떻게 불러오나요?",
+        "answer": "사용 중인 Codex 앱·VS Code·CLI를 완전히 종료한 뒤 다시 열어요. 평소 사용하던 프로젝트의 대화에서 이어가면 돼요.",
+        "steps": ["Codex 앱에서는 @ 메뉴를 열고 Research Agent를 선택하세요.", "아래 문장으로 사용법을 물어보세요. PDF가 없어도 확인할 수 있어요."],
+        "captures": [{"key": "codex-invocation", "caption": "Research Agent를 선택하고 사용법을 묻는 Codex 대화 화면"}],
+        "safety": "권한은 Ask for approval 또는 Approve for me를 사용하세요. Research Agent에는 Full access를 사용하지 마세요.",
+        "noteLabel": "메뉴에서 찾을 수 없나요?",
+        "note": "설치 완료 안내가 있었는지 확인하고, 새 대화를 여는 것뿐 아니라 Codex 앱이나 VS Code 자체를 완전히 종료한 뒤 다시 실행하세요. 계속 보이지 않으면 설치 메시지를 Codex에 알려주세요.",
+        "composer": "prompt",
+        "prompt": "@Research Agent 어떤 기능이 있고, 처음에는 어떻게 사용하면 돼?"
+      }
     ],
-    "steps": [
-      "⌘ + Space를 누르고 “터미널”을 검색한 뒤 Enter를 눌러 열어요.",
-      "아래 설치 명령 전체를 복사하고, 터미널에 ⌘ + V로 붙여 넣은 뒤 Enter를 눌러요.",
-      "설치 후 안내창에서 “폴더 선택하기” 또는 “나중에 하기”를 선택해요. 기존 설치 폴더가 있다는 메시지가 나오면 지우지 말고 Codex에 알려주세요.",
-      "사용 중인 Codex 앱이나 VS Code를 완전히 종료한 뒤 다시 열어요. 앱에서는 @ 메뉴의 Research Agent를, VS Code·CLI에서는 /skills의 research-library를 선택하세요."
-    ],
-    "note": "현재 macOS를 지원해요. 로그인한 Codex 구독을 사용하며 별도 API 키는 필요 없어요. ChatGPT Pro 5x를 권장해요. Plus는 사용량 제한에 더 빨리 도달할 수 있어요. Full access는 사용하지 마세요. 이번 설치 도구는 새 설치만 지원하며, 기존 자료를 보존하는 업데이트 기능은 아직 없어요.",
-    "prompt": "",
     "prev": "overview",
     "next": "connect"
   },
@@ -110,10 +145,10 @@ const pages={
     "next": "search"
   }
 };
-const captures={start:[
-  {src:'assets/screenshots/spotlight-terminal-crop.png',width:1282,height:327},
-  {src:'assets/screenshots/terminal-ready-crop.png',width:1282,height:220}
-]};
+const installationCaptures={
+  spotlight:{src:'assets/screenshots/spotlight-terminal-crop.png',width:1282,height:327},
+  terminal:{src:'assets/screenshots/terminal-ready-crop.png',width:1282,height:220}
+};
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ui={ko:{guide:'사용 가이드',overview:'가이드 둘러보기',menu:'메뉴',skip:'본문으로 이동',nav:'가이드 메뉴',first:'처음이라면',features:'기능',me:'나',assistant:'Research Agent 안내',howto:'사용 방법',note:'알아두세요',previous:'이전',next:'다음',related:'관련 가이드',blank:'실제 캡처를 넣을 빈 영역',capturePending:'캡처 준비 중',copy:'복사',copied:'복사됨',manualCopy:'직접 복사',copiedNotice:'복사했어요.',failedCopy:'복사할 문장을 선택했어요. ⌘ + C 또는 Ctrl + C로 직접 복사하세요.',prompt:'Codex에서 사용할 문장',invocationLabel:'VS Code·CLI에서 사용하려면',invocationNote:'문장 앞의 @Research Agent를 $research-library로 바꾸세요. 또는 /skills에서 research-library를 선택한 뒤 요청을 입력하세요.',install:'터미널에서 실행할 설치 명령',paste:'복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.',installNote:'명령을 복사해도 설치가 실행되지는 않아요. 터미널에서 직접 실행하세요.',sideNote:'사용 가이드 · v0.3.0\n실제 작업은 Codex에서 진행해요.',overviewQuestion:'Research Agent로 무엇을 할 수 있나요?',overviewAnswer:'흩어진 PDF와 중요한 연구 대화를 정리하고, 필요할 때 다시 찾아볼 수 있어요. 궁금한 기능을 선택해 보세요.',featureDescriptions:{attach:'PDF를 대화에 첨부해 바로 저장하고 질문해요.',organize:'기존 폴더의 새 문서와 변경된 문서를 정리해요.',search:'여러 PDF와 저장한 대화에서 관련 내용을 찾아요.',save:'연구 아이디어와 실험 설계를 선택해서 보관해요.'},startLink:'처음이라면 설치부터 시작하세요.',overviewEnd:'현재 지원 환경은 macOS의 Codex예요. 이 웹은 사용 방법을 안내합니다.',},en:{guide:'User guide',overview:'Explore the guide',menu:'Menu',skip:'Skip to content',nav:'Guide navigation',first:'Getting started',features:'Features',me:'You',assistant:'Research Agent guide',howto:'How to use it',note:'Good to know',previous:'Previous',next:'Next',related:'Related guides',blank:'Empty frame reserved for a real screenshot',capturePending:'Screenshot coming soon',copy:'Copy',copied:'Copied',manualCopy:'Copy manually',copiedNotice:'Copied to clipboard.',failedCopy:'The text is selected. Press ⌘ + C or Ctrl + C to copy it.',prompt:'Prompt to use in Codex',invocationLabel:'Using VS Code or the CLI?',invocationNote:'Replace @Research Agent at the start of the prompt with $research-library. Or choose research-library from /skills, then enter your request.',install:'Installation command for Terminal',paste:'Paste this into your usual Codex conversation.',installNote:'Copying does not install anything. Run the command yourself in Terminal.',sideNote:'User guide · v0.3.0\nActual work takes place in Codex.',overviewQuestion:'What can I do with Research Agent?',overviewAnswer:'Organize scattered PDFs and important research conversations, then find them again when you need them. Choose a feature to learn more.',featureDescriptions:{attach:'Attach PDFs in Codex to save them and ask questions.',organize:'Organize new and changed documents in their existing folders.',search:'Find related information across PDFs and saved conversations.',save:'Keep selected research ideas and experiment plans.'},startLink:'New here? Start with installation.',overviewEnd:'The supported environment is Codex on macOS. This website explains how to use it.',}};
 const preferences={language:'ko'};
@@ -134,7 +169,56 @@ function savePreferences(){
   // Old links still open the same feature, without an environment-specific layout.
   url.searchParams.delete('environment');
   url.searchParams.set('lang',preferences.language);
+  if(currentRoute()!=='start')url.searchParams.delete('step');
   if(url.href!==location.href)history.replaceState(null,'',url);
+}
+function renderCapture(capture, route, language){
+  const t=ui[language];
+  const asset=route==='start'?installationCaptures[capture.key]:null;
+  const caption=escapeHTML(capture.caption);
+  const attributes=`data-capture-language="${language}" data-capture-feature="${route}" data-capture-key="${escapeHTML(capture.key)}"`;
+  return asset
+    ? `<figure class="screenshot"><figcaption>${caption}</figcaption><div class="screenshot-frame has-capture" ${attributes}><img src="${asset.src}" width="${asset.width}" height="${asset.height}" alt="${caption}"></div></figure>`
+    : `<figure class="screenshot"><figcaption>${caption} · ${t.capturePending}</figcaption><div class="screenshot-frame" role="img" aria-label="${caption} — ${t.blank}" ${attributes}></div></figure>`;
+}
+function setComposer(kind, prompt=''){
+  const t=ui[preferences.language];
+  composer.classList.toggle('hidden',!kind);
+  promptField.value=kind==='install'?window.RESEARCH_GUIDE_RELEASE.installCommand:prompt;
+  promptField.rows=kind==='install'?5:2;
+  document.querySelector('#prompt-label').textContent=kind==='install'?t.install:t.prompt;
+  document.querySelector('#composer-note').textContent=kind==='install'?t.installNote:t.paste;
+  const invocationHelp=document.querySelector('#invocation-help');
+  invocationHelp.classList.toggle('hidden',kind!=='prompt');
+  invocationHelp.open=false;
+  document.querySelector('#invocation-label').textContent=t.invocationLabel;
+  document.querySelector('#invocation-note').textContent=t.invocationNote;
+}
+function renderInstallation(page, t, language){
+  const requested=Number(new URL(location.href).searchParams.get('step'));
+  const step=Number.isInteger(requested)&&requested>=1&&requested<=page.stages.length?requested:1;
+  const stage=page.stages[step-1];
+  setComposer(stage.composer,stage.prompt);
+  const previous=step>1
+    ? `<button type="button" data-install-step="${step-1}">${page.back}</button>`
+    : `<a href="#/overview">${t.overview}</a>`;
+  const next=step<page.stages.length
+    ? `<button type="button" data-install-step="${step+1}">${page.forward}: ${escapeHTML(page.stages[step].label)}</button>`
+    : `<a href="#/attach">${page.firstTask}</a>`;
+  main.innerHTML=`<div class="conversation installation-guide">
+    <nav aria-label="${page.stageNav}" class="installation-nav"><ol>${page.stages.map((s,i)=>`<li><button type="button" data-install-step="${i+1}"${step===i+1?' aria-current="step"':''}><span>${i+1}.</span> ${escapeHTML(s.label)}</button></li>`).join('')}</ol></nav>
+    <div class="message user-message"><p class="speaker">${t.me}</p><p class="message-text">${escapeHTML(stage.question)}</p></div>
+    <div class="message assistant-message"><p class="speaker">${t.assistant}</p>
+      <p class="message-text">${escapeHTML(stage.answer)}</p>
+      ${step===1?`<p class="installation-requirements">${escapeHTML(page.requirements)}</p>`:''}
+      ${stage.safety?`<p class="installation-requirements">${escapeHTML(stage.safety)}</p>`:''}
+      <ol class="installation-actions">${stage.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ol>
+      ${stage.captures.map(c=>renderCapture(c,'start',language)).join('')}
+      ${stage.note?`<details class="howto"><summary>${escapeHTML(stage.noteLabel)}</summary><p class="note">${escapeHTML(stage.note)}</p></details>`:''}
+    </div>
+    <nav class="installation-pagination" aria-label="${page.stageNav}">${previous}${next}</nav>
+    ${step===page.stages.length?`<p class="installation-alternative"><a href="#/connect">${page.folderTask}</a></p>`:''}
+  </div>`;
 }
 function render(){
   const {language}=preferences;const t=ui[language];const route=currentRoute();const translated=language==='en'?window.RESEARCH_GUIDE_EN:pages;
@@ -153,26 +237,16 @@ function render(){
   document.querySelector('#guide-nav').classList.remove('is-open');
   document.querySelector('.menu-toggle').setAttribute('aria-expanded','false');
   document.querySelector('#copy-prompt').textContent=t.copy;
+  document.querySelector('#live-message').textContent='';
   if(route==='overview'){
     composer.classList.add('hidden');
     main.innerHTML=`<div class="conversation overview"><div class="message user-message"><p class="speaker">${t.me}</p><p class="overview-question">${t.overviewQuestion}</p></div><div class="message assistant-message"><p class="speaker">${t.assistant}</p><p class="message-text">${t.overviewAnswer}</p><ul class="feature-list">${['attach','organize','search','save'].map(key=>`<li><a href="#/${key}">${titleFor(key)}</a><p>${t.featureDescriptions[key]}</p></li>`).join('')}</ul><div class="overview-start"><a href="#/start">${t.startLink}</a><p>${t.overviewEnd}</p></div></div></div>`;
+  }else if(route==='start'){
+    renderInstallation(translated.start,t,language);
   }else{
     const p={...translated[route],steps:[...translated[route].steps]};
-    const routeCaptures=captures[route];
-    const captureFigures=routeCaptures
-      ? routeCaptures.map((capture,index)=>{
-          const caption=p.captureCaptions[index];
-          return `<figure class="screenshot"><figcaption>${escapeHTML(caption)}</figcaption><div class="screenshot-frame has-capture" data-capture-language="${language}" data-capture-feature="${route}"><img src="${capture.src}" width="${capture.width}" height="${capture.height}" alt="${escapeHTML(caption)}"></div></figure>`;
-        }).join('')
-      : `<figure class="screenshot"><figcaption>${escapeHTML(p.capture)} · ${t.capturePending}</figcaption><div class="screenshot-frame" role="img" aria-label="${t.blank}" data-capture-language="${language}" data-capture-feature="${route}"></div></figure>`;
-    composer.classList.remove('hidden');promptField.value=route==='start'?window.RESEARCH_GUIDE_RELEASE.installCommand:p.prompt;promptField.rows=route==='start'?5:2;
-    document.querySelector('#prompt-label').textContent=route==='start'?t.install:t.prompt;
-    document.querySelector('#composer-note').textContent=route==='start'?t.installNote:t.paste;
-    const invocationHelp=document.querySelector('#invocation-help');
-    invocationHelp.classList.toggle('hidden',route==='start');
-    invocationHelp.open=false;
-    document.querySelector('#invocation-label').textContent=t.invocationLabel;
-    document.querySelector('#invocation-note').textContent=t.invocationNote;
+    const captureFigures=renderCapture({key:route,caption:p.capture},route,language);
+    setComposer('prompt',p.prompt);
     main.innerHTML=`<div class="conversation"><div class="message user-message"><p class="speaker">${t.me}</p><p class="message-text">${escapeHTML(p.question)}</p></div><div class="message assistant-message"><p class="speaker">${t.assistant}</p><p class="message-text">${escapeHTML(p.answer)}</p>${captureFigures}<details class="howto" open><summary>${t.howto}</summary><ol>${p.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ol></details><details class="howto"><summary>${t.note}</summary><p class="note">${escapeHTML(p.note)}</p></details></div><nav class="related" aria-label="${t.related}"><a href="#/${p.prev}">${t.previous}: ${titleFor(p.prev)}</a><a href="#/${p.next}">${t.next}: ${titleFor(p.next)}</a></nav></div>`;
   }
   main.scrollTo({top:0,behavior:'instant'});
@@ -184,6 +258,15 @@ function syncPreferencesFromURL(){
 }
 window.addEventListener('popstate',()=>{syncPreferencesFromURL();render()});
 window.addEventListener('hashchange',()=>{syncPreferencesFromURL();render();main.focus({preventScroll:true})});
+main.addEventListener('click',event=>{
+  const button=event.target.closest('[data-install-step]');
+  if(!button||currentRoute()!=='start')return;
+  const url=new URL(location.href);
+  url.searchParams.set('step',button.dataset.installStep);
+  history.pushState(null,'',url);
+  render();
+  main.focus({preventScroll:true});
+});
 document.querySelector('.menu-toggle').addEventListener('click',function(){const open=this.getAttribute('aria-expanded')!=='true';this.setAttribute('aria-expanded',String(open));document.querySelector('#guide-nav').classList.toggle('is-open',open)});
 document.querySelector('.skip-link').addEventListener('click',e=>{e.preventDefault();main.focus()});
 document.querySelectorAll('[data-language]').forEach(button=>button.addEventListener('click',()=>{preferences.language=button.dataset.language;savePreferences();render();}));

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tarfile
@@ -13,6 +14,51 @@ import unittest
 
 PROJECT = Path(__file__).resolve().parents[1]
 ARCHIVE = os.environ.get("RESEARCH_AGENT_RELEASE_ARCHIVE")
+
+
+class RuntimeManifestTests(unittest.TestCase):
+    def test_product_settings_and_instruction_dependencies_are_shipped(self) -> None:
+        entries = {}
+        for line in (PROJECT / "packaging/runtime-files.txt").read_text().splitlines():
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            fields = line.split()
+            self.assertIn(len(fields), (1, 2), line)
+            self.assertNotIn(fields[-1], entries, line)
+            entries[fields[-1]] = fields[0]
+            self.assertTrue((PROJECT / fields[0]).is_file(), line)
+        self.assertEqual(entries["AGENTS.md"], "resources/AGENTS.runtime.md")
+        self.assertEqual(entries[".codex/config.toml"], "resources/codex.runtime.toml")
+        self.assertNotIn("AGENTS.md", entries.values())
+        self.assertNotIn(".codex/config.toml", entries.values())
+        self.assertNotIn("scripts/check_guides.py", entries)
+        runtime = tomllib.loads((PROJECT / entries[".codex/config.toml"]).read_text())
+        self.assertEqual(runtime["sandbox_mode"], "workspace-write")
+        self.assertEqual(runtime["approval_policy"], "never")
+        limits = runtime["sandbox_workspace_write"]
+        self.assertEqual(limits["writable_roots"], [])
+        self.assertFalse(limits["network_access"])
+        self.assertTrue(limits["exclude_slash_tmp"])
+        self.assertTrue(limits["exclude_tmpdir_env_var"])
+        # A task-specific reference must survive packaging as well as exist in
+        # the development checkout, including references linked by references.
+        skill = PROJECT / "resources/skills/research-library"
+        pending = [skill / "SKILL.md"]
+        visited = set()
+        while pending:
+            path = pending.pop()
+            if path in visited:
+                continue
+            visited.add(path)
+            relative = path.relative_to(PROJECT).as_posix()
+            self.assertEqual(entries.get(relative), relative, relative)
+            for target in re.findall(r"\]\(([^)]+)\)", path.read_text()):
+                if "://" in target or target.startswith("#"):
+                    continue
+                linked = (path.parent / target.split("#", 1)[0]).resolve()
+                if linked.suffix == ".md" and linked.is_relative_to(skill):
+                    self.assertTrue(linked.is_file(), target)
+                    pending.append(linked)
 
 
 @unittest.skipUnless(ARCHIVE, "Set RESEARCH_AGENT_RELEASE_ARCHIVE to test an assembled release")
@@ -33,6 +79,14 @@ class ReleaseBundleTests(unittest.TestCase):
                 self.assertEqual(archive.extractfile(name).read(), path.read_bytes(), name)
             rules = archive.extractfile("research-agent/AGENTS.md").read()
             self.assertNotIn(b"# Research Agent development", rules)
+            self.assertEqual(
+                archive.extractfile("research-agent/.codex/config.toml").read(),
+                (PROJECT / "resources/codex.runtime.toml").read_bytes(),
+            )
+            self.assertNotEqual(
+                archive.extractfile("research-agent/.codex/config.toml").read(),
+                (PROJECT / ".codex/config.toml").read_bytes(),
+            )
             for path in ("research-store", "resources/skills/research-library/scripts/research-store", "resources/skills/research-library/scripts/research-review"):
                 self.assertTrue(archive.getmember("research-agent/" + path).mode & 0o111, path)
         with (PROJECT / "pyproject.toml").open("rb") as stream:

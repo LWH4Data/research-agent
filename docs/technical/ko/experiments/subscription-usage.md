@@ -1,6 +1,6 @@
 # 구독 사용량 및 처리 효율 실험
 
-[한국어](./subscription-usage.md) | [English](./subscription-usage.en.md)
+[한국어](./subscription-usage.md) | [English](../../en/experiments/subscription-usage.md)
 
 [개발 로드맵](../ROADMAP.md)
 

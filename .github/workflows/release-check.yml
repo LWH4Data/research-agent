@@ -34,6 +34,8 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install .
+      - name: Check user guide installation instructions
+        run: python scripts/check_guides.py
       - name: Run unit tests
         env:
           PYTHONDONTWRITEBYTECODE: '1'
@@ -77,6 +79,8 @@ jobs:
                   raise SystemExit(f'Duplicate or development-only destination: {destination}')
               if destination == 'AGENTS.md' and source != 'resources/AGENTS.runtime.md':
                   raise SystemExit('The runtime root guide must be the canonical product rules')
+              if destination == '.codex/config.toml' and source != 'resources/codex.runtime.toml':
+                  raise SystemExit('The runtime Codex config must come from the product resource')
               path = root / source
               if path.resolve() != path or not stat.S_ISREG(path.lstat().st_mode) or path.stat().st_nlink != 1:
                   raise SystemExit(f'Expected one regular source file: {source}')
@@ -86,6 +90,8 @@ jobs:
               raise SystemExit('A runtime module is missing from the file list')
           if entries['AGENTS.md'].read_bytes() != entries['resources/AGENTS.runtime.md'].read_bytes():
               raise SystemExit('Runtime guides differ')
+          if entries.get('.codex/config.toml') != root / 'resources/codex.runtime.toml':
+              raise SystemExit('Canonical runtime Codex config is missing')
           with archive.open('wb') as raw, gzip.GzipFile(filename='', fileobj=raw, mode='wb', mtime=epoch) as zipped:
               with tarfile.open(fileobj=zipped, mode='w', format=tarfile.USTAR_FORMAT) as bundle:
                   directory = tarfile.TarInfo('research-agent/')

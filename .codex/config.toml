@@ -1,10 +1,13 @@
-# Keep every local Codex command inside this project boundary.
+# Development checkout only. Never copy this file into a runtime release.
+# Product defaults live in resources/codex.runtime.toml.
 sandbox_mode = "workspace-write"
-approval_policy = "never"
+approval_policy = "on-request"
 allow_login_shell = false
 
 [sandbox_workspace_write]
 writable_roots = []
 network_access = false
-exclude_slash_tmp = true
-exclude_tmpdir_env_var = true
+# Disposable tests use the standard temporary directories. No source folder is
+# added to writable_roots; privileged operations still require approval.
+exclude_slash_tmp = false
+exclude_tmpdir_env_var = false

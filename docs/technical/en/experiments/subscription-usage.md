@@ -1,8 +1,8 @@
 # Subscription Usage and Processing Efficiency Experiment
 
-[한국어](./subscription-usage.md) | [English](./subscription-usage.en.md)
+[한국어](../../ko/experiments/subscription-usage.md) | [English](./subscription-usage.md)
 
-[Development roadmap](../ROADMAP.en.md)
+[Development roadmap](../ROADMAP.md)
 
 **Status: Preliminary measurement started**
 

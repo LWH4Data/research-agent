@@ -21,3 +21,5 @@ knowledge/assets/**
 # Local research inputs and private experiment evidence
 /papers/
 /docs/technical/experiments/raw/
+/docs/technical/ko/experiments/raw/
+/docs/technical/en/experiments/raw/

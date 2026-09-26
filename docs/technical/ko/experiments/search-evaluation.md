@@ -1,6 +1,6 @@
 # 검색 평가: search-v1
 
-[한국어](./search-evaluation.md) | [English](./search-evaluation.en.md)
+[한국어](./search-evaluation.md) | [English](../../en/experiments/search-evaluation.md)
 
 측정일: 2026-09-22
 
@@ -9,7 +9,7 @@ LangChain, 외부 API와 Codex 모델 호출을 사용하지 않는다.
 
 ## 평가 자료와 단위
 
-- [dataset.json](../../../evals/search/dataset.json): 광학·AI·소프트웨어 분야의
+- [dataset.json](../../../../evals/search/dataset.json): 광학·AI·소프트웨어 분야의
   합성 PDF 3개, 합성 대화 6개, 고정 질문 20개. 공개 논문 정확도 평가가 아니다.
 - 실행기가 PDF를 임시 폴더에 실제로 생성하고 기본 변환기를 실행한다. 원본 PDF의
   전후 해시가 같은지 확인하며, 개인 자료원이나 개인 설치 설정을 변경하지 않는다.
@@ -66,8 +66,8 @@ LangChain, 외부 API와 Codex 모델 호출을 사용하지 않는다.
 
 원시 기록에는 질문별 결과·반환 문서·자료 해시·검색 코드 해시가 들어 있다.
 
-- [개선 전 기록](../../../evals/search/results/baseline-v1.json)
-- [개선 후 기록과 차이](../../../evals/search/results/passages-v1.json)
+- [개선 전 기록](../../../../evals/search/results/baseline-v1.json)
+- [개선 후 기록과 차이](../../../../evals/search/results/passages-v1.json)
 
 ## 다시 측정하기
 

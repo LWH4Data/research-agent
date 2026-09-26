@@ -525,4 +525,4 @@ Codex에 연결되어 있거나 휴지통으로 옮길 수 없는 경우에는 �
 [기술 문서](https://github.com/LWH4Data/research-agent/blob/main/docs/technical/README.md)에서 확인할 수 있습니다.
 
 개발 예정 기능과 검증 계획은
-[로드맵](https://github.com/LWH4Data/research-agent/blob/main/docs/technical/ROADMAP.md)에서 확인할 수 있습니다.
+[로드맵](https://github.com/LWH4Data/research-agent/blob/main/docs/technical/ko/ROADMAP.md)에서 확인할 수 있습니다.

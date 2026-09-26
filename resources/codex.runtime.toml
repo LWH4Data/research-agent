@@ -1,0 +1,11 @@
+# Product project defaults, mapped to .codex/config.toml in the release bundle.
+# The installed command launchers use their own narrower generated profiles.
+sandbox_mode = "workspace-write"
+approval_policy = "never"
+allow_login_shell = false
+
+[sandbox_workspace_write]
+writable_roots = []
+network_access = false
+exclude_slash_tmp = true
+exclude_tmpdir_env_var = true

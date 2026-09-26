@@ -33,10 +33,14 @@ location already exists, installation stops without overwriting it. Keep the
 existing folder and share the message with Codex. Normal installation does not
 ask for your Mac administrator password.
 
-When the folder selection window appears, choose folders containing PDFs or
-choose to do this later. You can select several folders by holding **Command
-(⌘)** while clicking. Your original PDFs stay in their existing locations.
-Fully quit and reopen Codex after installation.
+After installation, a dialog offers **폴더 선택하기** (Select folders) and
+**나중에 하기** (Later). These buttons currently appear in Korean. Choose Select
+folders to open the folder picker, or Later to continue without any PDFs ready.
+In the picker, hold **Command (⌘)** while clicking to select several folders in
+the same view. Your original PDFs stay in their existing locations.
+Canceling either dialog keeps the completed installation. If no dialog appears,
+you can connect folders later or attach PDFs directly in Codex.
+Fully quit and reopen the Codex app, VS Code, or CLI after installation.
 
 GitHub's **Code → Download ZIP** downloads the development source. Use the
 installation command above for the user release.

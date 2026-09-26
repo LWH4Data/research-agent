@@ -4,7 +4,7 @@ resources/AGENTS.runtime.md AGENTS.md
 resources/AGENTS.runtime.md
 .research-agent-root
 .python-version
-.codex/config.toml
+resources/codex.runtime.toml .codex/config.toml
 README.md
 pyproject.toml
 uv.lock
@@ -16,14 +16,17 @@ research-store
 add-source.sh
 demo-progress.sh
 docs/ko/user-guide.md
-docs/ko/faq.md
 docs/en/user-guide.md
-docs/en/faq.md
 resources/agents/research-library-manager.toml
 resources/agents/research-paper-converter.toml
 resources/skills/research-library/SKILL.md
 resources/skills/research-library/agents/openai.yaml
 resources/skills/research-library/references/conversation-payload.md
+resources/skills/research-library/references/sources-and-attachments.md
+resources/skills/research-library/references/sync-and-background.md
+resources/skills/research-library/references/search-and-evidence.md
+resources/skills/research-library/references/conversations.md
+resources/skills/research-library/references/visual-review.md
 resources/skills/research-library/scripts/research-root
 resources/skills/research-library/scripts/research-store
 resources/skills/research-library/scripts/research-review

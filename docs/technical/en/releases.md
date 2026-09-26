@@ -1,6 +1,6 @@
 # Versioning and End-User Releases
 
-[한국어](./releases.md) | [English](./releases.en.md) | [Technical design index](./README.en.md)
+[한국어](../ko/releases.md) | [English](./releases.md) | [Technical design index](../README.en.md)
 
 The GitHub repository continues to expose the development code and documentation.
 A Release is a separate distribution page containing only the files needed to
@@ -30,19 +30,27 @@ flowchart LR
 
 ## What the release contains
 
-[`release-check.yml`](../../.github/workflows/release-check.yml) packages only
-the files named in [`runtime-files.txt`](../../packaging/runtime-files.txt).
-The current list has 49 destination paths. It includes code, skills, agents,
+[`release-check.yml`](../../../.github/workflows/release-check.yml) packages only
+the files named in [`runtime-files.txt`](../../../packaging/runtime-files.txt).
+It includes code, skills and task-specific references, agents,
 installation and removal tools, and user documentation. It excludes the
 development harness, tests, technical documentation, personal configuration,
 and research data. Review this list when adding a runtime dependency.
 
-[`resources/AGENTS.runtime.md`](../../resources/AGENTS.runtime.md) is the single
+[`resources/AGENTS.runtime.md`](../../../resources/AGENTS.runtime.md) is the single
 source of product rules. The development root `AGENTS.md` refers to it. The
 release places identical product rules at `resources/AGENTS.runtime.md` and its
 root `AGENTS.md`. The skill and registered agents read the resource path.
 This keeps development guidance out of the installation without maintaining
 independent copies of the product rules in source control.
+
+Configuration follows the same boundary. The development [`.codex/config.toml`](../../../.codex/config.toml)
+is excluded; [`resources/codex.runtime.toml`](../../../resources/codex.runtime.toml)
+becomes `.codex/config.toml` in the bundle. Development settings therefore do not
+silently change shipped product settings. Release checks verify both mappings
+and inclusion of the skill references. The narrower profiles used by the installed
+storage and background launchers are still generated separately by
+`personal_registration.py`; this separation does not broaden their permissions.
 
 The Release has three assets:
 
@@ -71,7 +79,7 @@ reporting, registering and converting a fixture PDF, retrieval, original-file
 preservation, and removal. HOME and Trash are temporary; the user's real
 installation is not removed. Tests also check the exact file list, agreement
 between source and archive contents, executable permissions, and checksums.
-See [`test_release_bundle.py`](../../tests/test_release_bundle.py) for the scope.
+See [`test_release_bundle.py`](../../../tests/test_release_bundle.py) for the scope.
 
 These checks do not call subscription models. Opt-in permission integrations
 remain skipped in the default run. Success does not establish actual permissions,
@@ -83,12 +91,13 @@ Actions result as well.
 
 1. Change the version in `pyproject.toml`. For example, a bug-fix release could use `0.3.1`.
 2. Regenerate `uv.lock` with `uv lock` in the development environment. Do not manually replace only its version string.
-3. Update the pinned download tag and `--version` value in the README and Korean/English user guides, plus [`RELEASE_NOTES.md`](../../packaging/RELEASE_NOTES.md). Review the manifest if runtime files were added.
+3. Update the pinned download tag and `--version` value in the README and Korean/English user guides, plus [`RELEASE_NOTES.md`](../../../packaging/RELEASE_NOTES.md). Review the manifest if runtime files were added.
 4. Run tests for the changed behavior, the full automated suite, and version validation. The `0.3.1` below is an example next release.
 
 ```sh
 bash scripts/reproduce-validation.sh full
 .venv/bin/python -B scripts/check_release_version.py --tag v0.3.1
+.venv/bin/python -B scripts/check_guides.py
 ```
 
 5. Commit the intended changes, push `main`, and confirm that its Actions validation succeeds.
@@ -118,12 +127,18 @@ preservation, and recovery.
 
 The [web guide](https://lwh4data.github.io/research-agent/?lang=en#/overview) is
 published to GitHub Pages separately from product releases. Only the HTML, CSS,
-JavaScript, and approved screenshots in [`docs/site`](../site/) are uploaded;
+JavaScript, and approved screenshots in [`docs/site`](../../site) are uploaded;
 research data and development documentation are not part of the site.
 
-[`pages.yml`](../../.github/workflows/pages.yml) deploys guide changes pushed to
+[`pages.yml`](../../../.github/workflows/pages.yml) deploys guide changes pushed to
 `main`. Check **Deploy web guide** in Actions for the result. Both languages share
 the installation command in `docs/site/config.js`. When publishing a new product
 version, update this command and version labels along with the README. Feature
 copy lives in `app.js` and `content-en.js`; styling lives in `styles.css`. Empty
 frames mark real screenshots that are still being prepared, not simulated results.
+
+[`check_guides.py`](../../../scripts/check_guides.py) compares installation commands
+in the Korean README, English user guide, and website. It also checks the download
+URL, install version, and visible web version labels against `pyproject.toml`.
+Both product validation and Pages deployment run it. It neither executes the
+commands nor downloads an installer; presentation remains specific to each guide.

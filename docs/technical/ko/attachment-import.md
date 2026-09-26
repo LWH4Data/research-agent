@@ -1,6 +1,6 @@
 # 첨부 PDF 저장과 설치 안내
 
-[한국어](./attachment-import.md) | [English](./attachment-import.en.md) | [기술 설계 목차](./README.md)
+[한국어](./attachment-import.md) | [English](../en/attachment-import.md) | [기술 설계 목차](../README.md)
 
 사용자는 PDF 한 개 또는 여러 개를 대화에 첨부하고 Research Agent에 바로
 정리를 요청할 수 있다. 이 요청은 폴더 등록 없이 해당 PDF를 기존 검색 저장소에
@@ -100,12 +100,12 @@ Markdown에는 `source_kind: imported-pdf`, `original_filename`, `imported_at`,
 
 | 책임 | 파일 |
 | --- | --- |
-| 첨부 사본과 메타데이터, 중복 처리·복구 | [imports.py](../../src/research_store/imports.py) |
-| 단일 호출에서 허용된 첨부 바이트 전달 | [import_attachment.py](../../scripts/import_attachment.py) |
-| 경로·바이너리 입력 명령 | [cli.py](../../src/research_store/cli.py) |
-| 기존 변환·검토와 연결 | [sync.py](../../src/research_store/sync.py) |
-| 사용자 의도와 에이전트 작업 안내 | [SKILL.md](../../resources/skills/research-library/SKILL.md) |
-| 설치 이후 선택 흐름 | [install_onboarding.py](../../scripts/install_onboarding.py) |
-| macOS 버튼과 다중 폴더 선택 | [picker.py](../../src/research_store/picker.py) |
-| 저장·복구 검증 | [test_pdf_import.py](../../tests/test_pdf_import.py) |
-| 실제 실행기 권한 검증 | [test_import_permission_integration.py](../../tests/test_import_permission_integration.py) |
+| 첨부 사본과 메타데이터, 중복 처리·복구 | [imports.py](../../../src/research_store/imports.py) |
+| 단일 호출에서 허용된 첨부 바이트 전달 | [import_attachment.py](../../../scripts/import_attachment.py) |
+| 경로·바이너리 입력 명령 | [cli.py](../../../src/research_store/cli.py) |
+| 기존 변환·검토와 연결 | [sync.py](../../../src/research_store/sync.py) |
+| 사용자 의도와 에이전트 작업 안내 | [SKILL.md](../../../resources/skills/research-library/SKILL.md) |
+| 설치 이후 선택 흐름 | [install_onboarding.py](../../../scripts/install_onboarding.py) |
+| macOS 버튼과 다중 폴더 선택 | [picker.py](../../../src/research_store/picker.py) |
+| 저장·복구 검증 | [test_pdf_import.py](../../../tests/test_pdf_import.py) |
+| 실제 실행기 권한 검증 | [test_import_permission_integration.py](../../../tests/test_import_permission_integration.py) |

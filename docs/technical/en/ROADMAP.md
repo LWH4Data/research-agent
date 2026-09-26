@@ -1,22 +1,35 @@
 # Research Agent Development Roadmap
 
-[한국어](./ROADMAP.md) | [English](./ROADMAP.en.md)
+[한국어](../ko/ROADMAP.md) | [English](./ROADMAP.md)
 
-[Technical design](./README.en.md)
+[Technical design](../README.en.md)
 
 This document tracks the current state and next development outcome for each
 area. The technical design records how the system works and why decisions were
 made; this roadmap contains only status, limitations, and completion criteria.
+This roadmap is the authority for completion status. Dated measurements and
+execution evidence belong in the
+[experiment records](../README.en.md#related-designs-and-validation-records).
+
+## Current work
+
+The single [current-work checkpoint](../ko/ROADMAP.md#current-work) records the
+latest agreed task, existing screenshots, missing captures, and the next action.
+Read it and the latest user agreement before resuming work or proposing a new
+priority. It is kept in one place to avoid competing progress records.
 
 ## Overall Progress
 
+The table below owns current status. The diagram shows the areas under review.
+
 ```mermaid
-flowchart LR
-    M1[1. Source protection and permissions<br/>Storage boundary validated; mode checks pending] --> M2[2. PDF conversion reliability<br/>Under validation]
-    M2 --> M3[3. Subscription usage and efficiency<br/>Experiment not started]
-    M3 --> M4[4. Retrieval quality<br/>Starvation fix and development evaluation complete]
-    M4 --> M5[5. Conversation storage and management<br/>Implementation validated]
-    M5 --> M6[6. Installation, removal, and user docs<br/>Review planned]
+flowchart TD
+    R[Prototype review] --> M1[1. Source protection and permissions]
+    R --> M2[2. PDF conversion reliability]
+    R --> M3[3. Subscription usage and efficiency]
+    R --> M4[4. Retrieval quality]
+    R --> M5[5. Conversation storage and management]
+    R --> M6[6. Installation, removal, and user docs]
 ```
 
 | Area | Current state | Next development item |
@@ -27,9 +40,12 @@ flowchart LR
 | Retrieval | Scope, diversity, continuation, and fixed development evaluation implemented | Expand validation with real research questions |
 | Conversation storage and management | Implemented and technically validated | Validate natural-language UX and retrieval usefulness |
 | Installation and removal | Validated with an empty temporary HOME | Validate the non-developer experience on a physically new Mac |
-| User documentation | File structure only | Write the real usage flow and FAQ |
+| User documentation | Korean README, English guide, and bilingual web guide published | Add real workflow captures and validate guidance with non-developers |
+| Development docs and release boundaries | Development/runtime settings separated and topic docs organized | Observe focused document loading and missed-change/validation prevention in real development |
 
 ## Milestone 1. Source Protection and Permission Management
+
+[Permission design](./permissions.md) · [Validation record](./experiments/safety-routing-validation.md)
 
 **Status: Constrained storage and read-only-parent workflow validated; approval-mode checks pending**
 
@@ -80,10 +96,13 @@ flowchart LR
 
 ## Milestone 2. Validate PDF Conversion Reliability
 
+[Conversion and review design](./pdf-conversion.md) · [Attachment import](./attachment-import.md)
+
 **Status: Under validation**
 
 ### Current Implementation
 
+- PDF storage and retrieval registration through registered folders or conversation attachments
 - Page-level base text extraction with `pypdf`
 - Markdown markers that preserve PDF page numbers
 - Candidate selection for possible tables, equations, figures, and extraction
@@ -92,6 +111,7 @@ flowchart LR
 - Sol high visual review with explicit uncertainty states
 - Separate visual-review jobs after text storage, document scoping, and page-level resume
 - Rejection of stale review results when the PDF hash changes
+- Atomic storage of a nonempty final note and review state for the current document, page, and version
 - A `document_operations` journal for PDF synchronization and page-review writes
 - `sync.lock` serialization between synchronization runs and a project write
   lock for page reviews
@@ -109,7 +129,9 @@ flowchart LR
 - Base extraction does not preserve equation structure, table relationships, or
   figure meaning.
 - Rule-based page selection can miss an important page.
-- `verified` records completion of AI review rather than human certification.
+- `verified` records a stored final note and state for the current document, page,
+  and version. Code does not prove semantic accuracy, actual image inspection,
+  or human certification.
 - An earlier direct-routing experiment completed primary → Luna → primary →
   Sol → primary → Luna. The current default starts an independent reviewer from
   the primary session because Luna could not invoke Sol as a nested agent.
@@ -144,7 +166,7 @@ flowchart LR
 
 ### Later Architecture Candidate
 
-[`sync.py`](../../src/research_store/sync.py) currently owns PDF discovery,
+[`sync.py`](../../../src/research_store/sync.py) currently owns PDF discovery,
 conversion, page selection, rendering, and review result storage. Keeping the
 flow together is useful at prototype scale. Split `parser`, `review detector`,
 and `renderer` responsibilities only when accuracy work makes those stages
@@ -155,7 +177,7 @@ files is not itself a milestone.
 
 **Status: Preliminary measurement started**
 
-[Subscription usage experiment record](./experiments/subscription-usage.en.md)
+[Subscription usage experiment record](./experiments/subscription-usage.md)
 
 ### Current Assessment
 
@@ -196,12 +218,14 @@ files is not itself a milestone.
 
 ## Milestone 4. Retrieval Quality and Ongoing Evaluation
 
+[Retrieval design and evidence use](./search.md)
+
 **Status: Starvation regression fixes and fixed development evaluation implemented**
 
 - Implemented PDF/conversation scopes, per-document candidate retention and
   diversity, passage grouping, and version-checked continuation while preserving
   original-path checks, recovery, and locking.
-- Use the [synthetic dataset and runner](./experiments/search-evaluation.en.md) to
+- Use the [synthetic dataset and runner](./experiments/search-evaluation.md) to
   compare identical queries, evidence labels, and result budgets.
 - Next: a separate validation set from real research, Codex query selection, and
   large-library scan and lock latency. Development scores are not a general
@@ -209,3 +233,42 @@ files is not itself a milestone.
 - Distinguish matching evidence crowded out of results from semantically related
   evidence with different wording. Evaluate hybrid keyword/vector retrieval when
   the latter recurs. Vectors, FTS5, and LangChain are not currently introduced.
+
+
+## Milestone 5. Conversation Management and User Experience
+
+**Status: Implementation and technical validation complete; natural-language UX remains to be validated**
+
+[Conversation lifecycle and recovery](./conversation-memory.md) ·
+[Safety and routing validation](./experiments/safety-routing-validation.md)
+
+- Save-scope selection, listing and retrieval, revision-checked updates and
+  deletion, and the operation journal are implemented.
+- Fault-injection and actual concurrent-operation results belong in the
+  experiment record. They do not establish natural-language accuracy or user
+  comprehension.
+- Next, check whether non-developers can select a save scope, distinguish records
+  with similar titles, and understand the result of an update or deletion.
+- Completion requires that real requests select the intended record and that
+  combined PDF/conversation answers clearly distinguish evidence types and sources.
+
+## Milestone 6. Installation, Removal, and User Guidance
+
+**Status: Temporary-HOME installation/removal validated and guides published; the experience on a physically new Mac remains unverified**
+
+[Uninstallation and source protection](./permissions.md#uninstallation-and-source-protection) ·
+[Release and web-guide delivery](./releases.md)
+
+- The Korean README, English usage guide, and bilingual web guide are published.
+  The web guide provides feature-level navigation and marks unavailable captures
+  as pending.
+- Empty-HOME installation and removal checks ran on the current Mac. They do not
+  establish the first-install experience on a physically new Mac or for a user
+  unfamiliar with developer tools.
+- Next, finish the installation captures in the [current-work checkpoint](../ko/ROADMAP.md#current-work),
+  then add captures of actual PDF registration, attachment, retrieval, and
+  conversation-management flows, then observe whether non-developers can install
+  and reach their first search using only the guide.
+- Completion requires screenshots and instructions that match current behavior,
+  user understanding of source preservation, generated-data locations and removal
+  scope, and consistent installation information across Korean and English guides.
