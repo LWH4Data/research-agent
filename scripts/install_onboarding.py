@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-import shlex
 import subprocess
 import sys
 
@@ -12,8 +11,8 @@ from research_store.picker import offer_source_selection
 
 
 def show_later_instruction(root: Path) -> None:
-    print("폴더는 나중에 연결해도 됩니다. 다음 명령으로 선택창을 열 수 있습니다.")
-    print(f"  bash {shlex.quote(str(root / 'add-source.sh'))}")
+    print("폴더는 나중에 연결해도 됩니다. Codex를 열고 Research Agent에 요청하세요.")
+    print("  @Research Agent PDF 폴더 연결창 다시 열어줘.")
 
 
 def run_onboarding(root: Path) -> None:
@@ -31,7 +30,7 @@ def run_onboarding(root: Path) -> None:
         show_later_instruction(root)
         return
 
-    print("선택창에서 Command(⌘) 키를 누른 채 여러 폴더를 선택할 수 있습니다.")
+    print("폴더 연결 화면에서 폴더를 추가하고, 목록을 확인한 뒤 연결하세요.")
     try:
         result = subprocess.run(
             [str(root / "research-store"), "source-add"],

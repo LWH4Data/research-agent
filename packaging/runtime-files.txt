@@ -34,6 +34,7 @@ scripts/personal_registration.py
 scripts/uninstall_project.py
 scripts/install_onboarding.py
 scripts/import_attachment.py
+scripts/select_sources.py
 scripts/background_review.py
 scripts/demo_progress.py
 src/research_store/__init__.py

@@ -107,9 +107,9 @@ page notes. See [Visual review](visual-review.md) only when performing a
 synchronous inspection or correction; ordinary sync does not require reading
 the converter procedure.
 
-For a folder-connection request with no supplied path, tell the user to run
-`bash "$STORE_ROOT/add-source.sh"` in a normal terminal. If a
-source is offline or unreadable, report that path and its error while preserving
+For a folder-connection request with no supplied path, follow the installed
+picker compatibility route in [Sources and PDF attachments](sources-and-attachments.md).
+If a source is offline or unreadable, report that path and its error while preserving
 its prior document state. Do not describe an incomplete scan as zero results.
 Saved attachments do not require connected folders; do not redirect an
 attachment-save or attachment-search request to folder registration.

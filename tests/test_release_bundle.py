@@ -32,6 +32,7 @@ class RuntimeManifestTests(unittest.TestCase):
         self.assertNotIn("AGENTS.md", entries.values())
         self.assertNotIn(".codex/config.toml", entries.values())
         self.assertNotIn("scripts/check_guides.py", entries)
+        self.assertEqual(entries.get("scripts/select_sources.py"), "scripts/select_sources.py")
         runtime = tomllib.loads((PROJECT / entries[".codex/config.toml"]).read_text())
         self.assertEqual(runtime["sandbox_mode"], "workspace-write")
         self.assertEqual(runtime["approval_policy"], "never")

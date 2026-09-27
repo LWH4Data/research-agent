@@ -4,10 +4,38 @@
 
 Delegate source listing and exact-path registration to
 `research_library_manager`. It uses the registered launcher with `source-list`
-and `source-add <path>`. If no
-path is available, ask the user to run the absolute
-`bash "$STORE_ROOT/add-source.sh"` command in a normal terminal so the native
-folder picker can open.
+and `source-add <path>`.
+
+When the user asks to choose folders or reopen the connection window without
+supplying paths, the primary session checks only whether
+`STORE_ROOT/scripts/select_sources.py` exists in the resolved installed store:
+
+- If the helper exists, invoke the absolute registered skill launcher with
+  exactly `source-add` and no extra arguments. Use the direct launcher path,
+  without a shell wrapper, pipeline, or preceding `cd`; the user need not type a
+  terminal command.
+- If the helper is absent, this installation uses the legacy picker. Ask the
+  user to run `bash "$STORE_ROOT/add-source.sh"` in a normal terminal, replacing
+  `STORE_ROOT` with the exact absolute installed path and quoting it safely.
+  Do not send no-argument `source-add` through that older skill launcher or
+  promise the temporary selection list described below.
+
+Do not create or update the helper, upgrade the runtime, or expand permissions
+as part of a library operation. If the existence check is blocked, report that
+stage rather than assuming either route is available. Exact-path registration
+continues to use the same constrained `source-add <path>` command in both cases.
+
+With the helper present, the host-side window keeps a temporary selection list:
+add folders, uncheck items to exclude them, then explicitly connect the checked
+folders. Closing the inner picker preserves the remaining checked folders.
+Closing the whole flow returns cancellation
+without registration; the same user request can reopen a fresh list. Only the
+confirmed paths go through the existing constrained storage command. A cancelled
+result is not a failure and does not undo earlier registrations. Do not auto-sync
+or retry a cancelled flow. If the launcher or UI is blocked, report the stage;
+do not broaden permissions or claim that the window opened. An exact path supplied
+by the user remains an alternative. The source-list command can identify already
+connected folders; do not imply the temporary list manages existing connections.
 
 Resolve the exact registered source before disconnection; ask the user to
 choose only if the target is ambiguous. Removing a source uses the registered

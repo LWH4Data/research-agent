@@ -76,9 +76,45 @@ Markdown에는 `source_kind: imported-pdf`, `original_filename`, `imported_at`,
 ## 설치 안내
 
 첫 대화형 macOS 설치가 성공한 뒤 **나중에 하기 / 폴더 선택하기** 안내창을
-보여 준다. 폴더 선택은 기존 다중 선택 기능을 사용한다. 창 취소, GUI 오류,
+보여 준다. 여기서 폴더 선택 흐름을 연다. 창 취소, GUI 오류,
 폴더 등록 오류로 이미 끝난 설치가 실패로 바뀌지 않는다. 자동 실행에서는
 창을 띄우지 않고 나중에 폴더를 추가하는 방법을 출력한다.
+
+**아래 선택 목록과 Codex에서 다시 열기는 개발본에만 반영되었으며, 현재 배포된
+v0.3.0과 기존 설치본에는 적용되지 않았다.**
+
+개발본은 JXA의 ObjC 브리지로 AppKit `NSAlert`에 확인 목록을 표시한다.
+**폴더 추가하기 / 폴더 더 추가하기**를 누르면 `NSOpenPanel`에서 폴더를 골라
+목록에 모을 수 있다. 각 행의 체크를 해제하면 이번 연결에서 제외되며,
+**이 폴더들 연결하기**를 눌러야 체크된 경로만 반환한다. 안쪽 `NSOpenPanel`의
+취소는 기존 목록을 유지하고, 확인 목록의 취소는 빈 목록을 반환한다. 확인 전
+목록은 메모리에만 존재하며, 전체 취소로 폴더 등록이나 설정 쓰기가 발생하지 않는다.
+
+호스트 앱은 현재 정책이 `regular` 또는 `accessory`이면 유지하고, 그렇지 않으면
+`accessory`로 변경을 요청한 뒤 실제 정책을 다시 확인한다. 같은 정책을 다시
+설정할 때의 `false` 반환을 창 표시 불가로 오해하지 않으며, 실제 정책이 계속
+`prohibited` 또는 알 수 없는 값이면 중단한다. 기본 모달 처리를 사용하며 폴더만
+다중 선택할 수 있고 원본 위치에 새 폴더를 만드는 버튼은 비활성화한다.
+클릭을 흉내 내지 않으며 실행 중단·정책 변경 실패는 오류로 보고한다.
+
+Codex에서 창을 다시 열 때는 주 세션이 등록된 스킬 실행기를 `source-add`
+단독 인자로 직접 호출한다. 실행기 안의 `select_sources.py`가 호스트에서
+선택 창만 열고, 확정된 절대 경로를 `--` 뒤의 개별 인자로 기존 제한
+`source-add`에 전달한다. 호스트 helper는 저장소를 변경하지 않고, 취소 시
+제한 명령도 실행하지 않는다. 실제 등록·중복·원본 보호 검사는 기존 CLI가
+담당하며 새 권한이나 허용 규칙은 추가하지 않는다. 정확한 경로의 등록·해제는
+계속 관리 에이전트가 담당한다. 설치 뒤의 안내창과 터미널 실행도 같은 선택
+목록을 사용한다.
+
+macOS 14 이후 앱 활성화는 성공이 보장되는 명령이 아니라 요청이다.
+2026-09-26 사용자는 확인 목록 추가 전의 `NSOpenPanel` 미리보기를 등록 없이
+열어, 창을 미리 클릭하지 않고 첫 폴더부터 ⌘ 다중 선택되는 것을 확인했다.
+이 결과는 해당 Mac의
+미리보기 범위이며 새 확인 목록 전체, Codex에서 다시 열기, 설치 직후 자동 실행이나
+다른 Mac 전체를 검증한 것은 아니다.
+현재 배포된 v0.3.0은 기존 `chooseFolder` 방식이며, 사용자가 확인한
+선택창 위쪽을 한 번 클릭한 뒤 ⌘ 다중 선택하는 방법을 안내한다.
+[Apple의 활성화 정책 설명](https://developer.apple.com/documentation/macos-release-notes/appkit-release-notes-for-macos-14)
 
 ## 현재 범위와 검증
 
@@ -93,8 +129,10 @@ Markdown에는 `source_kind: imported-pdf`, `original_filename`, `imported_at`,
 - 별도 선택 실행 테스트는 실제 개인 스킬 실행기와 기존 권한 프로필로 stdin
   가져오기, 임시 경로 직접 접근 차단, 원본 쓰기 차단을 확인한다. 이는 명령
   수준 검증이며 모든 Codex UI의 실제 첨부 전달이나 모델 호출을 검증하지 않는다.
-- 안내창은 모의 응답과 macOS 스크립트 컴파일로 검사한다. 실제 설치 화면과
-  Codex 첨부 UX 확인은 별도 사용자 시험이다.
+- 안내창은 모의 응답·JXA 실행과 macOS 스크립트 컴파일로 검사한다. 모의 JXA는
+  활성화 정책과 호출 순서, 폴더 전용·다중 선택·새 폴더 생성 금지 설정,
+  선택 결과와 취소·오류를 검증하며 실제 포커스는 검증하지 않는다.
+  실제 설치 화면과 Codex 첨부 UX 확인은 별도 사용자 시험이다.
 
 ## 책임별 구현 파일
 
@@ -106,6 +144,7 @@ Markdown에는 `source_kind: imported-pdf`, `original_filename`, `imported_at`,
 | 기존 변환·검토와 연결 | [sync.py](../../../src/research_store/sync.py) |
 | 사용자 의도와 에이전트 작업 안내 | [SKILL.md](../../../resources/skills/research-library/SKILL.md) |
 | 설치 이후 선택 흐름 | [install_onboarding.py](../../../scripts/install_onboarding.py) |
-| macOS 버튼과 다중 폴더 선택 | [picker.py](../../../src/research_store/picker.py) |
+| 호스트 선택 창과 제한된 등록 명령 연결 | [select_sources.py](../../../scripts/select_sources.py) |
+| macOS 확인 목록과 다중 폴더 선택 | [picker.py](../../../src/research_store/picker.py) |
 | 저장·복구 검증 | [test_pdf_import.py](../../../tests/test_pdf_import.py) |
 | 실제 실행기 권한 검증 | [test_import_permission_integration.py](../../../tests/test_import_permission_integration.py) |

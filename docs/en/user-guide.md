@@ -33,11 +33,18 @@ location already exists, installation stops without overwriting it. Keep the
 existing folder and share the message with Codex. Normal installation does not
 ask for your Mac administrator password.
 
-After installation, a dialog offers **폴더 선택하기** (Select folders) and
+After installing v0.3.0, a dialog offers **폴더 선택하기** (Select folders) and
 **나중에 하기** (Later). These buttons currently appear in Korean. Choose Select
 folders to open the folder picker, or Later to continue without any PDFs ready.
-In the picker, hold **Command (⌘)** while clicking to select several folders in
-the same view. Your original PDFs stay in their existing locations.
+To choose several folders in the same view:
+
+1. Hold down the **⌘ Command** key beside the spacebar on your keyboard.
+2. While holding it, click each folder name **once**. Double-clicking may finish selection immediately.
+3. Check that the folders you want are selected, release the key, then click **선택** (Select) at the bottom right.
+
+If Command-clicking does not select folders, click the instructions at the top of the picker once, then try again.
+
+Your original PDFs stay in their existing locations.
 Canceling either dialog keeps the completed installation. If no dialog appears,
 you can connect folders later or attach PDFs directly in Codex.
 Fully quit and reopen the Codex app, VS Code, or CLI after installation.
@@ -45,10 +52,21 @@ Fully quit and reopen the Codex app, VS Code, or CLI after installation.
 GitHub's **Code → Download ZIP** downloads the development source. Use the
 installation command above for the user release.
 
+> **Development only; not included in v0.3.0:** You can ask Codex to reopen the
+> folder picker in the current conversation. **폴더 추가하기** (Add folders) and
+> **폴더 더 추가하기** (Add more folders) collect folders in a review list.
+> Uncheck any folders to exclude, then press **이 폴더들 연결하기** (Connect these
+> folders) to register the checked folders. Canceling the inner picker keeps the
+> list; canceling the review list saves nothing. Existing installations have not
+> received this change. Keep your existing installation.
+
 ## Use it in Codex
 
-In your usual Codex conversation, select **Research Agent** from the `@` menu.
-You do not need to switch projects. Keep your usual **Ask for approval** or
+In the desktop app, select **Codex** from the product menu and open a **Local**
+conversation on your Mac. Type `@research` and select **Research Agent** from
+the results. You can use your usual project. This version does not support
+regular ChatGPT **Instant** chats or Codex **Cloud** tasks.
+Keep your usual **Ask for approval** or
 **Approve for me** setting; do not use **Full access** for Research Agent.
 
 You can attach PDFs and ask Research Agent to organize them, connect existing

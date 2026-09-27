@@ -6,6 +6,7 @@
 
 - [Design Goal](#design-goal)
 - [Relationship Between Projects and Research Agent](#relationship-between-projects-and-research-agent)
+- [Usage Help and Library Operations](#usage-help-and-library-operations)
 - [Search Targets](#search-targets)
 - [Retrieval Flow](#retrieval-flow)
 - [Building Search Terms From a Question](#building-search-terms-from-a-question)
@@ -44,7 +45,8 @@ location.
 The source repository's root `AGENTS.md` contains development instructions.
 The canonical product rules are
 [`resources/AGENTS.runtime.md`](../../../resources/AGENTS.runtime.md), which the skill
-and registered agents read explicitly. The end-user release excludes the
+and registered agents read explicitly before library operations. Explanation-only
+requests follow the separate route below. The end-user release excludes the
 development guide and also places the same product rules at the installation's
 root `AGENTS.md`. The source checkout and installed bundle therefore give that
 root file different roles. See the [release guide](./releases.md) for packaging
@@ -71,6 +73,29 @@ The current design does not create a separate Research Agent store for every
 Codex project. Every invocation uses the same `knowledge/` directory and SQLite
 state. This supports finding scattered research documents and saved ideas across
 project and session boundaries.
+
+## Usage Help and Library Operations
+
+An introduction such as “What can you do, and how do I get started?” takes the
+first branch in the skill. If the installation root is unknown, resolve it once
+with the read-only `research-root` launcher. Read only the installed README's
+“처음 사용한다면” and “무엇을 할 수 있나요?” sections, then answer in the user's
+language. For a specific how-to or error explanation, read the matching section.
+README remains the feature source; do not duplicate it in a separate help file.
+
+An introduction alone requires no operational rules, task references, agent
+configuration, research data, or status checks. If the user also requests a
+save, search, or actual status check, read the runtime rules and relevant
+references for that work and retain the existing execution boundaries. Reading
+README does not establish that installation or stored data is healthy.
+
+The personal skill in different projects points to the same installed bundle.
+Editing the development checkout does not automatically update that bundle.
+An installed-document update is separate from publishing a new Release, and
+neither removes instructions already read into an existing conversation. This
+is guidance to reduce model input, not a filesystem access restriction. The
+[installed update and behavior check](./experiments/safety-routing-validation.md#2026-09-26-usage-help-reading-scope-and-installed-update)
+records the verified scope.
 
 ## Search Targets
 

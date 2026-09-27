@@ -128,6 +128,41 @@ Without that variable, two archive tests also skip. Check versions and guides wi
 .venv/bin/python -B scripts/check_guides.py
 ```
 
+## 2026-09-26 Usage Help Reading Scope and Installed Update
+
+The installed bundle selected by the personal skill still had a 430-line
+`SKILL.md` with every workflow inline. An introduction loaded that file, and
+operational setup preceded the help branch. The original user test's complete
+trace was unavailable, so this finding does not prove that it also read every
+additional reference.
+
+The introduction now branches first and reads only the relevant sections of the
+existing README. Six skill documents were updated in the installed bundle after
+backup, saving references before replacing the entrypoint. Its entrypoint is now
+89 lines. Folder instructions also account for the older bundle's missing
+selection helper rather than prescribing an unsupported call.
+
+| Check | Result and scope |
+| --- | --- |
+| Installed documents | Six files match the development copy. The existing conversation payload reference was unchanged |
+| Protected state | Runtime/configuration hashes and research data sizes, modification times, and inodes match before and after |
+| Registration and packaging references | Fourteen relevant tests passed using temporary environments; actual personal registration was not rerun |
+| Guide consistency | Installation commands and versions agree; the public installer still targets v0.3.0 |
+| Independent behavior | An agent without conversation history received the installed skill and the Korean equivalent of “What can you do, and how do I get started?” It used three commands: read the skill, resolve the root read-only, and read the two introductory README sections |
+| Unnecessary operations | That run did not read runtime rules, task references, or research data, check status, delegate work, or write files |
+
+The basic skill validator could not run because both the project and bundled
+Python lacked PyYAML. Automated tests cover references and registration; the
+independent check covers one introduction request. They do not establish the
+behavior of every Codex app session or refresh instructions already loaded into
+an existing conversation. A fresh user conversation remains the next guide
+capture. The public Release and runtime code were not changed in this update.
+
+```sh
+.venv/bin/python -B -m unittest tests.test_release_bundle.RuntimeManifestTests tests.test_personal_registration
+.venv/bin/python -B scripts/check_guides.py
+```
+
 ## Reproduce the Automated Checks
 
 From the repository root, run the following command to replay the core recovery,

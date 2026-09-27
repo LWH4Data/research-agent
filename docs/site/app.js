@@ -31,22 +31,44 @@ const pages={
       },
       {
         "label": "폴더 선택",
-        "question": "아직 PDF를 준비하지 못했는데 괜찮나요?",
-        "answer": "괜찮아요. 설치 후 나타나는 안내창에서 “나중에 하기”를 누르세요. 폴더를 연결하지 않아도 설치는 완료돼요.",
-        "steps": ["지금 PDF 폴더를 연결하려면 “폴더 선택하기”를 누르세요.", "열리는 선택창에서 폴더를 고르세요. 같은 화면의 여러 폴더는 ⌘ 키를 누른 채 선택할 수 있어요."],
-        "captures": [{"key": "folder-choice", "caption": "“나중에 하기”와 “폴더 선택하기”가 보이는 안내창"}],
-        "noteLabel": "선택창을 닫았거나 창이 나타나지 않았나요?",
-        "note": "터미널에 설치 완료 안내가 있다면 계속 진행하세요. 폴더 선택을 취소해도 설치는 유지돼요. 나중에 폴더를 추가하거나 PDF를 대화에 바로 첨부할 수 있어요. 폴더 연결만으로 PDF 정리가 시작되지는 않아요."
+        "question": "PDF가 있는 폴더는 어떻게 연결하나요?",
+        "answer": "폴더를 고르고 목록을 확인한 뒤 연결해요. PDF를 옮길 필요 없고, 원본 파일은 수정하지 않아요.",
+        "notice": "개발 중인 새 화면을 안내하고 있어요. 현재 설치 명령으로 받는 v0.3.0에는 아직 포함되지 않았어요.",
+        "flow": [
+          {
+            "title": "1. 폴더 추가하기",
+            "body": "‘연결할 폴더’ 창에서 “폴더 추가하기”를 누르세요.",
+            "capture": {"key": "folder-draft-empty", "caption": "검은 테두리는 눌러야 할 버튼을 알려주는 가이드용 표시예요.", "alt": "연결할 폴더 창의 폴더 추가하기 버튼"}
+          },
+          {
+            "title": "2. 원하는 폴더 고르기",
+            "body": "스페이스바 옆 ⌘ Command 키를 누른 채 폴더 이름을 한 번씩 클릭하세요. 원하는 폴더들이 선택되면 키에서 손을 떼고 “목록에 추가”를 누르세요.",
+            "capture": {"key": "folder-selection", "caption": "선택된 세 폴더의 모습이에요. 이전 캡처에서 폴더 목록 부분만 잘랐어요.", "alt": "research-agent-test1, test2, test3 폴더가 함께 선택된 목록"}
+          },
+          {
+            "title": "3. 목록을 확인하고 연결하기",
+            "body": "연결할 폴더들이 맞는지 확인하고 “이 폴더들 연결하기”를 누르세요. 다른 위치의 폴더도 연결하려면 “폴더 더 추가하기”로 목록에 모을 수 있어요.",
+            "capture": {"key": "folder-draft-confirmation", "caption": "폴더 세 개를 선택한 연결 전 확인 화면이에요. 검은 테두리는 연결 버튼을 알려주는 가이드용 표시예요.", "alt": "세 폴더가 체크된 확인 목록과 이 폴더들 연결하기 버튼"}
+          }
+        ],
+        "helpLabel": "문제가 생겼나요? · 취소·잘못 선택·오류 안내",
+        "help": [
+          {"question": "아직 PDF가 준비되지 않았어요.", "answer": "‘연결할 폴더’ 창에서 “취소”를 누르고 다음 단계로 넘어가세요. 폴더를 연결하지 않아도 설치는 유지돼요."},
+          {"question": "원하지 않는 폴더를 골랐어요.", "answer": "연결하기 전이라면 목록에서 해당 폴더의 체크를 해제하세요. 이번에 연결할 목록에서만 제외돼요. 이미 연결했다면 Codex에 잘못 연결한 폴더를 알려주고 연결 해제를 요청하세요. 해제할 폴더가 맞는지 확인하세요."},
+          {"question": "폴더를 다 고르기 전에 창을 닫았어요.", "answer": "안쪽 선택창에서 “취소”했다면 앞서 체크한 폴더들이 남아 있어요. “폴더 더 추가하기”로 이어가세요. 확인 목록 전체를 취소했다면 이번 선택은 저장되지 않아요. Codex에 “@Research Agent PDF 폴더 연결창 다시 열어줘”라고 요청하는 기능을 개발 중이며, 실제 Codex에서의 재열기는 확인 중이에요."},
+          {"question": "여러 폴더가 선택되지 않거나 오류가 나요.", "answer": "선택창을 한 번 클릭한 뒤 ⌘ 키를 누르고 폴더 이름을 한 번씩 클릭해 보세요. 두 번 클릭하면 선택이 끝날 수 있어요. 오류가 계속되면 표시된 메시지를 Codex에 알려주세요. 해결을 위해 Full access로 바꾸지는 마세요."},
+          {"question": "안내와 다른 창이 보여요.", "answer": "공개된 v0.3.0에서는 “폴더 선택하기”를 누른 뒤 폴더를 고르고 “선택”으로 바로 연결해요. 위의 확인 목록 화면은 다음 배포에 포함할 예정이에요. 폴더 연결만으로 PDF 정리가 시작되지는 않아요."}
+        ]
       },
       {
         "label": "Codex에서 확인",
         "question": "설치한 Research Agent를 어떻게 불러오나요?",
-        "answer": "사용 중인 Codex 앱·VS Code·CLI를 완전히 종료한 뒤 다시 열어요. 평소 사용하던 프로젝트의 대화에서 이어가면 돼요.",
-        "steps": ["Codex 앱에서는 @ 메뉴를 열고 Research Agent를 선택하세요.", "아래 문장으로 사용법을 물어보세요. PDF가 없어도 확인할 수 있어요."],
-        "captures": [{"key": "codex-invocation", "caption": "Research Agent를 선택하고 사용법을 묻는 Codex 대화 화면"}],
+        "answer": "설치 후 데스크톱 앱을 완전히 종료했다가 다시 열어요. 평소 사용하던 프로젝트에서 시작할 수 있어요.",
+        "steps": ["앱의 제품 선택 메뉴에서 Codex를 선택하고, 로컬(Local) 대화를 여세요.", "입력창에 @research를 입력하고 목록에서 Research Agent를 선택하세요.", "아래 문장으로 사용법을 물어보세요. PDF가 없어도 확인할 수 있어요."],
+        "captures": [{"key": "codex-invocation", "caption": "Research Agent를 선택해 기능과 시작 방법을 안내받은 실제 화면이에요.", "alt": "Research Agent가 선택된 질문과 PDF 정리·검색·대화 저장 기능, PDF 한 개로 시작하는 방법을 안내하는 응답"}],
         "safety": "권한은 Ask for approval 또는 Approve for me를 사용하세요. Research Agent에는 Full access를 사용하지 마세요.",
         "noteLabel": "메뉴에서 찾을 수 없나요?",
-        "note": "설치 완료 안내가 있었는지 확인하고, 새 대화를 여는 것뿐 아니라 Codex 앱이나 VS Code 자체를 완전히 종료한 뒤 다시 실행하세요. 계속 보이지 않으면 설치 메시지를 Codex에 알려주세요.",
+        "note": "입력창에 Instant가 보이면 일반 ChatGPT 채팅이에요. 현재 Research Agent는 Codex의 로컬 작업에서 사용해요. Codex에서도 찾을 수 없다면 설치 완료 안내를 확인하고 앱을 완전히 종료한 뒤 다시 실행하세요. 계속 보이지 않으면 설치 메시지를 Codex에 알려주세요.",
         "composer": "prompt",
         "prompt": "@Research Agent 어떤 기능이 있고, 처음에는 어떻게 사용하면 돼?"
       }
@@ -61,10 +83,12 @@ const pages={
     "capture": "폴더 선택과 연결 결과 화면",
     "steps": [
       "Codex에 아래 문장으로 폴더 연결을 요청해요.",
-      "안내받은 명령을 일반 터미널에서 실행하고, 열리는 선택창에서 폴더를 골라요. 같은 화면에 있는 여러 폴더는 ⌘ 키를 누른 채 선택할 수 있어요.",
+      "안내받은 명령을 일반 터미널에서 실행하면 폴더 선택창이 열려요.",
+      "여러 폴더를 고르려면 스페이스바 옆 ⌘ Command 키를 누른 채 폴더 이름을 한 번씩 클릭하세요. 두 번 클릭하면 바로 선택이 끝날 수 있어요.",
+      "원하는 폴더들이 선택됐는지 확인한 뒤 키에서 손을 떼고, 오른쪽 아래 “선택”을 누르세요.",
       "다른 위치의 폴더도 연결한 뒤 “새로 추가된 문서를 정리해줘”라고 요청하세요."
     ],
-    "note": "설치 중 폴더를 연결했다면 다시 등록할 필요 없어요. 폴더를 연결하지 않고 PDF를 대화에 첨부해서 시작할 수도 있어요.",
+    "note": "설치 중 폴더를 연결했다면 다시 등록할 필요 없어요. 이 안내는 공개된 v0.3.0 기준이에요. 개발본에는 선택 목록에서 제외·추가하고 최종 연결하는 화면을 넣었어요. 선택창만 취소하면 목록이 유지되고, 전체를 취소하면 이번 선택은 등록되지 않아요. Codex에 “@Research Agent PDF 폴더 연결창 다시 열어줘”라고 요청하는 방식도 준비 중이며, 아직 공개 버전에는 포함되지 않았어요.",
     "prompt": "@Research Agent 내 PDF가 있는 폴더들을 연결해줘.",
     "prev": "start",
     "next": "attach"
@@ -146,8 +170,15 @@ const pages={
   }
 };
 const installationCaptures={
-  spotlight:{src:'assets/screenshots/spotlight-terminal-crop.png',width:1282,height:327},
-  terminal:{src:'assets/screenshots/terminal-ready-crop.png',width:1282,height:220}
+  spotlight:{src:'assets/screenshots/spotlight-terminal-crop.png?v=20260926-unselected',width:1282,height:326},
+  terminal:{src:'assets/screenshots/terminal-ready-crop.png',width:1282,height:220},
+  'install-complete':{src:'assets/screenshots/install-complete-crop.png',width:840,height:140},
+  'folder-selection':{src:'assets/screenshots/folder-selection-crop.png',width:442,height:145},
+  'folder-draft-empty':{src:'assets/screenshots/folder-draft-empty-crop.png',width:1224,height:834,
+    highlight:{x:378,y:673,width:468,height:68}},
+  'folder-draft-confirmation':{src:'assets/screenshots/folder-draft-confirmation-crop.png',width:1224,height:1208,
+    highlight:{x:378,y:978,width:468,height:68}},
+  'codex-invocation':{src:'assets/screenshots/codex-introduction.png',width:1674,height:1012}
 };
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ui={ko:{guide:'사용 가이드',overview:'가이드 둘러보기',menu:'메뉴',skip:'본문으로 이동',nav:'가이드 메뉴',first:'처음이라면',features:'기능',me:'나',assistant:'Research Agent 안내',howto:'사용 방법',note:'알아두세요',previous:'이전',next:'다음',related:'관련 가이드',blank:'실제 캡처를 넣을 빈 영역',capturePending:'캡처 준비 중',copy:'복사',copied:'복사됨',manualCopy:'직접 복사',copiedNotice:'복사했어요.',failedCopy:'복사할 문장을 선택했어요. ⌘ + C 또는 Ctrl + C로 직접 복사하세요.',prompt:'Codex에서 사용할 문장',invocationLabel:'VS Code·CLI에서 사용하려면',invocationNote:'문장 앞의 @Research Agent를 $research-library로 바꾸세요. 또는 /skills에서 research-library를 선택한 뒤 요청을 입력하세요.',install:'터미널에서 실행할 설치 명령',paste:'복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.',installNote:'명령을 복사해도 설치가 실행되지는 않아요. 터미널에서 직접 실행하세요.',sideNote:'사용 가이드 · v0.3.0\n실제 작업은 Codex에서 진행해요.',overviewQuestion:'Research Agent로 무엇을 할 수 있나요?',overviewAnswer:'흩어진 PDF와 중요한 연구 대화를 정리하고, 필요할 때 다시 찾아볼 수 있어요. 궁금한 기능을 선택해 보세요.',featureDescriptions:{attach:'PDF를 대화에 첨부해 바로 저장하고 질문해요.',organize:'기존 폴더의 새 문서와 변경된 문서를 정리해요.',search:'여러 PDF와 저장한 대화에서 관련 내용을 찾아요.',save:'연구 아이디어와 실험 설계를 선택해서 보관해요.'},startLink:'처음이라면 설치부터 시작하세요.',overviewEnd:'현재 지원 환경은 macOS의 Codex예요. 이 웹은 사용 방법을 안내합니다.',},en:{guide:'User guide',overview:'Explore the guide',menu:'Menu',skip:'Skip to content',nav:'Guide navigation',first:'Getting started',features:'Features',me:'You',assistant:'Research Agent guide',howto:'How to use it',note:'Good to know',previous:'Previous',next:'Next',related:'Related guides',blank:'Empty frame reserved for a real screenshot',capturePending:'Screenshot coming soon',copy:'Copy',copied:'Copied',manualCopy:'Copy manually',copiedNotice:'Copied to clipboard.',failedCopy:'The text is selected. Press ⌘ + C or Ctrl + C to copy it.',prompt:'Prompt to use in Codex',invocationLabel:'Using VS Code or the CLI?',invocationNote:'Replace @Research Agent at the start of the prompt with $research-library. Or choose research-library from /skills, then enter your request.',install:'Installation command for Terminal',paste:'Paste this into your usual Codex conversation.',installNote:'Copying does not install anything. Run the command yourself in Terminal.',sideNote:'User guide · v0.3.0\nActual work takes place in Codex.',overviewQuestion:'What can I do with Research Agent?',overviewAnswer:'Organize scattered PDFs and important research conversations, then find them again when you need them. Choose a feature to learn more.',featureDescriptions:{attach:'Attach PDFs in Codex to save them and ask questions.',organize:'Organize new and changed documents in their existing folders.',search:'Find related information across PDFs and saved conversations.',save:'Keep selected research ideas and experiment plans.'},startLink:'New here? Start with installation.',overviewEnd:'The supported environment is Codex on macOS. This website explains how to use it.',}};
@@ -177,8 +208,10 @@ function renderCapture(capture, route, language){
   const asset=route==='start'?installationCaptures[capture.key]:null;
   const caption=escapeHTML(capture.caption);
   const attributes=`data-capture-language="${language}" data-capture-feature="${route}" data-capture-key="${escapeHTML(capture.key)}"`;
+  const highlight=asset?.highlight;
+  const annotation=highlight?`<span class="screenshot-highlight" aria-hidden="true" style="left:${(highlight.x/asset.width*100).toFixed(4)}%;top:${(highlight.y/asset.height*100).toFixed(4)}%;width:${(highlight.width/asset.width*100).toFixed(4)}%;height:${(highlight.height/asset.height*100).toFixed(4)}%"></span>`:'';
   return asset
-    ? `<figure class="screenshot"><figcaption>${caption}</figcaption><div class="screenshot-frame has-capture" ${attributes}><img src="${asset.src}" width="${asset.width}" height="${asset.height}" alt="${caption}"></div></figure>`
+    ? `<figure class="screenshot"><figcaption>${caption}</figcaption><div class="screenshot-frame has-capture" style="max-width:${asset.width+2}px" ${attributes}><img src="${asset.src}" width="${asset.width}" height="${asset.height}" alt="${escapeHTML(capture.alt||capture.caption)}">${annotation}</div></figure>`
     : `<figure class="screenshot"><figcaption>${caption} · ${t.capturePending}</figcaption><div class="screenshot-frame" role="img" aria-label="${caption} — ${t.blank}" ${attributes}></div></figure>`;
 }
 function setComposer(kind, prompt=''){
@@ -212,8 +245,9 @@ function renderInstallation(page, t, language){
       <p class="message-text">${escapeHTML(stage.answer)}</p>
       ${step===1?`<p class="installation-requirements">${escapeHTML(page.requirements)}</p>`:''}
       ${stage.safety?`<p class="installation-requirements">${escapeHTML(stage.safety)}</p>`:''}
-      <ol class="installation-actions">${stage.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ol>
-      ${stage.captures.map(c=>renderCapture(c,'start',language)).join('')}
+      ${stage.notice?`<p class="installation-requirements">${escapeHTML(stage.notice)}</p>`:''}
+      ${stage.flow?stage.flow.map(item=>`<section class="installation-flow-step"><h2>${escapeHTML(item.title)}</h2><p>${escapeHTML(item.body)}</p>${renderCapture(item.capture,'start',language)}</section>`).join(''):`<ol class="installation-actions">${stage.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ol>${stage.captures.map(c=>renderCapture(c,'start',language)).join('')}`}
+      ${stage.help?`<details class="howto installation-help"><summary>${escapeHTML(stage.helpLabel)}</summary><dl>${stage.help.map(item=>`<dt>${escapeHTML(item.question)}</dt><dd>${escapeHTML(item.answer)}</dd>`).join('')}</dl></details>`:''}
       ${stage.note?`<details class="howto"><summary>${escapeHTML(stage.noteLabel)}</summary><p class="note">${escapeHTML(stage.note)}</p></details>`:''}
     </div>
     <nav class="installation-pagination" aria-label="${page.stageNav}">${previous}${next}</nav>

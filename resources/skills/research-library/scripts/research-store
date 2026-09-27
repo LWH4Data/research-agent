@@ -74,5 +74,12 @@ if [ "$#" -eq 3 ] && [ "$1" = "import-pdf" ] && [ "$2" = "--attachment" ]; then
         --codex "$CODEX" --root "$ROOT" --sandbox-home "$SANDBOX_HOME" --path "$3"
 fi
 
+# Native UI must run before the storage sandbox, without storage imports or
+# writes. Only a confirmed nonempty draft reaches the unchanged sandbox below.
+if [ "$#" -eq 1 ] && [ "$1" = "source-add" ]; then
+    exec "$ROOT/.venv/bin/python" -I -S -B "$ROOT/scripts/select_sources.py" \
+        --codex "$CODEX" --root "$ROOT" --sandbox-home "$SANDBOX_HOME"
+fi
+
 exec env CODEX_HOME="$SANDBOX_HOME" "$CODEX" sandbox \
     -P research-store -C "$SANDBOX_HOME" -- "$ROOT/research-store" "$@"

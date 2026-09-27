@@ -53,7 +53,8 @@ class InstallOnboardingTests(unittest.TestCase):
         self.offer.return_value = False
         onboarding.run_onboarding(self.root)
         self.run.assert_not_called()
-        self.assertIn("bash '/tmp/research agent-test/add-source.sh'", self.output.getvalue())
+        self.assertIn("@Research Agent PDF 폴더 연결창 다시 열어줘.", self.output.getvalue())
+        self.assertNotIn("bash", self.output.getvalue())
 
     def test_picker_cancel_is_successful_skip(self) -> None:
         self.response(cancelled=True)
@@ -84,13 +85,13 @@ class InstallOnboardingTests(unittest.TestCase):
         onboarding.run_onboarding(self.root)
         self.run.assert_not_called()
         self.assertIn("설치는 완료되었습니다", self.output.getvalue())
-        self.assertIn("add-source.sh", self.output.getvalue())
+        self.assertIn("연결창 다시 열어줘", self.output.getvalue())
 
     def test_source_add_error_keeps_install_success(self) -> None:
         self.run.return_value = subprocess.CompletedProcess([], 1, "", "원본 위치가 겹칩니다.")
         onboarding.run_onboarding(self.root)
         self.assertIn("설치는 완료되었습니다", self.output.getvalue())
-        self.assertIn("add-source.sh", self.output.getvalue())
+        self.assertIn("연결창 다시 열어줘", self.output.getvalue())
         self.assertIn("원본 위치가 겹칩니다", self.errors.getvalue())
 
     def test_source_add_launch_error_keeps_install_success(self) -> None:

@@ -1,6 +1,6 @@
 ---
 name: research-library
-description: Add one or more PDFs attached in the current Codex conversation to a persistent Markdown research library without folder registration, manage read-only PDF locations, search saved documents and conversations, or manage selected conversation memories.
+description: Explain or use Research Agent to save attached PDFs, connect read-only PDF locations, search a persistent research library, or manage selected conversation memories.
 ---
 
 # Research Agent
@@ -9,7 +9,26 @@ Use the installed research-agent store as the user's persistent research
 library. Its display name is Research Agent; the installed identifier and
 launcher directory remain `research-library` for compatibility.
 
-## Resolve the store once
+## Answer usage questions first
+
+For explanation-only requests, such as "어떤 기능이 있고, 처음에는 어떻게
+사용하면 돼?", answer from the user guide and stop before operational setup.
+Use the known installation root, or resolve it once with the read-only
+`~/.agents/skills/research-library/scripts/research-root` launcher.
+For a first introduction, read only `STORE_ROOT/README.md` sections
+"처음 사용한다면" and "무엇을 할 수 있나요?". For a specific how-to or error
+explanation, locate the matching heading and read that section only. Keep
+README as the feature source; do not duplicate a separate help manual.
+
+Answer in the user's language with a short explanation and one relevant next
+step. Link to the matching guide section when useful. Do not enumerate the
+bundle, read operational references, runtime rules, scripts, agents or research
+data, delegate work, or query library/review status just to explain usage.
+Reading the guide does not establish that installation or saved data is healthy.
+When the user also asks to perform a task or inspect actual state, continue below
+for that requested work; a general introduction alone does not authorize it.
+
+## Set up an actual library operation
 
 Use the absolute expansion of
 `~/.agents/skills/research-library/scripts/research-root`; treat its single
@@ -39,10 +58,11 @@ import, sync, saved-conversation, and broad retrieval work to
 exact accessible paths or resolved IDs; the manager does not delegate itself.
 When already running as that manager, perform the delegated work rather than
 delegating again. Users never need to choose an agent or model.
+Opening or reopening the folder connection window without supplied paths stays
+with the primary session; follow the source reference's exact launcher call.
 
 | Request | Read before acting |
 |---|---|
-| Purpose, features, usage, troubleshooting explanation | Relevant sections of `STORE_ROOT/README.md`; no agent or library operation for explanation alone. |
 | Connect, list, or disconnect folders/PDF sources; use attached PDFs | [Sources and PDF attachments](references/sources-and-attachments.md) |
 | Organize new/changed PDFs, resume review, or check progress | [Sync and background review](references/sync-and-background.md) |
 | Find or compare saved research, answer using PDF/conversation evidence | [Search and evidence](references/search-and-evidence.md) |

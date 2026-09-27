@@ -31,22 +31,71 @@ window.RESEARCH_GUIDE_EN = {
       },
       {
         label: 'Choose folders',
-        question: 'Can I continue without any PDFs ready?',
-        answer: 'Yes. In the dialog after installation, choose “나중에 하기” (Later). Installation is complete even if you do not connect any folders.',
-        steps: ['To connect PDF folders now, choose “폴더 선택하기” (Select folders). The installer currently shows these buttons in Korean.', 'Choose folders in the window that opens. Hold ⌘ to select several folders in the same view.'],
-        captures: [{key: 'folder-choice', caption: 'The dialog with “나중에 하기” (Later) and “폴더 선택하기” (Select folders)'}],
-        noteLabel: 'Closed the dialog, or did it not appear?',
-        note: 'Continue if Terminal showed the installation-complete message. Canceling folder selection does not undo installation. You can connect folders later or attach PDFs directly in a conversation. Connecting a folder alone does not start processing its PDFs.'
+        question: 'How do I connect my PDF folders?',
+        answer: 'Add folders to the list, check your choices, then connect them. Your original files stay unchanged.',
+        notice: 'Development preview: this flow is not yet included in v0.3.0, which the current installation command installs.',
+        flow: [
+          {
+            title: 'Open the folder picker',
+            body: 'Click “폴더 추가하기” (Add folders).',
+            capture: {
+              key: 'folder-draft-empty',
+              caption: 'The empty folder list. The black outline is a guide annotation.',
+              alt: 'The development version’s empty folder list and “폴더 추가하기” (Add folders) button'
+            }
+          },
+          {
+            title: 'Choose folders',
+            body: 'Hold ⌘ Command beside the spacebar and click each folder name once. Then click “목록에 추가” (Add to list).',
+            capture: {
+              key: 'folder-selection',
+              caption: 'An example of selected folders, cropped from an earlier screenshot.',
+              alt: 'Three folder names selected and highlighted together'
+            }
+          },
+          {
+            title: 'Check the list and connect',
+            body: 'Check the folder list, then click “이 폴더들 연결하기” (Connect these folders). To add another location first, click “폴더 더 추가하기” (Add more folders).',
+            capture: {
+              key: 'folder-draft-confirmation',
+              caption: 'Three folders selected, before connecting. The black outline is a guide annotation around the connect button.',
+              alt: 'The confirmation list with three folders checked and the “이 폴더들 연결하기” (Connect these folders) button'
+            }
+          }
+        ],
+        helpLabel: 'Need help?',
+        help: [
+          {
+            question: 'No PDFs ready yet?',
+            answer: 'Click “취소” (Cancel). Canceling folder selection does not undo installation. You can connect folders later or attach PDFs directly in Codex.'
+          },
+          {
+            question: 'Selected the wrong folder?',
+            answer: 'Before connecting, uncheck it to exclude it from this list. If it is already connected, ask Codex to identify the connection, then remove that connection. Your original folder and files remain unchanged.'
+          },
+          {
+            question: 'Closed a window?',
+            answer: 'Canceling the inner picker keeps your checked folders in the list. Canceling the whole flow discards this selection. Ask Codex to reopen the folder connection window; reopening directly from Codex is still being validated.'
+          },
+          {
+            question: 'Folders will not select, or an error appeared?',
+            answer: 'Click the picker window once, then hold ⌘ Command and click the folder names. If an error appears, share its message with Codex. Do not switch to Full access.'
+          },
+          {
+            question: 'Why does my window look different?',
+            answer: 'Published v0.3.0 uses the earlier picker, where “선택” (Select) finishes selection directly. The draft-list flow shown here is an upcoming development version.'
+          }
+        ]
       },
       {
         label: 'Try it in Codex',
         question: 'How do I call Research Agent after installation?',
-        answer: 'Fully quit and reopen your Codex app, VS Code, or CLI. Continue in a conversation in the project you normally use.',
-        steps: ['In the Codex app, select Research Agent from the @ menu.', 'Ask about its features using the prompt below. You do not need a PDF yet.'],
-        captures: [{key: 'codex-invocation', caption: 'Selecting Research Agent and asking how to use it in Codex'}],
+        answer: 'After installation, fully quit and reopen the desktop app. You can use your usual project.',
+        steps: ['Select Codex from the product menu, then open a Local conversation.', 'Type @research in the composer and select Research Agent from the results.', 'Ask about its features using the prompt below. You do not need a PDF yet.'],
+        captures: [{key: 'codex-invocation', caption: 'An actual Korean conversation with Research Agent selected, showing its features and how to get started.', alt: 'A selected Research Agent mention and its Korean response describing PDF organization, search, conversation storage, and starting with one PDF'}],
         safety: 'Use Ask for approval or Approve for me. Do not use Full access with Research Agent.',
         noteLabel: 'Cannot find it in the menu?',
-        note: 'Check that installation finished. Fully quit and reopen the Codex app or VS Code, rather than only starting a new conversation. If it still does not appear, share the installation messages with Codex.',
+        note: 'If the composer shows Instant, you are in a regular ChatGPT chat. This version of Research Agent runs in a local Codex task. If it is still missing in Codex, check that installation finished and fully quit and reopen the app. If that does not help, share the installation messages with Codex.',
         composer: 'prompt',
         prompt: '@Research Agent What can you do, and how should I get started?'
       }
@@ -61,10 +110,12 @@ window.RESEARCH_GUIDE_EN = {
     capture: 'Folder selection and connection result screen',
     steps: [
       'Use the prompt below to ask Codex to connect your folders.',
-      'Run the command it gives you in a regular Terminal window, then choose folders in the dialog that opens. Hold ⌘ to select several folders shown in the same view.',
+      'Run the command it gives you in a regular Terminal window to open the folder picker.',
+      'To choose several folders, hold down ⌘ Command beside the spacebar and click each folder name once. Double-clicking may finish selection immediately.',
+      'Check that the folders you want are selected, release the key, then click “선택” (Select) at the bottom right.',
       'Connect other folders the same way, then ask, “Organize my newly added documents.”'
     ],
-    note: 'If you connected folders during installation, you do not need to register them again. You can also start by attaching PDFs to a conversation without connecting a folder.',
+    note: 'If you connected folders during installation, you do not need to register them again. These instructions describe published v0.3.0. The development version adds a draft list: exclude or add folders before connecting. Canceling the inner picker preserves the list; canceling the whole flow registers nothing from that draft. Reopening through a Codex request is being prepared. These improvements are not yet released.',
     prompt: '@Research Agent Connect the folders containing my PDFs.',
     prev: 'start',
     next: 'attach'
