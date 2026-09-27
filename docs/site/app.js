@@ -227,11 +227,24 @@ function setComposer(kind, prompt=''){
   document.querySelector('#invocation-label').textContent=t.invocationLabel;
   document.querySelector('#invocation-note').textContent=t.invocationNote;
 }
+function renderInstallationCopy(stage,t){
+  if(!stage.composer)return '';
+  const isInstall=stage.composer==='install';
+  const text=isInstall?window.RESEARCH_GUIDE_RELEASE.installCommand:stage.prompt;
+  return `<div class="installation-copy" role="group" aria-labelledby="installation-copy-label">
+    <div class="installation-copy-box">
+      <div class="installation-copy-header"><p id="installation-copy-label">${isInstall?t.install:t.prompt}</p><button type="button" data-copy-installation>${t.copy}</button></div>
+      <pre id="installation-copy-text" class="installation-copy-text${isInstall?' is-command':''}" tabindex="0" aria-labelledby="installation-copy-label">${escapeHTML(text)}</pre>
+    </div>
+    <p class="installation-copy-note">${isInstall?t.installNote:t.paste}</p>
+    ${isInstall?'':`<details class="invocation-help"><summary>${t.invocationLabel}</summary><p>${t.invocationNote}</p></details>`}
+  </div>`;
+}
 function renderInstallation(page, t, language){
   const requested=Number(new URL(location.href).searchParams.get('step'));
   const step=Number.isInteger(requested)&&requested>=1&&requested<=page.stages.length?requested:1;
   const stage=page.stages[step-1];
-  setComposer(stage.composer,stage.prompt);
+  setComposer(null);
   const previous=step>1
     ? `<button type="button" data-install-step="${step-1}">${page.back}</button>`
     : `<a href="#/overview">${t.overview}</a>`;
@@ -246,7 +259,7 @@ function renderInstallation(page, t, language){
       ${step===1?`<p class="installation-requirements">${escapeHTML(page.requirements)}</p>`:''}
       ${stage.safety?`<p class="installation-requirements">${escapeHTML(stage.safety)}</p>`:''}
       ${stage.notice?`<p class="installation-requirements">${escapeHTML(stage.notice)}</p>`:''}
-      ${stage.flow?stage.flow.map(item=>`<section class="installation-flow-step"><h2>${escapeHTML(item.title)}</h2><p>${escapeHTML(item.body)}</p>${renderCapture(item.capture,'start',language)}</section>`).join(''):`<ol class="installation-actions">${stage.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ol>${stage.captures.map(c=>renderCapture(c,'start',language)).join('')}`}
+      ${stage.flow?stage.flow.map(item=>`<section class="installation-flow-step"><h2>${escapeHTML(item.title)}</h2><p>${escapeHTML(item.body)}</p>${renderCapture(item.capture,'start',language)}</section>`).join(''):`<ol class="installation-actions">${stage.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ol>${renderInstallationCopy(stage,t)}${stage.captures.map(c=>renderCapture(c,'start',language)).join('')}`}
       ${stage.help?`<details class="howto installation-help"><summary>${escapeHTML(stage.helpLabel)}</summary><dl>${stage.help.map(item=>`<dt>${escapeHTML(item.question)}</dt><dd>${escapeHTML(item.answer)}</dd>`).join('')}</dl></details>`:''}
       ${stage.note?`<details class="howto"><summary>${escapeHTML(stage.noteLabel)}</summary><p class="note">${escapeHTML(stage.note)}</p></details>`:''}
     </div>
@@ -293,6 +306,19 @@ function syncPreferencesFromURL(){
 window.addEventListener('popstate',()=>{syncPreferencesFromURL();render()});
 window.addEventListener('hashchange',()=>{syncPreferencesFromURL();render();main.focus({preventScroll:true})});
 main.addEventListener('click',event=>{
+  const copyButton=event.target.closest('[data-copy-installation]');
+  if(copyButton){
+    const text=main.querySelector('#installation-copy-text');
+    copyGuideText(text.textContent,copyButton,()=>{
+      text.focus();
+      const range=document.createRange();
+      range.selectNodeContents(text);
+      const selection=window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    });
+    return;
+  }
   const button=event.target.closest('[data-install-step]');
   if(!button||currentRoute()!=='start')return;
   const url=new URL(location.href);
@@ -304,6 +330,18 @@ main.addEventListener('click',event=>{
 document.querySelector('.menu-toggle').addEventListener('click',function(){const open=this.getAttribute('aria-expanded')!=='true';this.setAttribute('aria-expanded',String(open));document.querySelector('#guide-nav').classList.toggle('is-open',open)});
 document.querySelector('.skip-link').addEventListener('click',e=>{e.preventDefault();main.focus()});
 document.querySelectorAll('[data-language]').forEach(button=>button.addEventListener('click',()=>{preferences.language=button.dataset.language;savePreferences();render();}));
-document.querySelector('#copy-prompt').addEventListener('click',async function(){const t=ui[preferences.language];try{await navigator.clipboard.writeText(promptField.value);this.textContent=t.copied;document.querySelector('#live-message').textContent=t.copiedNotice;}catch{promptField.focus();promptField.select();this.textContent=t.manualCopy;document.querySelector('#live-message').textContent=t.failedCopy;}});
+async function copyGuideText(text,button,selectText){
+  const t=ui[preferences.language];
+  try{
+    await navigator.clipboard.writeText(text);
+    button.textContent=t.copied;
+    document.querySelector('#live-message').textContent=t.copiedNotice;
+  }catch{
+    selectText();
+    button.textContent=t.manualCopy;
+    document.querySelector('#live-message').textContent=t.failedCopy;
+  }
+}
+document.querySelector('#copy-prompt').addEventListener('click',function(){copyGuideText(promptField.value,this,()=>{promptField.focus();promptField.select();});});
 savePreferences();
 render();
