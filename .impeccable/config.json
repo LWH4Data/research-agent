@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          "docs/site/index.html"
+        ],
+        "createdAt": "2026-09-28T09:30:35.011Z",
+        "reason": "Codex review: intentional fixed-viewport chat layout with independently scrolling main/sidebar; positioned children are contained image annotations, screen-reader content and the mobile menu button, with no escaping popovers."
+      }
+    ]
+  }
+}

@@ -98,16 +98,22 @@ const pages={
   "attach": {
     "title": "PDF 첨부해서 저장하기",
     "question": "폴더를 연결하지 않고 PDF만 보내도 되나요?",
-    "answer": "네. Codex 대화에 PDF를 한 개 또는 여러 개 첨부하고 Research Agent에게 저장을 요청하세요. PDF 사본과 검색용 내용이 연구 자료실에 저장되어 다음 대화에서도 찾을 수 있어요.",
-    "capture": "PDF 3개를 첨부해 저장하고 문서별 요약을 받은 실제 화면이에요. 텍스트 저장은 완료됐고, 수식·표·그림 확인은 대기 중이라고 안내해요.",
+    "answer": "네. PDF를 한 개 또는 여러 개 첨부하고 저장과 요약을 요청하세요. 본문이 저장되면 바로 질문할 수 있고, 필요한 수식·표·그림은 이어서 백그라운드에서 확인해요. 검토가 진행되는 동안에도 대화를 계속할 수 있어요.",
+    "capture": "PDF 3개를 저장하고 요약한 기존 캡처예요. 시각 검토는 ‘대기 중’으로만 표시되어 시작 여부를 확인할 수 없어요. 개선된 흐름의 검토 시작·결과 화면으로 교체할 예정이에요.",
     "captureAlt": "TinyBERT, MiniLM, Dense Passage Retrieval PDF 3개와 저장·요약 요청, 새 저장 완료 및 문서별 요약, 시각 검토 27쪽 대기 안내가 담긴 Codex 응답",
     "steps": [
       "Codex의 로컬 대화에 PDF를 한 개 또는 여러 개 함께 첨부해요.",
       "@research를 입력해 Research Agent를 선택하고, 아래 문장으로 첨부한 PDF의 저장과 요약을 요청해요.",
-      "저장된 문서와 처리하지 못한 파일이 있는지 확인해요. 텍스트 정리가 끝나면 바로 질문을 이어가세요."
+      "답변에서 저장된 문서와 실패한 파일, 시각 검토가 시작됐는지 확인해요. 본문 저장이 끝나면 먼저 질문을 이어가세요.",
+      "수식·표·그림의 세부 내용을 사용하려면 검토 결과를 확인해요. ‘첨부한 PDF의 시각 검토 결과를 알려줘’라고 물어볼 수 있어요."
     ],
     "alternative": {"route": "organize", "label": "폴더를 연결해 두었다면: 폴더의 PDF 저장하기"},
-    "note": "첨부만 하면 자동으로 저장되지는 않아요. Codex에서 첨부 파일을 읽을 수 있어야 해요. 저장을 원하지 않으면 “저장하지 말고 이번 대화에서만 설명해줘”라고 말하세요. 그림·수식·표 확인은 더 걸릴 수 있어요.",
+    "note": "Codex에서 첨부 파일을 읽을 수 있어야 해요. 첨부만 하면 저장되지 않지만 Research Agent에게 그 PDF로 요약·비교를 요청하면 함께 저장돼요. 원하지 않으면 “저장하지 말고 이번 대화에서만 설명해줘”라고 말하세요. 저장한 자료는 다음 대화에서도 찾을 수 있어요.",
+    "helpLabel": "검토가 시작되지 않거나, 잠시 멈추고 싶다면?",
+    "help": [
+      {"question": "‘대기 중’이거나 시작하지 못했다고 나오면?", "answer": "대기는 검토가 진행 중이라는 뜻이 아니에요. 답변에 표시된 이유를 확인하고 “첨부한 PDF의 시각 검토가 시작됐는지 확인하고, 시작하지 못했다면 이유를 알려줘”라고 요청하세요. 확인하지 못한 수식·표·그림은 검토 완료로 취급하지 않아요. 추가 검토가 필요하면 필요한 문서와 페이지만 다시 확인해 달라고 요청하세요."},
+      {"question": "시간이 오래 걸리거나 사용량이 부담된다면?", "answer": "현재 개발본에서는 “이 PDF의 시각 검토를 잠시 멈춰줘”라고 요청할 수 있어요. 저장된 본문은 계속 사용할 수 있고, 나중에 “이 PDF의 시각 검토를 이어서 해줘”라고 요청하면 돼요. 이 일시정지·재개 기능은 공개 v0.3.0에는 아직 포함되지 않았어요."}
+    ],
     "prompt": "@Research Agent 첨부한 PDF들을 연구 자료실에 저장하고, 첨부한 문서의 핵심 내용을 각각 정리해줘.",
     "prev": "start",
     "next": "compare"
@@ -116,7 +122,16 @@ const pages={
     "title": "폴더의 PDF 저장하기",
     "question": "설치할 때 연결한 폴더의 PDF는 어떻게 저장하나요?",
     "answer": "현재 배포된 v0.3.0은 연결 후 아래 문장으로 첫 저장을 요청해요. 개발본은 폴더 확인 후 저장이 시작되므로 처리 상태를 확인하면 돼요. 이후 PDF를 추가하거나 바꾸면 아래 문장으로 갱신하세요. 원본 PDF는 수정하지 않아요.",
-    "capture": "연결한 폴더의 PDF 변환·저장 요청과 결과 화면",
+    "capture": "저장 후 상태를 확인한 실제 화면이에요. 폴더 3개의 PDF 9개가 저장됐고, 시각 검토는 7개 문서가 완료됐어요. 나머지 2개는 각각 1쪽씩 추가 검토가 필요하며, 진행 중인 검토 작업은 없다고 안내해요.",
+    "captureAlt": "연결한 폴더의 저장 결과와 시각 검토 상태를 묻는 질문, PDF 9개 저장·실패 없음, 7개 문서 시각 검토 완료·2개 문서 각 1쪽 추가 검토 필요·실행 중인 검토 없음이라는 Codex 응답",
+    "followUp": {
+      "title": "추가 검토가 필요하다고 나오면?",
+      "explanation": "PDF는 저장됐지만 그림·수식·표에 아직 확인하지 못한 부분이 있다는 뜻이에요. 기다리기만 하면 자동으로 반복 검토되지는 않아요. Codex에 필요한 페이지만 다시 확인해 달라고 요청하세요.",
+      "prompt": "@Research Agent 추가 검토가 필요한 문서와 페이지를 확인하고, 그 부분만 다시 검토해서 결과를 저장해줘. 끝나면 문서명과 페이지별로 완료 여부를 알려주고, 여전히 확인하지 못한 부분은 이유도 설명해줘.",
+      "result": "“검토 중”이라는 답변을 받았다면 대화를 계속해도 돼요. 이후 “방금 요청한 추가 검토 결과를 알려줘”라고 물어보세요. 결과에서 어느 문서의 몇 쪽이 확인됐는지 살펴보세요. 여전히 확인하기 어려운 부분은 이유와 함께 남을 수 있어요. 그 내용이나 수치를 검증 완료로 받아들이지 말고, 안내된 원본 페이지를 확인하세요. 이미 저장한 PDF와 확인이 끝난 내용은 그대로 사용할 수 있어요.",
+      "capture": "추가 검토를 요청한 뒤 받은 실제 답변이에요. BERT 15쪽과 Auto-Encoding Variational Bayes 14쪽을 다시 확인해 저장했고, 남은 검토나 실패는 없다고 안내해요.",
+      "captureAlt": "추가 검토가 필요한 페이지만 다시 확인해 저장해 달라는 요청과, BERT 15쪽·Auto-Encoding Variational Bayes 14쪽의 검토와 저장 완료, 대기·미해결·실패 각 0쪽이라는 Codex 응답"
+    },
     "steps": [
       "설치할 때 폴더를 연결했다면 다시 연결하거나 PDF를 첨부할 필요 없어요.",
       "Codex의 로컬 대화에서 Research Agent를 선택하세요. v0.3.0은 아래 문장으로 저장을 요청하고, 개발본에서 이미 시작했다면 “방금 연결한 폴더의 저장 상태를 알려줘”라고 물어보세요.",
@@ -204,7 +219,9 @@ const installationCaptures={
   'codex-invocation':{src:'assets/screenshots/codex-introduction.png?v=20260928-introduction',width:1584,height:722}
 };
 const featureCaptures={
-  attach:{src:'assets/screenshots/pdf-attachments-save.png',width:1652,height:1352}
+  attach:{src:'assets/screenshots/pdf-attachments-save.png',width:1652,height:1352},
+  organize:{src:'assets/screenshots/folder-pdf-status.png',width:1614,height:648},
+  'organize-review':{src:'assets/screenshots/folder-pdf-review-result.png',width:1622,height:712}
 };
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ui={ko:{guide:'사용 가이드',overview:'가이드 둘러보기',menu:'메뉴',skip:'본문으로 이동',nav:'가이드 메뉴',first:'처음이라면',features:'기능',me:'나',assistant:'Research Agent 안내',howto:'사용 방법',note:'알아두세요',previous:'이전',next:'다음',related:'관련 가이드',blank:'실제 캡처를 넣을 빈 영역',capturePending:'캡처 준비 중',copy:'복사',copied:'복사됨',manualCopy:'직접 복사',copiedNotice:'복사했어요.',failedCopy:'복사할 문장을 선택했어요. ⌘ + C 또는 Ctrl + C로 직접 복사하세요.',prompt:'Codex에서 사용할 문장',invocationLabel:'VS Code·CLI에서 사용하려면',invocationNote:'문장 앞의 @Research Agent를 $research-library로 바꾸세요. 또는 /skills에서 research-library를 선택한 뒤 요청을 입력하세요.',install:'터미널에서 실행할 설치 명령',paste:'복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.',installNote:'명령을 복사해도 설치가 실행되지는 않아요. 터미널에서 직접 실행하세요.',sideNote:'사용 가이드 · v0.3.0\n실제 작업은 Codex에서 진행해요.',overviewQuestion:'Research Agent로 무엇을 할 수 있나요?',overviewAnswer:'흩어진 PDF와 중요한 연구 대화를 정리하고, 필요할 때 다시 찾아볼 수 있어요. 궁금한 기능을 선택해 보세요.',featureDescriptions:{attach:'PDF를 대화에 첨부해 바로 저장하고 질문해요.',organize:'연결한 폴더의 PDF를 변환해 검색할 수 있도록 저장해요.',compare:'새 PDF를 저장하고 기존 자료와 함께 정리해요.',search:'여러 PDF와 저장한 대화에서 관련 내용을 찾아요.',save:'연구 아이디어와 실험 설계를 선택해서 보관해요.'},startLink:'처음이라면 설치부터 시작하세요.',overviewEnd:'현재 지원 환경은 macOS의 Codex예요. 이 웹은 사용 방법을 안내합니다.',},en:{guide:'User guide',overview:'Explore the guide',menu:'Menu',skip:'Skip to content',nav:'Guide navigation',first:'Getting started',features:'Features',me:'You',assistant:'Research Agent guide',howto:'How to use it',note:'Good to know',previous:'Previous',next:'Next',related:'Related guides',blank:'Empty frame reserved for a real screenshot',capturePending:'Screenshot coming soon',copy:'Copy',copied:'Copied',manualCopy:'Copy manually',copiedNotice:'Copied to clipboard.',failedCopy:'The text is selected. Press ⌘ + C or Ctrl + C to copy it.',prompt:'Prompt to use in Codex',invocationLabel:'Using VS Code or the CLI?',invocationNote:'Replace @Research Agent at the start of the prompt with $research-library. Or choose research-library from /skills, then enter your request.',install:'Installation command for Terminal',paste:'Paste this into your usual Codex conversation.',installNote:'Copying does not install anything. Run the command yourself in Terminal.',sideNote:'User guide · v0.3.0\nActual work takes place in Codex.',overviewQuestion:'What can I do with Research Agent?',overviewAnswer:'Organize scattered PDFs and important research conversations, then find them again when you need them. Choose a feature to learn more.',featureDescriptions:{attach:'Attach PDFs in Codex to save them and ask questions.',organize:'Convert and save PDFs from your connected folders.',compare:'Save new PDFs and summarize them with existing materials.',search:'Find related information across PDFs and saved conversations.',save:'Keep selected research ideas and experiment plans.'},startLink:'New here? Start with installation.',overviewEnd:'The supported environment is Codex on macOS. This website explains how to use it.',}};
@@ -216,8 +233,6 @@ try{
 const requestedLanguage=new URL(location.href).searchParams.get('lang');
 if(['ko','en'].includes(requestedLanguage))preferences.language=requestedLanguage;
 const main=document.querySelector('main');
-const composer=document.querySelector('#composer-area');
-const promptField=document.querySelector('#prompt');
 const titleFor=route=>route==='overview'?ui[preferences.language].overview:(preferences.language==='en'?window.RESEARCH_GUIDE_EN:pages)[route].title;
 const currentRoute=()=>{const key=location.hash.replace(/^#\//,'');return key==='overview'||Object.hasOwn(pages,key)?key:'overview'};
 function savePreferences(){
@@ -240,27 +255,14 @@ function renderCapture(capture, route, language){
     ? `<figure class="screenshot"><figcaption>${caption}</figcaption><div class="screenshot-frame has-capture" style="max-width:${asset.width+2}px" ${attributes}><img src="${asset.src}" width="${asset.width}" height="${asset.height}" alt="${escapeHTML(capture.alt||capture.caption)}">${annotation}</div></figure>`
     : `<figure class="screenshot"><figcaption>${caption} · ${t.capturePending}</figcaption><div class="screenshot-frame" role="img" aria-label="${caption} — ${t.blank}" ${attributes}></div></figure>`;
 }
-function setComposer(kind, prompt=''){
-  const t=ui[preferences.language];
-  composer.classList.toggle('hidden',!kind);
-  promptField.value=kind==='install'?window.RESEARCH_GUIDE_RELEASE.installCommand:prompt;
-  promptField.rows=kind==='install'?5:2;
-  document.querySelector('#prompt-label').textContent=kind==='install'?t.install:t.prompt;
-  document.querySelector('#composer-note').textContent=kind==='install'?t.installNote:t.paste;
-  const invocationHelp=document.querySelector('#invocation-help');
-  invocationHelp.classList.toggle('hidden',kind!=='prompt');
-  invocationHelp.open=false;
-  document.querySelector('#invocation-label').textContent=t.invocationLabel;
-  document.querySelector('#invocation-note').textContent=t.invocationNote;
-}
-function renderInstallationCopy(stage,t){
+function renderGuideCopy(stage,t,key){
   if(!stage.composer)return '';
   const isInstall=stage.composer==='install';
   const text=isInstall?window.RESEARCH_GUIDE_RELEASE.installCommand:stage.prompt;
-  return `<div class="installation-copy" role="group" aria-labelledby="installation-copy-label">
+  return `<div class="installation-copy" role="group" aria-labelledby="copy-${key}-label">
     <div class="installation-copy-box">
-      <div class="installation-copy-header"><p id="installation-copy-label">${isInstall?t.install:t.prompt}</p><button type="button" data-copy-installation>${t.copy}</button></div>
-      <pre id="installation-copy-text" class="installation-copy-text${isInstall?' is-command':''}" tabindex="0" aria-labelledby="installation-copy-label">${escapeHTML(text)}</pre>
+      <div class="installation-copy-header"><p id="copy-${key}-label">${isInstall?t.install:t.prompt}</p><button type="button" data-copy-guide>${t.copy}</button></div>
+      <pre id="copy-${key}-text" class="installation-copy-text${isInstall?' is-command':''}" tabindex="0" aria-labelledby="copy-${key}-label">${escapeHTML(text)}</pre>
     </div>
     <p class="installation-copy-note">${isInstall?t.installNote:t.paste}</p>
     ${isInstall?'':`<details class="invocation-help"><summary>${t.invocationLabel}</summary><p>${t.invocationNote}</p></details>`}
@@ -270,7 +272,6 @@ function renderInstallation(page, t, language){
   const requested=Number(new URL(location.href).searchParams.get('step'));
   const step=Number.isInteger(requested)&&requested>=1&&requested<=page.stages.length?requested:1;
   const stage=page.stages[step-1];
-  setComposer(null);
   const previous=step>1
     ? `<button type="button" data-install-step="${step-1}">${page.back}</button>`
     : `<a href="#/overview">${t.overview}</a>`;
@@ -285,13 +286,18 @@ function renderInstallation(page, t, language){
       ${step===1?`<p class="installation-requirements">${escapeHTML(page.requirements)}</p>`:''}
       ${stage.safety?`<p class="installation-requirements">${escapeHTML(stage.safety)}</p>`:''}
       ${stage.notice?`<p class="installation-requirements">${escapeHTML(stage.notice)}</p>`:''}
-      ${stage.flow?stage.flow.map(item=>`<section class="installation-flow-step"><h2>${escapeHTML(item.title)}</h2><p>${escapeHTML(item.body)}</p>${renderCapture(item.capture,'start',language)}</section>`).join(''):`<ol class="installation-actions">${stage.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ol>${renderInstallationCopy(stage,t)}${stage.captures.map(c=>renderCapture(c,'start',language)).join('')}`}
+      ${stage.flow?stage.flow.map(item=>`<section class="installation-flow-step"><h2>${escapeHTML(item.title)}</h2><p>${escapeHTML(item.body)}</p>${renderCapture(item.capture,'start',language)}</section>`).join(''):`<ol class="installation-actions">${stage.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ol>${renderGuideCopy(stage,t,`start-${step}`)}${stage.captures.map(c=>renderCapture(c,'start',language)).join('')}`}
       ${stage.help?`<details class="howto installation-help"><summary>${escapeHTML(stage.helpLabel)}</summary><dl>${stage.help.map(item=>`<dt>${escapeHTML(item.question)}</dt><dd>${escapeHTML(item.answer)}</dd>`).join('')}</dl></details>`:''}
       ${stage.note?`<details class="howto"><summary>${escapeHTML(stage.noteLabel)}</summary><p class="note">${escapeHTML(stage.note)}</p></details>`:''}
     </div>
     ${step===page.stages.length?`<section class="installation-flow-step"><h2>${escapeHTML(page.saveChoice)}</h2><ul class="feature-list"><li><a href="#/attach">${escapeHTML(page.firstTask)}</a></li><li><a href="#/organize">${escapeHTML(page.folderTask)}</a></li></ul></section>`:''}
     <nav class="installation-pagination" aria-label="${page.stageNav}">${previous}${next}</nav>
   </div>`;
+}
+function renderFollowUp(followUp,route,t,language){
+  if(!followUp)return '';
+  const key=`${route}-review`;
+  return `<details class="howto"><summary>${escapeHTML(followUp.title)}</summary><p class="note">${escapeHTML(followUp.explanation)}</p>${renderGuideCopy({composer:'prompt',prompt:followUp.prompt},t,key)}<p class="note">${escapeHTML(followUp.result)}</p>${renderCapture({key,caption:followUp.capture,alt:followUp.captureAlt},key,language)}</details>`;
 }
 function render(){
   const {language}=preferences;const t=ui[language];const route=currentRoute();const translated=language==='en'?window.RESEARCH_GUIDE_EN:pages;
@@ -309,18 +315,18 @@ function render(){
   document.querySelectorAll('[data-route]').forEach(a=>{a.textContent=titleFor(a.dataset.route);if(a.dataset.route===route)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
   document.querySelector('#guide-nav').classList.remove('is-open');
   document.querySelector('.menu-toggle').setAttribute('aria-expanded','false');
-  document.querySelector('#copy-prompt').textContent=t.copy;
   document.querySelector('#live-message').textContent='';
   if(route==='overview'){
-    composer.classList.add('hidden');
     main.innerHTML=`<div class="conversation overview"><div class="message user-message"><p class="speaker">${t.me}</p><p class="overview-question">${t.overviewQuestion}</p></div><div class="message assistant-message"><p class="speaker">${t.assistant}</p><p class="message-text">${t.overviewAnswer}</p><ul class="feature-list">${['attach','organize','compare','search','save'].map(key=>`<li><a href="#/${key}">${titleFor(key)}</a><p>${t.featureDescriptions[key]}</p></li>`).join('')}</ul><div class="overview-start"><a href="#/start">${t.startLink}</a><p>${t.overviewEnd}</p></div></div></div>`;
   }else if(route==='start'){
     renderInstallation(translated.start,t,language);
   }else{
     const p={...translated[route],steps:[...translated[route].steps]};
     const captureFigures=renderCapture({key:route,caption:p.capture,alt:p.captureAlt},route,language);
-    setComposer('prompt',p.prompt);
-    main.innerHTML=`<div class="conversation"><div class="message user-message"><p class="speaker">${t.me}</p><p class="message-text">${escapeHTML(p.question)}</p></div><div class="message assistant-message"><p class="speaker">${t.assistant}</p><p class="message-text">${escapeHTML(p.answer)}</p>${captureFigures}<details class="howto" open><summary>${t.howto}</summary><ol>${p.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ol></details>${p.alternative?`<p class="note"><a href="#/${escapeHTML(p.alternative.route)}">${escapeHTML(p.alternative.label)}</a></p>`:''}<details class="howto"><summary>${t.note}</summary><p class="note">${escapeHTML(p.note)}</p></details></div><nav class="related" aria-label="${t.related}"><a href="#/${p.prev}">${t.previous}: ${titleFor(p.prev)}</a><a href="#/${p.next}">${t.next}: ${titleFor(p.next)}</a></nav></div>`;
+    const followUp=renderFollowUp(p.followUp,route,t,language);
+    const promptCopy=renderGuideCopy({composer:'prompt',prompt:p.prompt},t,route);
+    const help=p.help?`<details class="howto installation-help"><summary>${escapeHTML(p.helpLabel)}</summary><dl>${p.help.map(item=>`<dt>${escapeHTML(item.question)}</dt><dd>${escapeHTML(item.answer)}</dd>`).join('')}</dl></details>`:'';
+    main.innerHTML=`<div class="conversation"><div class="message user-message"><p class="speaker">${t.me}</p><p class="message-text">${escapeHTML(p.question)}</p></div><div class="message assistant-message"><p class="speaker">${t.assistant}</p><p class="message-text">${escapeHTML(p.answer)}</p><details class="howto" open><summary>${t.howto}</summary><ol>${p.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ol></details>${promptCopy}${captureFigures}${p.alternative?`<p class="note"><a href="#/${escapeHTML(p.alternative.route)}">${escapeHTML(p.alternative.label)}</a></p>`:''}<details class="howto"><summary>${t.note}</summary><p class="note">${escapeHTML(p.note)}</p></details>${help}${followUp}</div><nav class="related" aria-label="${t.related}"><a href="#/${p.prev}">${t.previous}: ${titleFor(p.prev)}</a><a href="#/${p.next}">${t.next}: ${titleFor(p.next)}</a></nav></div>`;
   }
   main.scrollTo({top:0,behavior:'instant'});
 }
@@ -332,9 +338,9 @@ function syncPreferencesFromURL(){
 window.addEventListener('popstate',()=>{syncPreferencesFromURL();render()});
 window.addEventListener('hashchange',()=>{syncPreferencesFromURL();render();main.focus({preventScroll:true})});
 main.addEventListener('click',event=>{
-  const copyButton=event.target.closest('[data-copy-installation]');
+  const copyButton=event.target.closest('[data-copy-guide]');
   if(copyButton){
-    const text=main.querySelector('#installation-copy-text');
+    const text=copyButton.closest('.installation-copy').querySelector('.installation-copy-text');
     copyGuideText(text.textContent,copyButton,()=>{
       text.focus();
       const range=document.createRange();
@@ -368,6 +374,5 @@ async function copyGuideText(text,button,selectText){
     document.querySelector('#live-message').textContent=t.failedCopy;
   }
 }
-document.querySelector('#copy-prompt').addEventListener('click',function(){copyGuideText(promptField.value,this,()=>{promptField.focus();promptField.select();});});
 savePreferences();
 render();

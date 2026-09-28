@@ -128,16 +128,22 @@ window.RESEARCH_GUIDE_EN = {
   attach: {
     title: 'Save attached PDFs',
     question: 'Can I send PDFs without connecting a folder?',
-    answer: 'Yes. Attach one or more PDFs to your Codex conversation and ask Research Agent to save them. PDF copies and searchable content are saved in your library so you can find them in future conversations.',
-    capture: 'An actual Korean conversation saving three attached PDFs and summarizing each. The response reports that text saving is complete while review of equations, tables, and figures is pending.',
+    answer: 'Yes. Attach one or more PDFs and ask to save and summarize them. Once the text is saved, you can ask questions immediately. Figures, equations, and tables that need checking are then reviewed in the background, while you keep chatting.',
+    capture: 'An earlier Korean capture showing three PDFs saved and summarized. Visual review is only marked as pending, so this does not confirm that it started. A new capture showing review startup and results will replace it.',
     captureAlt: 'Three attached PDFs, TinyBERT, MiniLM, and Dense Passage Retrieval, a save-and-summarize request, and a Korean response reporting new saves, document summaries, and 27 pages awaiting visual review',
     steps: [
       'Attach one or more PDFs together in a local Codex conversation.',
       'Type @research, select Research Agent, and use the prompt below to save and summarize the attached PDFs.',
-      'Check which documents were saved and whether any files could not be processed. Once text processing finishes, you can continue asking questions.'
+      'Check which documents were saved, whether any files failed, and whether visual review started. You can keep asking questions once the text is saved.',
+      'Check the review results before relying on details in figures, equations, or tables. You can ask, “What are the visual review results for the attached PDFs?”'
     ],
     alternative: {route: 'organize', label: 'Already connected folders? Save their PDFs'},
-    note: 'Attaching a PDF alone does not save it automatically. Codex must be able to read the attachment. If you do not want to save it, say, “Do not save this; explain it only in this conversation.” Reviewing figures, equations, and tables may take longer.',
+    note: 'Codex must be able to read the attachment. Attaching a PDF alone does not save it, but asking Research Agent to summarize or compare it also saves it. If you do not want this, say, “Do not save this; explain it only in this conversation.” Saved materials remain available in future conversations.',
+    helpLabel: 'Review has not started, or you want to pause?',
+    help: [
+      {question: 'What if review is pending or could not start?', answer: 'Pending does not mean a review is running. Check the reason in the reply and ask, “Check whether visual review of the attached PDFs has started. If it has not, tell me why.” Do not treat unconfirmed figures, equations, or tables as verified. If further review is needed, ask to recheck only the affected documents and pages.'},
+      {question: 'What if it takes too long or uses too much of your allowance?', answer: 'In the current development version, you can ask, “Pause visual review of this PDF.” Its saved text remains available. Later, ask, “Resume visual review of this PDF.” This pause and resume feature is not included in published v0.3.0 yet.'}
+    ],
     prompt: '@Research Agent Save the attached PDFs to my research library and summarize the key points of each attached document.',
     prev: 'start',
     next: 'compare'
@@ -146,7 +152,16 @@ window.RESEARCH_GUIDE_EN = {
     title: 'Save PDFs from folders',
     question: 'How do I save PDFs from the folders I connected during installation?',
     answer: 'Published v0.3.0 needs the prompt below for the first save after connecting folders. The development version starts saving after folder confirmation, so check its progress instead. Use the prompt later to update added or changed PDFs. Your originals stay unchanged.',
-    capture: 'Request and results for converting and saving PDFs from connected folders',
+    capture: 'An actual Korean status check after saving: nine PDFs from three folders are saved, and visual review is complete for seven documents. Each of the other two needs one page reviewed further; no review job is currently running.',
+    captureAlt: 'A Korean storage and visual-review status request, with a Codex response reporting nine PDFs saved without failures, seven documents visually complete, one page needing further review in each of two documents, and no active review job',
+    followUp: {
+      title: 'What if further review is needed?',
+      explanation: 'The PDF is saved, but some details in figures, equations, or tables could not be confirmed. Waiting alone does not trigger repeated reviews. Ask Codex to check only the pages that still need attention.',
+      prompt: '@Research Agent Identify the documents and pages needing further review, review only those pages again, and save the results. When finished, report completion by document and page, and explain anything that remains unconfirmed.',
+      result: 'If the reply says review is in progress, you can keep chatting. Later ask “What are the results of the further review I requested?” Check which documents and pages were verified. Some details may remain unresolved, with an explanation. Do not treat those details or values as verified; check the indicated original page. Your saved PDFs and already verified content remain available.',
+      capture: 'An actual Korean reply after a request for further review. It reports that BERT page 15 and Auto-Encoding Variational Bayes page 14 were checked again and saved, with no pending review, unresolved pages, or failures remaining.',
+      captureAlt: 'A Korean request to recheck and save only pages needing further review, followed by a Codex response reporting BERT page 15 and Auto-Encoding Variational Bayes page 14 verified and saved, with zero pending, unresolved, or failed pages'
+    },
     steps: [
       'If you connected folders during installation, you do not need to reconnect them or attach their PDFs.',
       'Select Research Agent in a local Codex conversation. In v0.3.0, request saving with the prompt below. If the development version already started, ask “What is the storage status of the folders I just connected?”',
