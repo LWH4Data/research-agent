@@ -12,7 +12,7 @@ import uuid
 from .safety import ensure_owned_directory, reject_linked_file, require_owned_path
 
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 BUSY_TIMEOUT_MS = 3_000
 
 RUN_KINDS = {"sync"}
@@ -273,6 +273,17 @@ class LibraryState(AbstractContextManager["LibraryState"]):
             document_operation_columns
         ):
             raise RuntimeError("SQLite 문서 복구 기록 구조가 올바르지 않습니다")
+        for table, required in {
+            "documents": {"incarnation"},
+            "page_reviews": {"result_fence_json"},
+            "document_operations": {"intake_receipt_json"},
+            "intake_receipts": {"request_id", "item_id", "parent_item_id", "document_key", "sha256", "incarnation", "stage"},
+            "document_exclusions": {"document_key", "source_id"},
+            "document_deletions": {"document_key", "files_json", "directories_json"},
+        }.items():
+            columns = {str(row["name"]) for row in self.connection.execute(f"PRAGMA table_info({table})")}
+            if not required.issubset(columns):
+                raise RuntimeError("SQLite 문서 수명 기록 구조가 올바르지 않습니다")
 
     def _initialize(self) -> None:
         self.connection.execute(
@@ -403,8 +414,62 @@ class LibraryState(AbstractContextManager["LibraryState"]):
                 target_markdown_sha256 TEXT NOT NULL,
                 prepared_at TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS intake_receipts (
+                request_id TEXT NOT NULL,
+                item_id TEXT NOT NULL,
+                document_key TEXT NOT NULL,
+                sha256 TEXT NOT NULL,
+                incarnation TEXT,
+                stage TEXT NOT NULL CHECK(stage IN ('stored', 'committed')),
+                created_at TEXT NOT NULL,
+                PRIMARY KEY(request_id, item_id)
+            );
+            CREATE TABLE IF NOT EXISTS document_exclusions (
+                document_key TEXT PRIMARY KEY,
+                source_id TEXT NOT NULL,
+                deleted_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS document_deletions (
+                document_key TEXT PRIMARY KEY,
+                files_json TEXT NOT NULL,
+                directories_json TEXT NOT NULL
+            );
             """
         )
+        document_columns = {str(row["name"]) for row in self.connection.execute("PRAGMA table_info(documents)")}
+        if "incarnation" not in document_columns:
+            self.connection.execute("ALTER TABLE documents ADD COLUMN incarnation TEXT")
+        for row in self.connection.execute("SELECT document_key FROM documents WHERE incarnation IS NULL OR incarnation = ''").fetchall():
+            self.connection.execute("UPDATE documents SET incarnation = ? WHERE document_key = ?", (uuid.uuid4().hex, row["document_key"]))
+        operation_columns = {str(row["name"]) for row in self.connection.execute("PRAGMA table_info(document_operations)")}
+        if "intake_receipt_json" not in operation_columns:
+            self.connection.execute("ALTER TABLE document_operations ADD COLUMN intake_receipt_json TEXT")
+        review_columns = {str(row["name"]) for row in self.connection.execute("PRAGMA table_info(page_reviews)")}
+        if "result_fence_json" not in review_columns:
+            self.connection.execute("ALTER TABLE page_reviews ADD COLUMN result_fence_json TEXT")
+        receipt_columns = {str(row["name"]) for row in self.connection.execute("PRAGMA table_info(intake_receipts)")}
+        if "parent_item_id" not in receipt_columns:
+            self.connection.execute("ALTER TABLE intake_receipts ADD COLUMN parent_item_id TEXT")
+        # Interrupted v4 writes carry snapshots without an incarnation. Migrate
+        # both sides together so journal comparison and roll-forward remain exact.
+        operation_row = self.connection.execute("SELECT document_key, base_document_json, target_document_json FROM document_operations WHERE singleton = 1").fetchone()
+        if operation_row is not None:
+            current = self.get_document(str(operation_row["document_key"]))
+            incarnation = str(current["incarnation"]) if current else uuid.uuid4().hex
+            for column in ("base_document_json", "target_document_json"):
+                if operation_row[column] is not None:
+                    snapshot = json.loads(operation_row[column])
+                    if "incarnation" not in snapshot:
+                        snapshot["incarnation"] = incarnation
+                        self.connection.execute(f"UPDATE document_operations SET {column} = ? WHERE singleton = 1", (json.dumps(snapshot, ensure_ascii=False),))
+            for column in ("base_reviews_json", "target_reviews_json"):
+                raw = self.connection.execute(f"SELECT {column} FROM document_operations WHERE singleton = 1").fetchone()[0]
+                reviews = json.loads(raw)
+                if any("result_fence_json" not in review for review in reviews):
+                    for review in reviews:
+                        review.setdefault("result_fence_json", None)
+                    self.connection.execute(f"UPDATE document_operations SET {column} = ? WHERE singleton = 1", (json.dumps(reviews, ensure_ascii=False),))
         conversation_columns = {
             str(row["name"])
             for row in self.connection.execute("PRAGMA table_info(conversations)")
@@ -929,6 +994,7 @@ class LibraryState(AbstractContextManager["LibraryState"]):
         target_reviews: list[dict[str, Any]],
         base_markdown_sha256: str | None,
         target_markdown: bytes | str,
+        intake_receipt: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Durably journal one generated Markdown/SQLite replacement."""
 
@@ -983,8 +1049,8 @@ class LibraryState(AbstractContextManager["LibraryState"]):
                     output_path, base_document_json, target_document_json,
                     base_reviews_json, target_reviews_json,
                     base_markdown_sha256, target_markdown,
-                    target_markdown_sha256, prepared_at
-                ) VALUES(1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    target_markdown_sha256, prepared_at, intake_receipt_json
+                ) VALUES(1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     operation_id,
@@ -999,6 +1065,7 @@ class LibraryState(AbstractContextManager["LibraryState"]):
                     target_bytes,
                     target_hash,
                     now(),
+                    None if intake_receipt is None else self._json_payload(intake_receipt, label="접수 항목", expected=dict),
                 ),
             )
             self.commit()
@@ -1024,6 +1091,8 @@ class LibraryState(AbstractContextManager["LibraryState"]):
         if row is None:
             return None
         result = dict(row)
+        raw_receipt = result.pop("intake_receipt_json", None)
+        result["intake_receipt"] = None if raw_receipt is None else json.loads(raw_receipt)
         for column, expected in (
             ("base_document_json", dict),
             ("target_document_json", dict),
@@ -1098,11 +1167,87 @@ class LibraryState(AbstractContextManager["LibraryState"]):
         ).fetchone()
         return None if row is None else dict(row)
 
+    def validate_intake_receipt(self, receipt: dict[str, Any]) -> dict[str, Any] | None:
+        """Check immutable intake identity before the durable journal boundary."""
+        for field in ("request_id", "item_id", "document_key", "sha256"):
+            if not isinstance(receipt.get(field), str) or not receipt[field] or len(receipt[field]) > 4096:
+                raise ValueError(f"접수 항목의 {field}가 올바르지 않습니다")
+        self._validate_sha256(receipt["sha256"], label="접수 PDF 해시")
+        stage = receipt.get("stage", "stored")
+        if stage not in {"stored", "committed"}:
+            raise ValueError("접수 항목 저장 상태가 올바르지 않습니다")
+        if stage == "committed" and not receipt.get("incarnation"):
+            raise ValueError("확정된 접수 항목에 문서 생성 식별자가 필요합니다")
+        if receipt.get("parent_item_id") is not None and (not isinstance(receipt["parent_item_id"], str) or not receipt["parent_item_id"]):
+            raise ValueError("접수 원본 항목 ID가 올바르지 않습니다")
+        existing = self.connection.execute(
+            "SELECT * FROM intake_receipts WHERE request_id = ? AND item_id = ?",
+            (receipt["request_id"], receipt["item_id"]),
+        ).fetchone()
+        if existing is not None:
+            if any(existing[key] != receipt[key] for key in ("document_key", "sha256")):
+                raise ValueError("같은 접수 항목이 다른 문서 버전을 가리킵니다")
+            if existing["incarnation"] and receipt.get("incarnation") and existing["incarnation"] != receipt["incarnation"]:
+                raise ValueError("삭제된 문서의 접수 항목은 다시 사용할 수 없습니다")
+            if existing["parent_item_id"] != receipt.get("parent_item_id"):
+                raise ValueError("접수 항목의 원본 범위가 다릅니다")
+        return None if existing is None else dict(existing)
+
+    def record_intake_receipt(self, receipt: dict[str, Any]) -> None:
+        """Bind one intake item once; commit it with the document transaction."""
+        self._require_writer()
+        existing = self.validate_intake_receipt(receipt)
+        stage = receipt.get("stage", "stored")
+        if existing is not None and stage == "stored":
+            return
+        self.connection.execute(
+            """INSERT INTO intake_receipts(request_id, item_id, document_key, sha256, incarnation, stage, created_at, parent_item_id)
+               VALUES(?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(request_id, item_id) DO UPDATE SET incarnation = excluded.incarnation, stage = excluded.stage""",
+            (receipt["request_id"], receipt["item_id"], receipt["document_key"], receipt["sha256"], receipt.get("incarnation"), stage, now(), receipt.get("parent_item_id")),
+        )
+
+    def intake_receipts(self, request_id: str) -> list[dict[str, Any]]:
+        return [dict(row) for row in self.connection.execute(
+            "SELECT * FROM intake_receipts WHERE request_id = ? ORDER BY item_id", (request_id,)
+        )]
+
+    def delete_intake_receipts(self, request_id: str) -> None:
+        self._require_writer()
+        self.connection.execute("DELETE FROM intake_receipts WHERE request_id = ?", (request_id,))
+
+    def is_document_excluded(self, document_key: str) -> bool:
+        return self.connection.execute("SELECT 1 FROM document_exclusions WHERE document_key = ?", (document_key,)).fetchone() is not None
+
+    def clear_document_exclusions(self, *, source_id: str | None = None, document_key: str | None = None) -> None:
+        self._require_writer()
+        if (source_id is None) == (document_key is None):
+            raise ValueError("수집 제외를 해제할 원본 ID 또는 문서 키 하나가 필요합니다")
+        field, value = ("source_id", source_id) if source_id is not None else ("document_key", document_key)
+        self.connection.execute(f"DELETE FROM document_exclusions WHERE {field} = ?", (value,))
+
+    def prepare_document_deletion(self, document: dict[str, Any], files: list[str], directories: list[str]) -> None:
+        self._require_writer()
+        self.connection.execute("INSERT OR REPLACE INTO document_exclusions VALUES(?, ?, ?)", (document["document_key"], document["source_id"], now()))
+        self.connection.execute("INSERT INTO document_deletions VALUES(?, ?, ?)", (document["document_key"], json.dumps(files), json.dumps(directories)))
+        self.commit()
+
+    def pending_document_deletions(self) -> list[dict[str, Any]]:
+        return [{"document_key": row["document_key"], "files": json.loads(row["files_json"]), "directories": json.loads(row["directories_json"])} for row in self.connection.execute("SELECT * FROM document_deletions ORDER BY document_key")]
+
+    def finish_document_deletion(self, document_key: str) -> None:
+        self._require_writer()
+        self.connection.execute("DELETE FROM documents WHERE document_key = ?", (document_key,))
+        # Do not keep private intake details after explicit material deletion.
+        self.connection.execute("DELETE FROM intake_receipts WHERE document_key = ?", (document_key,))
+        self.connection.execute("DELETE FROM document_deletions WHERE document_key = ?", (document_key,))
+        self.commit()
+
     def document_reviews(self, document_key: str) -> list[dict[str, Any]]:
         rows = self.connection.execute(
             """
             SELECT document_key, page_number, reasons, status, reviewed_at,
-                   reviewer_model, notes
+                   reviewer_model, notes, result_fence_json
             FROM page_reviews
             WHERE document_key = ?
             ORDER BY page_number
@@ -1125,6 +1270,7 @@ class LibraryState(AbstractContextManager["LibraryState"]):
             "reviewed_at",
             "reviewer_model",
             "notes",
+            "result_fence_json",
         )
         for review in reviews:
             if not isinstance(review, dict):
@@ -1135,8 +1281,8 @@ class LibraryState(AbstractContextManager["LibraryState"]):
                 """
                 INSERT INTO page_reviews(
                     document_key, page_number, reasons, status, reviewed_at,
-                    reviewer_model, notes
-                ) VALUES(?, ?, ?, ?, ?, ?, ?)
+                    reviewer_model, notes, result_fence_json
+                ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 tuple(review.get(column) for column in columns),
             )
@@ -1148,6 +1294,9 @@ class LibraryState(AbstractContextManager["LibraryState"]):
         return [dict(row) for row in rows]
 
     def upsert_document(self, document: dict[str, Any]) -> None:
+        if not document.get("incarnation"):
+            existing = self.get_document(str(document["document_key"]))
+            document = {**document, "incarnation": existing["incarnation"] if existing else uuid.uuid4().hex}
         columns = (
             "document_key",
             "source_id",
@@ -1162,6 +1311,7 @@ class LibraryState(AbstractContextManager["LibraryState"]):
             "checked_at",
             "missing_since",
             "error",
+            "incarnation",
         )
         values = [document.get(column) for column in columns]
         placeholders = ", ".join("?" for _ in columns)
@@ -1178,12 +1328,14 @@ class LibraryState(AbstractContextManager["LibraryState"]):
         )
 
     def mark_missing_except(
-        self, seen: set[str], scanned_source_ids: set[str]
+        self, seen: set[str], scanned_source_ids: set[str],
+        *, document_keys: set[str] | None = None,
     ) -> int:
         missing = 0
         for document in self.documents():
             if (
-                document["source_id"] not in scanned_source_ids
+                (document_keys is not None and document["document_key"] not in document_keys)
+                or document["source_id"] not in scanned_source_ids
                 or document["document_key"] in seen
                 or not document["present"]
             ):

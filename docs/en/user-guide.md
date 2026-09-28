@@ -55,10 +55,15 @@ installation command above for the user release.
 > **Development only; not included in v0.3.0:** You can ask Codex to reopen the
 > folder picker in the current conversation. **폴더 추가하기** (Add folders) and
 > **폴더 더 추가하기** (Add more folders) collect folders in a review list.
-> Uncheck any folders to exclude, then press **이 폴더들 연결하기** (Connect these
-> folders) to register the checked folders. Canceling the inner picker keeps the
-> list; canceling the review list saves nothing. Existing installations have not
-> received this change. Keep your existing installation.
+> Uncheck any folders to exclude, then press **연결하고 PDF 저장하기** (Connect and
+> save PDFs). Saving starts for those folders, followed by review of equations,
+> tables, and figures. Saved text is searchable while visual review continues.
+> Ask Codex to pause review whenever needed; an existing library-wide pause stays
+> in effect. Canceling the inner picker keeps the list; canceling the review list
+> registers and saves nothing. If installation cannot find the Codex executable,
+> it keeps the connections and reports that saving has not started. Installation
+> remains complete; share that message with Codex to continue. Existing
+> installations have not received this change. Keep your existing installation.
 
 ## Use it in Codex
 
@@ -77,6 +82,12 @@ content. For example:
 
 Text becomes searchable first. Checking figures, tables, and equations can
 continue in the background. Research Agent does not modify the original PDFs.
+
+> **Development only; not included in v0.3.0:** PDF storage hands off to visual
+> review in one workflow. Ask “Pause this PDF's review” or “Resume its review.”
+> Time/page guidance never stops the review automatically; you decide whether
+> to continue. Saved material remains available. Existing installations have
+> not received this change.
 
 The [Korean README](../../README.md) has the full feature guide and examples.
 

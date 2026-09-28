@@ -10,7 +10,7 @@ import sys
 PICKER_PROMPT = (
     "목록에 추가할 폴더를 선택하세요.\n"
     "⌘ Command 키를 누른 채 클릭하면 여러 폴더를 고를 수 있습니다.\n"
-    "선택한 뒤 목록에서 확인하고 연결합니다."
+    "선택한 뒤 목록에서 확인하면 PDF 저장과 시각 검토를 시작합니다."
 )
 
 
@@ -21,7 +21,7 @@ def macos_onboarding_script() -> str:
   app.includeStandardAdditions = true;
   try {
     const choice = app.displayDialog(
-      "Research Agent 설치가 완료됐어요.\\n\\n지금 PDF가 있는 폴더를 연결할까요?\\n원본 파일은 수정하지 않습니다.",
+      "Research Agent 설치가 완료됐어요.\\n\\n지금 폴더를 연결하고 PDF 저장과 시각 검토를 시작할까요?\\n원본 파일은 수정하지 않습니다.",
       {
         withTitle: "Research Agent",
         buttons: ["나중에 하기", "폴더 선택하기"],
@@ -159,9 +159,9 @@ def macos_selection_script() -> str:
   while (true) {
     const alert = $.NSAlert.alloc.init;
     alert.messageText = "연결할 폴더";
-    alert.informativeText = "선택한 폴더에서 PDF를 찾습니다. 원본 파일은 수정하지 않습니다.";
+    alert.informativeText = "확인하면 선택한 폴더의 PDF를 저장하고 시각 검토를 시작합니다. 원본 파일은 수정하지 않습니다.";
     alert.icon = $.NSImage.imageNamed($.NSImageNameFolder);
-    const connect = alert.addButtonWithTitle("이 폴더들 연결하기");
+    const connect = alert.addButtonWithTitle("연결하고 PDF 저장하기");
     const add = alert.addButtonWithTitle(draft.length ? "폴더 더 추가하기" : "폴더 추가하기");
     const cancel = alert.addButtonWithTitle("취소");
     cancel.keyEquivalent = "\\u001b";

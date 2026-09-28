@@ -72,7 +72,7 @@ class SourceSelectionTests(unittest.TestCase):
                     add_sources(self.config, [self.folders[0]])
                 before = self.config.read_bytes() if self.config.exists() else None
                 with mock.patch("research_store.cli.choose_sources", return_value=[]):
-                    self.assertEqual(self.run_add(), {"added": [], "cancelled": True})
+                    self.assertEqual(self.run_add(), {"added": [], "selected": [], "cancelled": True})
                 after = self.config.read_bytes() if self.config.exists() else None
                 self.assertEqual(after, before)
         self.assert_sources_unchanged()
@@ -86,7 +86,9 @@ class SourceSelectionTests(unittest.TestCase):
         self.assertEqual(rows[0]["id"], original.id)
         before = self.config.read_bytes()
         again = self.run_add(*self.folders)
-        self.assertEqual(again, {"added": [], "cancelled": False})
+        self.assertEqual(again["added"], [])
+        self.assertFalse(again["cancelled"])
+        self.assertEqual([row["path"] for row in again["selected"]], list(map(str, self.folders)))
         self.assertEqual(self.config.read_bytes(), before)
         self.assert_sources_unchanged()
 
@@ -153,6 +155,30 @@ class SourceSelectionTests(unittest.TestCase):
         rows = source_rows(self.config)
         self.assertEqual(rows[0]["id"], original.id)
         self.assertTrue(all(row["enabled"] for row in rows))
+        self.assert_sources_unchanged()
+
+    def test_receipt_selects_only_confirmed_existing_and_new_paths(self):
+        existing = add_sources(self.config, [self.folders[0], self.folders[2]])
+        selected = [self.folders[1], self.folders[0], self.folders[1],
+                    self.folders[0] / ".." / self.folders[0].name]
+        result = self.run_add(*selected)
+        self.assertEqual(len(result["added"]), 1)
+        self.assertEqual([row["path"] for row in result["selected"]],
+                         [str(self.folders[1]), str(self.folders[0])])
+        self.assertEqual(result["selected"][1]["id"], existing[0].id)
+        self.assertNotIn(existing[1].id, {row["id"] for row in result["selected"]})
+        self.assertTrue(all(row["access"] == "read-only" for row in result["selected"]))
+        self.assertEqual(len(source_rows(self.config)), 3)
+        self.assert_sources_unchanged()
+
+    def test_reselected_disabled_source_retains_identity_in_selection(self):
+        original = add_sources(self.config, [self.folders[0], self.folders[1]])[0]
+        remove_sources(self.config, [original.id])
+        result = self.run_add(self.folders[0], self.folders[0])
+        expected = {"id": original.id, "path": str(self.folders[0]), "access": "read-only"}
+        self.assertEqual(result["added"], [expected])
+        self.assertEqual(result["selected"], [expected])
+        self.assertTrue(load_config(self.config).sources[0].enabled)
         self.assert_sources_unchanged()
 
 

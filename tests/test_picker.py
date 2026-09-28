@@ -427,7 +427,7 @@ class MacOSScriptBehaviorTests(unittest.TestCase):
         self.assertEqual(outcome["result"], paths)
         reviews = self.review_calls(outcome)
         self.assertEqual([row["path"] for row in reviews[1]["rows"]], paths)
-        self.assertEqual(reviews[1]["buttons"][0]["title"], "이 폴더들 연결하기")
+        self.assertEqual(reviews[1]["buttons"][0]["title"], "연결하고 PDF 저장하기")
         self.assertTrue(reviews[1]["buttons"][0]["enabled"])
         self.assertEqual(reviews[1]["buttons"][0]["keyEquivalent"], "\r")
         self.assertEqual(

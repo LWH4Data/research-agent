@@ -6,7 +6,263 @@ Validation dates: 2026-09-22; background-review follow-up: 2026-09-24; review-no
 
 This record captures the live validation performed for storage recovery,
 permissions, prompt injection, and model routing issues found before prototype
-release.
+release. Design-only reviews are explicitly separated from executed validation.
+
+<a id="prepush-2026-09-28"></a>
+
+## 2026-09-28 Final validation before main integration
+
+Ran `bash scripts/reproduce-validation.sh full` against the accumulated changes:
+521 tests, 513 passed and 8 skipped, no failures (about 50 seconds). Skips cover
+four live sandbox/notification integrations, two tests requiring a separately
+assembled release archive, and two requiring case-distinct filenames. GitHub
+Actions runs the two archive tests separately after assembling the bundle.
+
+Version consistency, Korean/English/web installation commands, JavaScript syntax,
+diff whitespace, and all 58 runtime manifest entries passed validation. The 64
+changed/new commit paths contain no source PDFs, private library files, or DBs;
+no recognized credential patterns were found. Luna xhigh / Sol high and read-only
+defaults remain intact. An additional independent reviewer could not run because
+of the account usage limit, so this final audit was performed by the primary
+agent. No subscription model calls or user-PDF conversion were run. These results
+do not signify publication of a new installation Release.
+
+<a id="usage-introduction-2026-09-28"></a>
+
+## 2026-09-28 Readable introductions and contextual next actions
+
+The user's actual introduction placed capabilities in a dense paragraph and
+repeated skill selection after the skill was already selected. The explanation
+branch now asks for a capability list, a request the user can send, and a next
+action based on already confirmed context. README's feature descriptions and
+the existing guide capture were retained.
+
+An independent agent without conversation history answered three cases: a first
+introduction, next steps after nine PDFs were saved, and Korean questions about
+English PDFs. It returned a capability list and attachment example, a search
+example after storage, and a focused feature answer respectively. It did not
+repeat installation/selection or execute storage/status commands. However, it
+read the entire README, so this evaluation did not satisfy the existing
+section-only reading rule. Response structure and reading-scope compliance are
+separate findings. A subsequent actual capture supplied by the user showed a
+one-sentence introduction, capability list, and PDF attachment request example,
+without repeated skill-selection instructions. The original 1584×722 capture
+replaced step 4's guide image. It confirms the response structure, not file-read
+scope or successful storage/visual review. The displayed 14 seconds describes
+this run only.
+
+<a id="native-process-identity-2026-09-28"></a>
+
+## 2026-09-28 Visual startup failure under the actual restricted profile
+
+The personal installation saved text for nine PDFs, but all 96 visual-review
+pages remained pending. All nine document links recorded `Cannot verify
+execution supervisor`; there was no active execution. The original `/bin/ps`
+launch reproduced `Operation not permitted`. This executable is setuid, while
+direct `libproc` inspection of the caller and its children succeeds inside the
+same sandbox.
+
+- Darwin identity now uses `proc_pidinfo(PROC_PIDTBSDINFO)`, validating PID,
+  process group, seconds/microseconds, and the complete record. Permission
+  profiles are unchanged.
+- Denied or malformed inspection is distinct from confirmed process exit. It
+  cannot authorize signalling, ownership release, or replacement execution.
+  Pre-dispatch failures close the gate, reap the child, and preserve diagnostics.
+- All **27 focused tests** and **22 notifier/release/supervision regressions**
+  passed. The eight real-process supervision cases previously skipped when
+  `/bin/ps` was unavailable now run successfully.
+- A separate integration test applied the **actual Codex research-review-worker
+  profile** to a disposable product bundle and ran all eight supervision cases
+  without skips. External source writes were denied; source contents, inode,
+  modification time, and permissions remained unchanged. Only fake models ran.
+- An independent reviewer confirmed matching live-process identity across two
+  separate applications of the same real profile. No permission expansion or
+  subscription model call was used.
+- Guide consistency and diff checks passed. The `permission` reproduction mode
+  includes this integration check. The entire suite, actual Sol conversion,
+  notification delivery, and a clean-Mac installation were not rerun.
+
+Previous supervision tests skipped in this sandbox and previous permission
+integration checked file writes only; that gap missed the defect. Only the
+installed execution script was replaced after backup. Existing nine PDFs and
+pending pages are reused. Data, originals, and settings matched their content
+and metadata snapshots; native inspection from the installed script succeeded.
+Actual review resumption remains the next user test.
+
+```sh
+.venv/bin/python -B -m unittest discover -s tests -p 'test_process_identity.py' -v
+.venv/bin/python -B -m unittest discover -s tests -p 'test_lifecycle_*.py' -v
+# Run in a regular terminal; disposable bundle/data and fake models only.
+RESEARCH_AGENT_RUN_SANDBOX_TEST=1 .venv/bin/python -B -m unittest tests.test_process_identity_integration -v
+```
+
+<a id="folder-auto-storage-2026-09-28"></a>
+
+## 2026-09-28 automatic storage after folder confirmation
+
+**Development validation only; the personal installation and published v0.3.0
+were not updated.** Final folder confirmation now proceeds through exact source
+registration, text storage, and visual-review intake. Existing `added` receipts
+remain; `selected` separately identifies this request's exact processing scope.
+
+- An independent reviewer verified **86 focused tests** for selection, transport,
+  onboarding, native dialogs, and intake: cancellation does nothing, existing
+  sources can be reselected, unrelated sources stay excluded, one submit owns
+  dispatch, installation without Codex defers storage, and runtime failures do
+  not bypass the constrained launcher.
+- Review found and fixed hidden recovery output during onboarding and malformed
+  receipt handling. Key/specification output reaches the caller before storage;
+  interruptions report that work may have begun. The affected 27 tests were rerun,
+  with additional malformed-response checks preserving recovery identity.
+- A disposable archive assembled from the product manifest exercised public
+  `source-add`: two selected folders, reverse/duplicate reselection, and an
+  unrelated registered folder. Only selected documents were stored. A library
+  review hold allowed text storage with zero visual attempts. Original content,
+  directory entries, inode, mode, and modification times remained unchanged.
+  This uses fake Codex and does not prove real sandbox enforcement or model use.
+- Final full run: **493 tests, 478 passed and 15 skipped**. Skips were permission
+  integrations (3), OS process-ownership conditions (8), archive environment
+  conditions (2), and case-sensitive filesystem conditions (2). Archive content
+  validation passed separately. This run did not test a new Mac, actual download
+  installation, subscription models, notification receipt, or manual UI clicks.
+- The real release-workflow assembly produced **58 product files**. Manifest and
+  archive-content checks (2 tests), version/guide agreement, and JavaScript syntax
+  passed. No published tag or asset was changed.
+
+Reproduce in the development checkout, with temporary inputs and stores:
+
+```sh
+.venv/bin/python -B -m unittest tests.test_source_selection tests.test_source_picker_transport tests.test_install_onboarding tests.test_picker tests.test_source_intake -v
+.venv/bin/python -B -m unittest tests.test_lifecycle_release_integration -v
+bash scripts/reproduce-validation.sh full
+.venv/bin/python -B scripts/check_guides.py
+```
+
+After the automated checks above, the user explicitly authorized preparation
+steps 1–3. The completed legacy review and free locks were confirmed; the full
+installation and owned registrations were backed up, and state/material
+directories were moved into the backup rather than deleted. Development product
+files were applied at the same path using the existing private Python environment.
+The protected project `.codex/config.toml` was retained because its parsed values
+match the current runtime settings and only comments differ. Personal registrations
+were refreshed. Actual public launchers reported zero sources/requests, no execution,
+and no library hold; the initialized DB has schema 5 and zero documents/conversations.
+Content, inode, mode, and modification times of all four original locations were
+unchanged. This does not validate actual PDF processing, model calls, or a new Mac.
+
+The next actual-use check is the user's folder confirmation followed by text
+storage and review handoff. Existing screenshots are labeled as showing the old
+button wording. Previous material can be restored from the local backup.
+
+<a id="visual-review-lifecycle-implementation-2026-09-28"></a>
+
+## 2026-09-28 Visual Review Lifecycle Implementation Validation
+
+Following the user's decision, **time/page-triggered automatic stopping was
+removed**. Configured thresholds provide guidance while review continues unless
+the user stops it or authorization/execution fails. No default time/page cap is
+enabled. Missing token measurements remain unknown; there is no conversion to
+subscription percentage or exact cost.
+
+Implementation and storage work were split in an isolated checkout. A reviewer
+who did not author the code performed repeated review and final tests. These
+results concern development code, not a v0.3.0 publication or an update to the
+existing `~/research-agent` installation.
+
+| Area | Reproduction and result |
+| --- | --- |
+| Independent requests/shared execution | A/B on one document, overlapping pages, union of duplicate input scopes; cancelling A preserves B's authorized results |
+| Text → review handoff | Stable key, attachment transport, committed text, exact version links, acknowledged execution; a pending input prevents premature whole-request completion |
+| Stop/process ownership | Real local child processes running a fake model; controller/supervisor death, explicit cancellation, and PID birth mismatch prevent overlap or signalling an unrelated process |
+| Storage boundary | Journal acceptance and page authority; only current verified notes count as evidence; durable intake receipts recover commits before link creation |
+| Delete/retry | Delete one of two attachments, delete during staging, or delete after text commit before linking; retry cannot silently restore the removed item |
+| Retention/cleanup | Expiry embedded in keys prevents resurrection after denial-marker cleanup; owned image manifests clean intermediates while preserving original PDFs and committed notes |
+| Notices | Ledger-only updates without storage-journal recovery; bounded retries, concurrent cancellation, no replay of short-task milestones; delivery failure never stops review |
+| Packaged files | Extracted product manifest exercises public loading, ownership rejection, persistent library hold, and two-attachment intake with original content/directory preservation |
+
+Regression fixes cover reservation-before-lock publication, A cancellation
+discarding B results, expired-key resurrection, overwritten page scopes,
+orphan-model stopping, premature intake completion, pause-before-link loss,
+and reimport after deletion. Visual routing remains Sol high; management remains
+Luna xhigh.
+
+Reproduce from the development checkout using disposable stores, sources, and
+HOME. No real user PDFs or subscription model calls are used:
+
+```sh
+bash scripts/reproduce-validation.sh full
+.venv/bin/python -B -m unittest discover -s tests -p 'test_lifecycle_supervision.py' -v
+.venv/bin/python -B scripts/check_release_version.py
+.venv/bin/python -B scripts/check_guides.py
+```
+
+The process suite requires OS process-ownership inspection and must run
+separately where that is allowed; a restricted Codex sandbox skips it. Final
+full run was **473 tests: 458 passed, 15 skipped**. The **8 skipped process
+cases passed separately on the final code with no skips**. The other skips were
+3 permission integrations, 2 archive-environment tests, and 2 case-sensitive
+filesystem tests. Archive content equality subsequently passed separately;
+the live download/install/remove test was not rerun. The manifest/archive pair
+of checks and version/guide consistency checks passed. Archive validation uses the actual release workflow
+assembler and includes 57 product files, excluding development harnesses,
+tests, and research data.
+
+**Limits:** a fake Codex boundary checks profile names, arguments, shipped
+modules, and source preservation; it does not prove actual Codex sandbox
+enforcement. This change did not newly measure subscription calls, visible OS
+notification receipt, fresh-Mac setup, or Plus/Pro usage. Live model responses
+and notification arrival still require a separate check. The package was checked
+locally; existing tags and release assets were not replaced.
+
+<a id="visual-review-lifecycle-audit-2026-09-28"></a>
+
+## 2026-09-28 Request and Shared Visual Review Lifecycle Audit
+
+**Later user decision:** this audit reviewed the then-current automatic-limit
+draft. At implementation start the user clarified that stopping is their
+decision. Automatic budget pauses and extension-required resume were superseded
+by advisory usage notices with continued execution until a user stop. Limit and
+deadline entries below are historical findings, not current product promises.
+
+**This was a document and targeted-code design review. No runtime changes, fault
+injection, or model calls were performed in this task.** The target was the
+[visual review lifecycle proposal](../visual-review-lifecycle.md), separate from
+current [progress and recovery](../progress-recovery.md).
+
+A new independent reviewer, `lifecycle_contract_audit`, examined lost requests,
+shared execution ownership, stop/resume/budgets, journals, notifications, and
+expiration/deletion. Targeted implementation reads established relevant
+boundaries, including separate page commits and job-state updates. Six findings
+from the first pass were addressed, followed by another review and fixes for two
+additional findings.
+A final check limited to those two amended clauses found them resolved at the
+design level. That narrow confirmation was not an implementation test.
+
+| Pass | Gap | Contract added |
+| --- | --- | --- |
+| 1 | Lost initial response leaves retries unidentifiable | Caller-persisted key before side effects, conflicting-input rejection, expiry rejection, bounded deletion marker |
+| 1 | Cancelling initiating A could reject B's required result | Commit authority derives from review/page/current valid links; initiating request is provenance |
+| 1 | Crash after commit can leave a request waiting forever | Reconcile request evidence state and missing events from committed versioned page results |
+| 1 | Model child can survive its controller without recoverable ownership | Execution/process ownership identity; block new calls until previous exit is confirmed |
+| 1 | Budget timing for B joining an in-flight call is unspecified | Freeze accountable requests at reservation; B reuses that call and participates in subsequent reservations |
+| 1 | Expired but undeleted records may still confer authority | Apply logical expiration on each operation; delayed cleanup cannot extend permission |
+| 2 | Removing A could remove an in-flight time cap | Preserve reservation allowances/deadlines until that attempt ends |
+| 2 | A new B request could undo store-wide stop | Persistent library dispatch hold, cleared only by explicit library resume; retain separate cancellation/exhausted budgets |
+
+The proposal also distinguishes evidence from answering, defines version-change
+handling, lock order and partial success, and disclaims exactly-once remote model
+execution. Both languages contain the contracts and 16 future acceptance
+scenarios. This number is not a count of passing tests.
+Checked 184 local links/anchors across nine documents, paired code fences,
+acceptance numbering in both languages, and diff whitespace. No missing targets
+or formatting errors were found by those checks.
+
+Implementation must reproduce lost receipts, A cancellation while B awaits the
+result, crashes after commit, surviving model children, late joins, uncollected
+expired records, and store-wide stop racing new intake using disposable stores.
+Time/page defaults and warning thresholds still require measured product-policy
+choices; thirty-day retention is a proposed default. This limited audit does not
+prove that no omissions remain or establish runtime safety.
 
 ## Confirmed Results
 

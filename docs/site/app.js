@@ -6,8 +6,9 @@ const pages={
     "stageNav": "설치 안내 단계",
     "back": "이전 단계",
     "forward": "다음 단계",
-    "firstTask": "PDF를 첨부해서 시작하기",
-    "folderTask": "기존 PDF 폴더 연결하기",
+    "saveChoice": "PDF를 저장하는 방법을 선택하세요.",
+    "firstTask": "PDF를 첨부해서 저장하기",
+    "folderTask": "연결한 폴더의 PDF 저장하기",
     "stages": [
       {
         "label": "터미널 열기",
@@ -32,7 +33,7 @@ const pages={
       {
         "label": "폴더 선택",
         "question": "PDF가 있는 폴더는 어떻게 연결하나요?",
-        "answer": "폴더를 고르고 목록을 확인한 뒤 연결해요. PDF를 옮길 필요 없고, 원본 파일은 수정하지 않아요.",
+        "answer": "폴더를 고르고 목록을 확인한 뒤 “연결하고 PDF 저장하기”를 누르세요. 선택한 폴더의 PDF 저장이 시작되고, 텍스트 저장 후 그림·수식·표 확인으로 이어져요. 원본 파일은 수정하지 않아요.",
         "notice": "개발 중인 새 화면을 안내하고 있어요. 현재 설치 명령으로 받는 v0.3.0에는 아직 포함되지 않았어요.",
         "flow": [
           {
@@ -46,9 +47,9 @@ const pages={
             "capture": {"key": "folder-selection", "caption": "선택된 세 폴더의 모습이에요. 이전 캡처에서 폴더 목록 부분만 잘랐어요.", "alt": "research-agent-test1, test2, test3 폴더가 함께 선택된 목록"}
           },
           {
-            "title": "3. 목록을 확인하고 연결하기",
-            "body": "연결할 폴더들이 맞는지 확인하고 “이 폴더들 연결하기”를 누르세요. 다른 위치의 폴더도 연결하려면 “폴더 더 추가하기”로 목록에 모을 수 있어요.",
-            "capture": {"key": "folder-draft-confirmation", "caption": "폴더 세 개를 선택한 연결 전 확인 화면이에요. 검은 테두리는 연결 버튼을 알려주는 가이드용 표시예요.", "alt": "세 폴더가 체크된 확인 목록과 이 폴더들 연결하기 버튼"}
+            "title": "3. 확인하고 PDF 저장 시작하기",
+            "body": "연결할 폴더들이 맞는지 확인하고 “연결하고 PDF 저장하기”를 누르세요. 다른 위치의 폴더도 연결하려면 먼저 “폴더 더 추가하기”로 목록에 모으세요. 저장된 본문은 먼저 검색할 수 있고 시각 자료는 이어서 확인해요.",
+            "capture": {"key": "folder-draft-confirmation", "caption": "세 폴더를 선택한 확인 화면이에요. 검은 테두리는 “연결하고 PDF 저장하기” 버튼을 알려주는 가이드용 표시예요.", "alt": "세 폴더가 체크된 확인 목록과 연결하고 PDF 저장하기 버튼"}
           }
         ],
         "helpLabel": "문제가 생겼나요? · 취소·잘못 선택·오류 안내",
@@ -57,7 +58,8 @@ const pages={
           {"question": "원하지 않는 폴더를 골랐어요.", "answer": "연결하기 전이라면 목록에서 해당 폴더의 체크를 해제하세요. 이번에 연결할 목록에서만 제외돼요. 이미 연결했다면 Codex에 잘못 연결한 폴더를 알려주고 연결 해제를 요청하세요. 해제할 폴더가 맞는지 확인하세요."},
           {"question": "폴더를 다 고르기 전에 창을 닫았어요.", "answer": "안쪽 선택창에서 “취소”했다면 앞서 체크한 폴더들이 남아 있어요. “폴더 더 추가하기”로 이어가세요. 확인 목록 전체를 취소했다면 이번 선택은 저장되지 않아요. Codex에 “@Research Agent PDF 폴더 연결창 다시 열어줘”라고 요청하는 기능을 개발 중이며, 실제 Codex에서의 재열기는 확인 중이에요."},
           {"question": "여러 폴더가 선택되지 않거나 오류가 나요.", "answer": "선택창을 한 번 클릭한 뒤 ⌘ 키를 누르고 폴더 이름을 한 번씩 클릭해 보세요. 두 번 클릭하면 선택이 끝날 수 있어요. 오류가 계속되면 표시된 메시지를 Codex에 알려주세요. 해결을 위해 Full access로 바꾸지는 마세요."},
-          {"question": "안내와 다른 창이 보여요.", "answer": "공개된 v0.3.0에서는 “폴더 선택하기”를 누른 뒤 폴더를 고르고 “선택”으로 바로 연결해요. 위의 확인 목록 화면은 다음 배포에 포함할 예정이에요. 폴더 연결만으로 PDF 정리가 시작되지는 않아요."}
+          {"question": "연결했는데 저장이 시작되지 않았어요.", "answer": "연결 완료와 PDF 저장 완료는 다른 상태예요. Codex 실행기를 찾지 못했거나 시작 오류가 나면 연결은 유지하고 저장 대기 상태를 알려줘요. 그 메시지를 Codex에 전달해 이어서 저장하세요. 이전에 전체 시각 검토를 멈췄다면 텍스트 저장 후에도 검토는 재개 요청을 기다려요."},
+          {"question": "안내와 다른 창이 보여요.", "answer": "공개된 v0.3.0에서는 “폴더 선택하기”를 누른 뒤 폴더를 고르고 “선택”으로 바로 연결해요. 확인 목록과 저장 자동 시작은 다음 배포에 포함할 예정이에요. v0.3.0에서는 연결 후 Codex에 문서 정리를 요청하세요."}
         ]
       },
       {
@@ -74,12 +76,12 @@ const pages={
       }
     ],
     "prev": "overview",
-    "next": "connect"
+    "next": "organize"
   },
   "connect": {
     "title": "PDF 폴더 연결하기",
     "question": "PDF가 여러 폴더에 흩어져 있는데 괜찮나요?",
-    "answer": "PDF를 옮길 필요 없어요. 원래 있는 폴더들을 연결하면 됩니다. 이 단계에서는 위치만 등록하고, PDF는 정리를 요청할 때 처리해요.",
+    "answer": "PDF를 옮길 필요 없어요. 원래 있는 폴더들을 연결하면 됩니다. 현재 배포된 v0.3.0은 연결 후 PDF 정리 요청이 필요해요. 개발본은 확인한 폴더의 PDF 저장을 바로 시작해요.",
     "capture": "폴더 선택과 연결 결과 화면",
     "steps": [
       "Codex에 아래 문장으로 폴더 연결을 요청해요.",
@@ -88,39 +90,60 @@ const pages={
       "원하는 폴더들이 선택됐는지 확인한 뒤 키에서 손을 떼고, 오른쪽 아래 “선택”을 누르세요.",
       "다른 위치의 폴더도 연결한 뒤 “새로 추가된 문서를 정리해줘”라고 요청하세요."
     ],
-    "note": "설치 중 폴더를 연결했다면 다시 등록할 필요 없어요. 이 안내는 공개된 v0.3.0 기준이에요. 개발본에는 선택 목록에서 제외·추가하고 최종 연결하는 화면을 넣었어요. 선택창만 취소하면 목록이 유지되고, 전체를 취소하면 이번 선택은 등록되지 않아요. Codex에 “@Research Agent PDF 폴더 연결창 다시 열어줘”라고 요청하는 방식도 준비 중이며, 아직 공개 버전에는 포함되지 않았어요.",
+    "note": "설치 중 폴더를 연결했다면 다시 등록할 필요 없어요. 이 안내는 공개된 v0.3.0 기준이에요. 개발본에서는 목록을 확인하고 “연결하고 PDF 저장하기”를 누르면 선택한 폴더의 PDF 저장과 시각 검토로 이어져요. 선택창만 취소하면 목록이 유지되고, 전체를 취소하면 이번 선택은 등록되지 않아요. Codex에 “@Research Agent PDF 폴더 연결창 다시 열어줘”라고 요청하는 방식도 준비 중이며, 아직 공개 버전에는 포함되지 않았어요.",
     "prompt": "@Research Agent 내 PDF가 있는 폴더들을 연결해줘.",
     "prev": "start",
-    "next": "attach"
-  },
-  "attach": {
-    "title": "PDF 바로 첨부하기",
-    "question": "폴더를 연결하지 않고 PDF만 보내도 되나요?",
-    "answer": "네. Codex 대화에 PDF를 한 개 또는 여러 개 첨부하고 Research Agent에게 작업을 요청하세요. PDF 사본과 검색용 내용이 연구 자료실에 저장되어 다음 대화에서도 찾을 수 있어요.",
-    "capture": "PDF 첨부와 저장 결과 화면",
-    "steps": [
-      "평소 사용하던 Codex 대화에 필요한 PDF를 첨부해요.",
-      "@ 메뉴에서 Research Agent를 선택하고 아래 문장으로 요청해요.",
-      "저장된 문서와 처리하지 못한 파일이 있는지 확인해요. 텍스트 정리가 끝나면 바로 질문을 이어가세요."
-    ],
-    "note": "첨부만 하면 자동으로 저장되지는 않아요. Codex에서 첨부 파일을 읽을 수 있어야 해요. 저장을 원하지 않으면 “저장하지 말고 이번 대화에서만 설명해줘”라고 말하세요. 그림·수식·표 확인은 더 걸릴 수 있어요.",
-    "prompt": "@Research Agent 첨부한 PDF들을 정리하고 기존 자료와 함께 공통된 내용을 찾아줘.",
-    "prev": "connect",
     "next": "organize"
   },
-  "organize": {
-    "title": "PDF 정리하기",
-    "question": "새로 넣은 PDF도 정리하고 싶어요.",
-    "answer": "문서 정리를 요청하면 연결된 폴더에서 새로 추가되거나 변경된 PDF를 찾아 처리해요. 텍스트 정리가 끝나면 검색하거나 대화를 이어갈 수 있고, 필요한 그림·수식·표 확인은 백그라운드에서 계속돼요.",
-    "capture": "문서 정리 진행 상황과 완료 결과 화면",
+  "attach": {
+    "title": "PDF 첨부해서 저장하기",
+    "question": "폴더를 연결하지 않고 PDF만 보내도 되나요?",
+    "answer": "네. Codex 대화에 PDF를 한 개 또는 여러 개 첨부하고 Research Agent에게 저장을 요청하세요. PDF 사본과 검색용 내용이 연구 자료실에 저장되어 다음 대화에서도 찾을 수 있어요.",
+    "capture": "PDF 3개를 첨부해 저장하고 문서별 요약을 받은 실제 화면이에요. 텍스트 저장은 완료됐고, 수식·표·그림 확인은 대기 중이라고 안내해요.",
+    "captureAlt": "TinyBERT, MiniLM, Dense Passage Retrieval PDF 3개와 저장·요약 요청, 새 저장 완료 및 문서별 요약, 시각 검토 27쪽 대기 안내가 담긴 Codex 응답",
     "steps": [
-      "PDF가 있는 폴더를 연결해요. 개별 PDF라면 “PDF 바로 첨부하기” 방법을 사용할 수 있어요.",
-      "아래 문장을 Codex에 붙여 넣어 정리를 요청해요.",
-      "정리된 문서와 확인 중인 페이지를 확인하세요. 필요하면 “수식과 그림 확인은 얼마나 진행됐어?”라고 물어보세요."
+      "Codex의 로컬 대화에 PDF를 한 개 또는 여러 개 함께 첨부해요.",
+      "@research를 입력해 Research Agent를 선택하고, 아래 문장으로 첨부한 PDF의 저장과 요약을 요청해요.",
+      "저장된 문서와 처리하지 못한 파일이 있는지 확인해요. 텍스트 정리가 끝나면 바로 질문을 이어가세요."
     ],
+    "alternative": {"route": "organize", "label": "폴더를 연결해 두었다면: 폴더의 PDF 저장하기"},
+    "note": "첨부만 하면 자동으로 저장되지는 않아요. Codex에서 첨부 파일을 읽을 수 있어야 해요. 저장을 원하지 않으면 “저장하지 말고 이번 대화에서만 설명해줘”라고 말하세요. 그림·수식·표 확인은 더 걸릴 수 있어요.",
+    "prompt": "@Research Agent 첨부한 PDF들을 연구 자료실에 저장하고, 첨부한 문서의 핵심 내용을 각각 정리해줘.",
+    "prev": "start",
+    "next": "compare"
+  },
+  "organize": {
+    "title": "폴더의 PDF 저장하기",
+    "question": "설치할 때 연결한 폴더의 PDF는 어떻게 저장하나요?",
+    "answer": "현재 배포된 v0.3.0은 연결 후 아래 문장으로 첫 저장을 요청해요. 개발본은 폴더 확인 후 저장이 시작되므로 처리 상태를 확인하면 돼요. 이후 PDF를 추가하거나 바꾸면 아래 문장으로 갱신하세요. 원본 PDF는 수정하지 않아요.",
+    "capture": "연결한 폴더의 PDF 변환·저장 요청과 결과 화면",
+    "steps": [
+      "설치할 때 폴더를 연결했다면 다시 연결하거나 PDF를 첨부할 필요 없어요.",
+      "Codex의 로컬 대화에서 Research Agent를 선택하세요. v0.3.0은 아래 문장으로 저장을 요청하고, 개발본에서 이미 시작했다면 “방금 연결한 폴더의 저장 상태를 알려줘”라고 물어보세요.",
+      "결과에서 저장된 문서 수와 처리하지 못한 파일이 있는지 확인하세요. 텍스트 저장이 끝난 문서는 바로 검색할 수 있어요. 그림·수식·표는 확인 중일 수 있어요.",
+      "나중에 폴더에 PDF를 추가하거나 바꿨을 때도 같은 요청을 보내세요. 새로 추가되거나 변경된 문서를 갱신해요."
+    ],
+    "alternative": {"route": "connect", "label": "아직 폴더를 연결하지 않았다면: PDF 폴더 연결하기"},
     "note": "아직 확인 중인 시각 자료는 검증된 결과로 취급하지 않아요. 완료·오류와 오래 걸리는 작업의 진행 상황은 macOS 알림으로 안내할 수 있어요. 알림 설정에 따라 보이지 않을 수 있고, 대화에 새 메시지가 자동으로 추가되지는 않아요. 중단 후 같은 요청을 하면 저장된 상태를 확인해 남은 작업을 이어가요.",
-    "prompt": "@Research Agent 새로 추가된 문서를 정리해줘.",
-    "prev": "attach",
+    "prompt": "@Research Agent 연결한 폴더 안의 PDF들을 변환해서 연구 자료실에 저장해줘. 저장된 문서와 아직 처리 중인 부분을 알려줘.",
+    "prev": "start",
+    "next": "compare"
+  },
+  "compare": {
+    "title": "새 PDF와 기존 자료 함께 정리하기",
+    "question": "새 PDF를 저장하면서 기존 자료와 함께 정리할 수 있나요?",
+    "answer": "네. 새 PDF를 대화에 첨부하고 저장과 비교를 함께 요청하세요. 첨부한 PDF를 저장한 뒤, 이미 저장된 관련 PDF와 대화 기록을 찾아 함께 정리하고 출처를 알려줘요.",
+    "capture": "새 PDF의 저장 결과와 기존 자료의 출처가 함께 보이는 응답 화면",
+    "steps": [
+      "비교할 기존 자료를 먼저 저장해 두세요. 폴더를 연결했다면 ‘폴더의 PDF 저장하기’에서 저장 완료 여부부터 확인해요.",
+      "Codex의 로컬 대화에 새 PDF를 한 개 또는 여러 개 첨부하고 Research Agent를 선택하세요.",
+      "아래 문장으로 저장과 기존 자료를 활용한 정리를 한 번에 요청하세요.",
+      "답변의 출처에 새 PDF와 기존 자료가 함께 포함됐는지 확인하세요. 관련된 기존 자료를 찾지 못했다면 이번에 첨부한 문서만으로 정리했다는 안내가 나올 수 있어요."
+    ],
+    "alternative": {"route": "organize", "label": "연결한 폴더의 PDF부터 저장하려면"},
+    "note": "저장된 자료 중 질문과 관련된 내용을 찾아 활용해요. 기존 자료가 있어도 관련 내용을 찾지 못할 수 있어요. 답변에 필요한 그림·수식·표의 확인이 아직 끝나지 않았다면 그 상태를 함께 확인하세요.",
+    "prompt": "@Research Agent 첨부한 PDF들을 저장하고, 기존에 저장된 관련 자료와 함께 핵심 내용을 정리해줘. 공통점과 차이점을 설명하고, 어떤 문서에 근거했는지도 알려줘.",
+    "prev": "organize",
     "next": "search"
   },
   "search": {
@@ -135,7 +158,7 @@ const pages={
     ],
     "note": "영어 PDF에도 한국어로 질문할 수 있어요. 관련 한국어·영어 핵심어로 자료를 찾아요. 답변에 필요한 그림·수식이 아직 확인 중이면 그 상태를 함께 안내해요.",
     "prompt": "@Research Agent 내 자료에서 광소자 결합 효율을 높이는 방법을 찾아줘.",
-    "prev": "organize",
+    "prev": "compare",
     "next": "save"
   },
   "save": {
@@ -176,12 +199,15 @@ const installationCaptures={
   'folder-selection':{src:'assets/screenshots/folder-selection-crop.png',width:442,height:145},
   'folder-draft-empty':{src:'assets/screenshots/folder-draft-empty-crop.png',width:1224,height:834,
     highlight:{x:378,y:673,width:468,height:68}},
-  'folder-draft-confirmation':{src:'assets/screenshots/folder-draft-confirmation-crop.png',width:1224,height:1208,
-    highlight:{x:378,y:978,width:468,height:68}},
-  'codex-invocation':{src:'assets/screenshots/codex-introduction.png',width:1674,height:1012}
+  'folder-draft-confirmation':{src:'assets/screenshots/folder-draft-confirmation-crop.png?v=20260928-auto-save',width:1280,height:1248,
+    highlight:{x:398,y:1000,width:468,height:68}},
+  'codex-invocation':{src:'assets/screenshots/codex-introduction.png?v=20260928-introduction',width:1584,height:722}
+};
+const featureCaptures={
+  attach:{src:'assets/screenshots/pdf-attachments-save.png',width:1652,height:1352}
 };
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const ui={ko:{guide:'사용 가이드',overview:'가이드 둘러보기',menu:'메뉴',skip:'본문으로 이동',nav:'가이드 메뉴',first:'처음이라면',features:'기능',me:'나',assistant:'Research Agent 안내',howto:'사용 방법',note:'알아두세요',previous:'이전',next:'다음',related:'관련 가이드',blank:'실제 캡처를 넣을 빈 영역',capturePending:'캡처 준비 중',copy:'복사',copied:'복사됨',manualCopy:'직접 복사',copiedNotice:'복사했어요.',failedCopy:'복사할 문장을 선택했어요. ⌘ + C 또는 Ctrl + C로 직접 복사하세요.',prompt:'Codex에서 사용할 문장',invocationLabel:'VS Code·CLI에서 사용하려면',invocationNote:'문장 앞의 @Research Agent를 $research-library로 바꾸세요. 또는 /skills에서 research-library를 선택한 뒤 요청을 입력하세요.',install:'터미널에서 실행할 설치 명령',paste:'복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.',installNote:'명령을 복사해도 설치가 실행되지는 않아요. 터미널에서 직접 실행하세요.',sideNote:'사용 가이드 · v0.3.0\n실제 작업은 Codex에서 진행해요.',overviewQuestion:'Research Agent로 무엇을 할 수 있나요?',overviewAnswer:'흩어진 PDF와 중요한 연구 대화를 정리하고, 필요할 때 다시 찾아볼 수 있어요. 궁금한 기능을 선택해 보세요.',featureDescriptions:{attach:'PDF를 대화에 첨부해 바로 저장하고 질문해요.',organize:'기존 폴더의 새 문서와 변경된 문서를 정리해요.',search:'여러 PDF와 저장한 대화에서 관련 내용을 찾아요.',save:'연구 아이디어와 실험 설계를 선택해서 보관해요.'},startLink:'처음이라면 설치부터 시작하세요.',overviewEnd:'현재 지원 환경은 macOS의 Codex예요. 이 웹은 사용 방법을 안내합니다.',},en:{guide:'User guide',overview:'Explore the guide',menu:'Menu',skip:'Skip to content',nav:'Guide navigation',first:'Getting started',features:'Features',me:'You',assistant:'Research Agent guide',howto:'How to use it',note:'Good to know',previous:'Previous',next:'Next',related:'Related guides',blank:'Empty frame reserved for a real screenshot',capturePending:'Screenshot coming soon',copy:'Copy',copied:'Copied',manualCopy:'Copy manually',copiedNotice:'Copied to clipboard.',failedCopy:'The text is selected. Press ⌘ + C or Ctrl + C to copy it.',prompt:'Prompt to use in Codex',invocationLabel:'Using VS Code or the CLI?',invocationNote:'Replace @Research Agent at the start of the prompt with $research-library. Or choose research-library from /skills, then enter your request.',install:'Installation command for Terminal',paste:'Paste this into your usual Codex conversation.',installNote:'Copying does not install anything. Run the command yourself in Terminal.',sideNote:'User guide · v0.3.0\nActual work takes place in Codex.',overviewQuestion:'What can I do with Research Agent?',overviewAnswer:'Organize scattered PDFs and important research conversations, then find them again when you need them. Choose a feature to learn more.',featureDescriptions:{attach:'Attach PDFs in Codex to save them and ask questions.',organize:'Organize new and changed documents in their existing folders.',search:'Find related information across PDFs and saved conversations.',save:'Keep selected research ideas and experiment plans.'},startLink:'New here? Start with installation.',overviewEnd:'The supported environment is Codex on macOS. This website explains how to use it.',}};
+const ui={ko:{guide:'사용 가이드',overview:'가이드 둘러보기',menu:'메뉴',skip:'본문으로 이동',nav:'가이드 메뉴',first:'처음이라면',features:'기능',me:'나',assistant:'Research Agent 안내',howto:'사용 방법',note:'알아두세요',previous:'이전',next:'다음',related:'관련 가이드',blank:'실제 캡처를 넣을 빈 영역',capturePending:'캡처 준비 중',copy:'복사',copied:'복사됨',manualCopy:'직접 복사',copiedNotice:'복사했어요.',failedCopy:'복사할 문장을 선택했어요. ⌘ + C 또는 Ctrl + C로 직접 복사하세요.',prompt:'Codex에서 사용할 문장',invocationLabel:'VS Code·CLI에서 사용하려면',invocationNote:'문장 앞의 @Research Agent를 $research-library로 바꾸세요. 또는 /skills에서 research-library를 선택한 뒤 요청을 입력하세요.',install:'터미널에서 실행할 설치 명령',paste:'복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.',installNote:'명령을 복사해도 설치가 실행되지는 않아요. 터미널에서 직접 실행하세요.',sideNote:'사용 가이드 · v0.3.0\n실제 작업은 Codex에서 진행해요.',overviewQuestion:'Research Agent로 무엇을 할 수 있나요?',overviewAnswer:'흩어진 PDF와 중요한 연구 대화를 정리하고, 필요할 때 다시 찾아볼 수 있어요. 궁금한 기능을 선택해 보세요.',featureDescriptions:{attach:'PDF를 대화에 첨부해 바로 저장하고 질문해요.',organize:'연결한 폴더의 PDF를 변환해 검색할 수 있도록 저장해요.',compare:'새 PDF를 저장하고 기존 자료와 함께 정리해요.',search:'여러 PDF와 저장한 대화에서 관련 내용을 찾아요.',save:'연구 아이디어와 실험 설계를 선택해서 보관해요.'},startLink:'처음이라면 설치부터 시작하세요.',overviewEnd:'현재 지원 환경은 macOS의 Codex예요. 이 웹은 사용 방법을 안내합니다.',},en:{guide:'User guide',overview:'Explore the guide',menu:'Menu',skip:'Skip to content',nav:'Guide navigation',first:'Getting started',features:'Features',me:'You',assistant:'Research Agent guide',howto:'How to use it',note:'Good to know',previous:'Previous',next:'Next',related:'Related guides',blank:'Empty frame reserved for a real screenshot',capturePending:'Screenshot coming soon',copy:'Copy',copied:'Copied',manualCopy:'Copy manually',copiedNotice:'Copied to clipboard.',failedCopy:'The text is selected. Press ⌘ + C or Ctrl + C to copy it.',prompt:'Prompt to use in Codex',invocationLabel:'Using VS Code or the CLI?',invocationNote:'Replace @Research Agent at the start of the prompt with $research-library. Or choose research-library from /skills, then enter your request.',install:'Installation command for Terminal',paste:'Paste this into your usual Codex conversation.',installNote:'Copying does not install anything. Run the command yourself in Terminal.',sideNote:'User guide · v0.3.0\nActual work takes place in Codex.',overviewQuestion:'What can I do with Research Agent?',overviewAnswer:'Organize scattered PDFs and important research conversations, then find them again when you need them. Choose a feature to learn more.',featureDescriptions:{attach:'Attach PDFs in Codex to save them and ask questions.',organize:'Convert and save PDFs from your connected folders.',compare:'Save new PDFs and summarize them with existing materials.',search:'Find related information across PDFs and saved conversations.',save:'Keep selected research ideas and experiment plans.'},startLink:'New here? Start with installation.',overviewEnd:'The supported environment is Codex on macOS. This website explains how to use it.',}};
 const preferences={language:'ko'};
 try{
   const stored=JSON.parse(localStorage.getItem('research-guide-preferences')||'{}');
@@ -205,7 +231,7 @@ function savePreferences(){
 }
 function renderCapture(capture, route, language){
   const t=ui[language];
-  const asset=route==='start'?installationCaptures[capture.key]:null;
+  const asset=route==='start'?installationCaptures[capture.key]:featureCaptures[route];
   const caption=escapeHTML(capture.caption);
   const attributes=`data-capture-language="${language}" data-capture-feature="${route}" data-capture-key="${escapeHTML(capture.key)}"`;
   const highlight=asset?.highlight;
@@ -250,7 +276,7 @@ function renderInstallation(page, t, language){
     : `<a href="#/overview">${t.overview}</a>`;
   const next=step<page.stages.length
     ? `<button type="button" data-install-step="${step+1}">${page.forward}: ${escapeHTML(page.stages[step].label)}</button>`
-    : `<a href="#/attach">${page.firstTask}</a>`;
+    : '';
   main.innerHTML=`<div class="conversation installation-guide">
     <nav aria-label="${page.stageNav}" class="installation-nav"><ol>${page.stages.map((s,i)=>`<li><button type="button" data-install-step="${i+1}"${step===i+1?' aria-current="step"':''}><span>${i+1}.</span> ${escapeHTML(s.label)}</button></li>`).join('')}</ol></nav>
     <div class="message user-message"><p class="speaker">${t.me}</p><p class="message-text">${escapeHTML(stage.question)}</p></div>
@@ -263,8 +289,8 @@ function renderInstallation(page, t, language){
       ${stage.help?`<details class="howto installation-help"><summary>${escapeHTML(stage.helpLabel)}</summary><dl>${stage.help.map(item=>`<dt>${escapeHTML(item.question)}</dt><dd>${escapeHTML(item.answer)}</dd>`).join('')}</dl></details>`:''}
       ${stage.note?`<details class="howto"><summary>${escapeHTML(stage.noteLabel)}</summary><p class="note">${escapeHTML(stage.note)}</p></details>`:''}
     </div>
+    ${step===page.stages.length?`<section class="installation-flow-step"><h2>${escapeHTML(page.saveChoice)}</h2><ul class="feature-list"><li><a href="#/attach">${escapeHTML(page.firstTask)}</a></li><li><a href="#/organize">${escapeHTML(page.folderTask)}</a></li></ul></section>`:''}
     <nav class="installation-pagination" aria-label="${page.stageNav}">${previous}${next}</nav>
-    ${step===page.stages.length?`<p class="installation-alternative"><a href="#/connect">${page.folderTask}</a></p>`:''}
   </div>`;
 }
 function render(){
@@ -287,14 +313,14 @@ function render(){
   document.querySelector('#live-message').textContent='';
   if(route==='overview'){
     composer.classList.add('hidden');
-    main.innerHTML=`<div class="conversation overview"><div class="message user-message"><p class="speaker">${t.me}</p><p class="overview-question">${t.overviewQuestion}</p></div><div class="message assistant-message"><p class="speaker">${t.assistant}</p><p class="message-text">${t.overviewAnswer}</p><ul class="feature-list">${['attach','organize','search','save'].map(key=>`<li><a href="#/${key}">${titleFor(key)}</a><p>${t.featureDescriptions[key]}</p></li>`).join('')}</ul><div class="overview-start"><a href="#/start">${t.startLink}</a><p>${t.overviewEnd}</p></div></div></div>`;
+    main.innerHTML=`<div class="conversation overview"><div class="message user-message"><p class="speaker">${t.me}</p><p class="overview-question">${t.overviewQuestion}</p></div><div class="message assistant-message"><p class="speaker">${t.assistant}</p><p class="message-text">${t.overviewAnswer}</p><ul class="feature-list">${['attach','organize','compare','search','save'].map(key=>`<li><a href="#/${key}">${titleFor(key)}</a><p>${t.featureDescriptions[key]}</p></li>`).join('')}</ul><div class="overview-start"><a href="#/start">${t.startLink}</a><p>${t.overviewEnd}</p></div></div></div>`;
   }else if(route==='start'){
     renderInstallation(translated.start,t,language);
   }else{
     const p={...translated[route],steps:[...translated[route].steps]};
-    const captureFigures=renderCapture({key:route,caption:p.capture},route,language);
+    const captureFigures=renderCapture({key:route,caption:p.capture,alt:p.captureAlt},route,language);
     setComposer('prompt',p.prompt);
-    main.innerHTML=`<div class="conversation"><div class="message user-message"><p class="speaker">${t.me}</p><p class="message-text">${escapeHTML(p.question)}</p></div><div class="message assistant-message"><p class="speaker">${t.assistant}</p><p class="message-text">${escapeHTML(p.answer)}</p>${captureFigures}<details class="howto" open><summary>${t.howto}</summary><ol>${p.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ol></details><details class="howto"><summary>${t.note}</summary><p class="note">${escapeHTML(p.note)}</p></details></div><nav class="related" aria-label="${t.related}"><a href="#/${p.prev}">${t.previous}: ${titleFor(p.prev)}</a><a href="#/${p.next}">${t.next}: ${titleFor(p.next)}</a></nav></div>`;
+    main.innerHTML=`<div class="conversation"><div class="message user-message"><p class="speaker">${t.me}</p><p class="message-text">${escapeHTML(p.question)}</p></div><div class="message assistant-message"><p class="speaker">${t.assistant}</p><p class="message-text">${escapeHTML(p.answer)}</p>${captureFigures}<details class="howto" open><summary>${t.howto}</summary><ol>${p.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ol></details>${p.alternative?`<p class="note"><a href="#/${escapeHTML(p.alternative.route)}">${escapeHTML(p.alternative.label)}</a></p>`:''}<details class="howto"><summary>${t.note}</summary><p class="note">${escapeHTML(p.note)}</p></details></div><nav class="related" aria-label="${t.related}"><a href="#/${p.prev}">${t.previous}: ${titleFor(p.prev)}</a><a href="#/${p.next}">${t.next}: ${titleFor(p.next)}</a></nav></div>`;
   }
   main.scrollTo({top:0,behavior:'instant'});
 }

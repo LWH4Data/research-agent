@@ -66,6 +66,22 @@ if [ -z "$CODEX" ] || [ ! -x "$CODEX" ]; then
     exit 1
 fi
 
+# Normal PDF storage/sync is one managed intake, including review handoff.
+# Internal storage commands use the root launcher; an explicitly text-only
+# public operation must say so, rather than silently omitting lifecycle intake.
+case "${1-}" in
+    sync|import-pdf)
+        INTAKE_OPERATION=$1
+        shift
+        if [ "${1-}" = "--text-only" ]; then
+            shift
+            set -- "$INTAKE_OPERATION" "$@"
+        else
+            exec "$SCRIPT_DIR/research-review" submit "$@"
+        fi
+        ;;
+esac
+
 # Keep attachment transfer inside the exact launcher covered by the narrow
 # execution rule. A caller-side shell pipeline does not match that rule as one
 # allowed invocation and can accidentally nest the macOS sandbox.
@@ -74,11 +90,25 @@ if [ "$#" -eq 3 ] && [ "$1" = "import-pdf" ] && [ "$2" = "--attachment" ]; then
         --codex "$CODEX" --root "$ROOT" --sandbox-home "$SANDBOX_HOME" --path "$3"
 fi
 
-# Native UI must run before the storage sandbox, without storage imports or
-# writes. Only a confirmed nonempty draft reaches the unchanged sandbox below.
-if [ "$#" -eq 1 ] && [ "$1" = "source-add" ]; then
+# Both native confirmation and explicit paths use the same host sequence.
+# The helper registers through the root primitive, then submits exact sources.
+if [ "${1-}" = "source-add" ]; then
+    shift
+    # User arguments are paths, never overrides for the host helper's trusted
+    # root, executable, profile, or installation-only registration fallback.
+    case "${1-}" in
+        --help|-h)
+            exec "$ROOT/.venv/bin/python" -I -S -B "$ROOT/scripts/select_sources.py" --help ;;
+        --registration-only)
+            shift
+            [ "${1-}" != "--" ] || shift
+            exec "$ROOT/.venv/bin/python" -I -S -B "$ROOT/scripts/select_sources.py" \
+                --codex "$CODEX" --root "$ROOT" --sandbox-home "$SANDBOX_HOME" \
+                --registration-only -- "$@" ;;
+    esac
+    [ "${1-}" != "--" ] || shift
     exec "$ROOT/.venv/bin/python" -I -S -B "$ROOT/scripts/select_sources.py" \
-        --codex "$CODEX" --root "$ROOT" --sandbox-home "$SANDBOX_HOME"
+        --codex "$CODEX" --root "$ROOT" --sandbox-home "$SANDBOX_HOME" -- "$@"
 fi
 
 exec env CODEX_HOME="$SANDBOX_HOME" "$CODEX" sandbox \

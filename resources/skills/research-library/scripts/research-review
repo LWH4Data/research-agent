@@ -12,8 +12,8 @@ SANDBOX_OWNER="$SANDBOX_HOME/.research-agent-owner"
 # This is the only public entry point. The private worker subcommand is started
 # by the controller with inherited lock descriptors, never by a model task.
 case "${1-}" in
-    start|status) ;;
-    *) echo '오류: research-review start 또는 status를 사용하세요.' >&2; exit 2 ;;
+    key|submit|prepare|start|status|pause|cancel|resume|cleanup|forget|migrate|delete-document) ;;
+    *) echo '오류: 지원되는 research-review 명령을 사용하세요.' >&2; exit 2 ;;
 esac
 
 if [ -L "$ROOT/.venv" ] || [ ! -x "$ROOT/.venv/bin/python" ]; then
@@ -55,32 +55,31 @@ if [ -z "$CODEX" ] || [ ! -x "$CODEX" ]; then
     exit 1
 fi
 
-# Enter the separate worker profile before running any controller Python.
-# Original PDF locations remain read-only even if the parent task can edit them.
-if [ "${1-}" = "start" ]; then
-    # Record the new job before starting its watcher. A previous completed job
-    # must not make the new watcher exit during a slow controller startup.
-    if env CODEX_HOME="$SANDBOX_HOME" "$CODEX" sandbox \
-        -P research-review-worker -C "$SANDBOX_HOME" -- \
+# Lifecycle and executor mutations always run inside the existing worker
+# profile. Attachment intake uses the existing read-only host transport between
+# constrained prepare and submit, because the worker cannot read arbitrary
+# attachment locations. Private handoff arguments remain excluded.
+case "$1" in
+    submit|start)
         "$ROOT/.venv/bin/python" -I -S -B \
-        "$ROOT/scripts/background_review.py" --root "$ROOT" "$@"; then
-        :
-    else
-        exit $?
-    fi
+            "$ROOT/scripts/review_intake_host.py" --root "$ROOT" \
+            --codex "$CODEX" --sandbox-home "$SANDBOX_HOME" "$@"
+        ;;
+    *)
+        env CODEX_HOME="$SANDBOX_HOME" "$CODEX" sandbox \
+            -P research-review-worker -C "$SANDBOX_HOME" -- \
+            "$ROOT/.venv/bin/python" -I -S -B \
+            "$ROOT/scripts/background_lifecycle.py" --root "$ROOT" "$@"
+        ;;
+esac
 
-    # The supervisor checks the detached watcher's readiness and records any
-    # startup error. Its own Seatbelt profile remains store-only for writes.
-    if "$ROOT/.venv/bin/python" -I -S -B \
-       "$ROOT/scripts/background_review.py" --root "$ROOT" --launch-notifier; then
-        :
-    else
-        echo '안내: macOS 알림 상태를 기록할 수 없습니다. 시각 검토는 계속됩니다.' >&2
-    fi
-    exit 0
-fi
-
-exec env CODEX_HOME="$SANDBOX_HOME" "$CODEX" sandbox \
-    -P research-review-worker -C "$SANDBOX_HOME" -- \
-    "$ROOT/.venv/bin/python" -I -S -B \
-    "$ROOT/scripts/background_review.py" --root "$ROOT" "$@"
+# Deliver notices outside the review worker's enclosing sandbox. This helper
+# enters a separate profile with writes limited to the notification ledger.
+# A notification failure never cancels a successful intake or visual review.
+case "$1" in
+    submit|start|resume|pause|cancel)
+        "$ROOT/.venv/bin/python" -I -S -B \
+            "$ROOT/scripts/background_notifier.py" --root "$ROOT" --launch || \
+            echo '안내: macOS 알림을 시작하지 못했습니다. 저장된 검토 상태를 확인해 주세요.' >&2
+        ;;
+esac

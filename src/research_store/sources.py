@@ -6,6 +6,9 @@ from pathlib import Path
 import re
 
 from .config import Config, Source, load_config
+from .locking import conversation_lock as project_write_lock
+from .operations import recover_document_operation
+from .state import LibraryState
 from .safety import (
     atomic_text,
     find_project_root,
@@ -85,11 +88,21 @@ def _render(config: Config, sources: list[Source]) -> str:
 
 
 def add_sources(config_path: Path, paths: list[Path]) -> list[Source]:
+    """Keep the existing API's newly added or re-enabled source list."""
+    return add_sources_with_selection(config_path, paths)[0]
+
+
+def add_sources_with_selection(
+    config_path: Path, paths: list[Path]
+) -> tuple[list[Source], list[Source]]:
+    """Register a confirmed batch and return its exact, deduplicated selection."""
     initialize_config(config_path)
     config = load_config(config_path)
     sources = list(config.sources)
     existing_ids = {source.id for source in sources}
     added: list[Source] = []
+    explicitly_registered: set[str] = set()
+    selected_ids: list[str] = []
 
     for raw_path in paths:
         requested = raw_path.expanduser()
@@ -110,6 +123,9 @@ def add_sources(config_path: Path, paths: list[Path]) -> list[Source]:
             )
         duplicate = next((source for source in sources if source.path == path), None)
         if duplicate:
+            if duplicate.id not in explicitly_registered:
+                selected_ids.append(duplicate.id)
+            explicitly_registered.add(duplicate.id)
             if not duplicate.enabled:
                 for source in sources:
                     if not source.enabled or source.path == path:
@@ -156,11 +172,22 @@ def add_sources(config_path: Path, paths: list[Path]) -> list[Source]:
         existing_ids.add(source.id)
         sources.append(source)
         added.append(source)
+        explicitly_registered.add(source.id)
+        selected_ids.append(source.id)
 
     if added:
         atomic_text(config_path, _render(config, sources), config.root)
         load_config(config_path)
-    return added
+    if explicitly_registered and config.state.exists():
+        with project_write_lock(config.root):
+            with LibraryState(config.state, config.root):
+                pass
+            recover_document_operation(config, lock_held=True)
+            with LibraryState(config.state, config.root) as state:
+                for source_id in explicitly_registered:
+                    state.clear_document_exclusions(source_id=source_id)
+    by_id = {source.id: source for source in sources}
+    return added, [by_id[source_id] for source_id in selected_ids]
 
 
 def remove_sources(config_path: Path, source_ids: list[str]) -> list[Source]:

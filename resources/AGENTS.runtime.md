@@ -69,17 +69,25 @@ the installation root, whether this policy is read there or at
   `research_library_manager` agent handles sources, imports, incremental sync,
   conversation memory, and retrieval using Luna xhigh. It never opens page
   images, calls `review-complete`, or creates a nested visual agent as a fallback.
-- The primary session starts the detached Sol high reviewer after text sync,
-  limited to imported document keys for attachment requests. Text may be used
-  immediately while visual checking continues. `research_paper_converter`
-  remains for explicitly requested synchronous correction or targeted review;
-  do not concurrently assign an active background queue to it.
+- The managed intake command records a caller key before storing text, then
+  links only committed document versions and starts the detached Sol high
+  reviewer. Text may be used immediately while visual checking continues.
+  Each request keeps its own receipt even when execution is shared. Explicit
+  saved corrections use exact pages with `rereview: true` through the same
+  managed command; `--wait` supports synchronous work. The converter may inspect
+  pages read-only, but never bypass lifecycle fencing with an unfenced write.
 - Users never need to choose the agent or model. Registered agents have fixed
   role settings in `resources/agents/`; do not silently change them.
 - Invoking Research Agent to use attached PDFs authorizes persistent import of
   that requested set, without a second save request or folder registration.
   Mere attachment, a general PDF question without the skill, and an explicit
   no-save request do not authorize import.
+- Confirming folders in the connection window, or explicitly asking to connect
+  exact paths, authorizes saving PDFs from that selected set and managed visual
+  review. The public source-add flow owns this handoff; do not dispatch a second
+  sync. Cancellation authorizes no intake. An explicit registration-only/no-save
+  request uses `--registration-only`. Preserve existing library review holds.
+  Report registration, text storage, review startup, and failures separately.
 - Ask one range question before saving research conversation content. After
   selection, save without a second confirmation. Preserve selected messages
   verbatim; unavailable history stays partial and is never reconstructed.
@@ -144,6 +152,16 @@ the installation root, whether this policy is read there or at
   `research-review status` remains authoritative. The skill's
   `references/sync-and-background.md` procedure defines the progress display
   and notification thresholds.
+- Execution time and page-attempt thresholds are advisory. Crossing a threshold
+  warns; it does not pause, cancel, shrink a batch, or require an extension.
+  Only explicit user controls stop for time/cost reasons. Preserve accounting
+  across retries and record missing token usage as unknown. Authorization
+  expiry, version changes, and unsafe/unconfirmed process ownership fail closed.
+- Pause/cancel controls require an exact request, document, or whole-library
+  scope. Library pause persists across later intake and restarts; only explicit
+  library resume clears it. Cancelling one request keeps work needed by another.
+  Report stopping until owned child exit is confirmed. Never kill a PID without
+  matching creation identity and owned process group.
 
 ## Removal
 

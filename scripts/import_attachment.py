@@ -34,6 +34,12 @@ def _filename(path: str) -> str:
     return name
 
 
+def _identity(value: str) -> str:
+    if not value or "\0" in value or len(value) > 4096:
+        raise argparse.ArgumentTypeError("접수 식별자가 올바르지 않습니다")
+    return value
+
+
 def _fingerprint(info: os.stat_result) -> tuple[int, ...]:
     # Access time may legitimately change during a read; never restore it by
     # writing to the original. All fields relevant to a stable snapshot remain.
@@ -81,7 +87,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", required=True, type=_absolute)
     parser.add_argument("--sandbox-home", required=True, type=_absolute)
     parser.add_argument("--path", required=True, type=_absolute)
+    parser.add_argument("--request-id", type=_identity)
+    parser.add_argument("--item-id", type=_identity)
     args = parser.parse_args(argv)
+    if (args.request_id is None) != (args.item_id is None):
+        parser.error("--request-id와 --item-id를 함께 지정해야 합니다")
     try:
         name, content = read_attachment(args.path)
     except (ValueError, UnicodeError) as error:
@@ -96,6 +106,9 @@ def main(argv: list[str] | None = None) -> int:
     command = [args.codex, "sandbox", "-P", "research-store", "-C",
                args.sandbox_home, "--", str(Path(args.root) / "research-store"),
                "import-pdf", "--stdin", "--name", name]
+    if args.request_id is not None:
+        command.extend(["--request-id=" + args.request_id,
+                        "--item-id=" + args.item_id])
     try:
         result = subprocess.run(command, input=content, env=env, check=False)
     except OSError:

@@ -67,6 +67,7 @@
 
 ## 관련 설계와 검증 기록
 
+- [시각 검토 작업과 요청의 수명](./ko/visual-review-lifecycle.md) — 개발 구현, 배포본에는 미반영; 사용자 중단·공유 실행·만료 정리
 - [첨부 PDF 저장과 설치 안내](./ko/attachment-import.md)
 - [버전과 사용자용 Release 배포](./ko/releases.md)
 - [안전성과 에이전트 라우팅 검증](./ko/experiments/safety-routing-validation.md)

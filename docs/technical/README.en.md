@@ -67,6 +67,7 @@ Explains in-task progress, background-review status, and the next run after inte
 
 ## Related Designs and Validation Records
 
+- [Visual Review Jobs and Request Lifecycles](./en/visual-review-lifecycle.md) — development implementation, not released; user controls, shared execution, retention
 - [Attachment import and installation](./en/attachment-import.md)
 - [Versioning and runtime releases](./en/releases.md)
 - [Safety and agent-routing validation](./en/experiments/safety-routing-validation.md)

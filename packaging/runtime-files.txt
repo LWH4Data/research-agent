@@ -34,8 +34,12 @@ scripts/personal_registration.py
 scripts/uninstall_project.py
 scripts/install_onboarding.py
 scripts/import_attachment.py
+scripts/review_intake_host.py
 scripts/select_sources.py
+scripts/source_intake.py
 scripts/background_review.py
+scripts/background_lifecycle.py
+scripts/background_notifier.py
 scripts/demo_progress.py
 src/research_store/__init__.py
 src/research_store/cli.py
@@ -47,6 +51,7 @@ src/research_store/operation_guard.py
 src/research_store/operations.py
 src/research_store/picker.py
 src/research_store/progress.py
+src/research_store/review_lifecycle.py
 src/research_store/safety.py
 src/research_store/search.py
 src/research_store/search_results.py

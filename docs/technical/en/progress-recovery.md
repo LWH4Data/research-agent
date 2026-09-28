@@ -2,6 +2,12 @@
 
 [한국어](../ko/progress-recovery.md) | [English](./progress-recovery.md) | [Technical design index](../README.en.md) · [Roadmap](./ROADMAP.md)
 
+The follow-up [visual review lifecycle implementation](./visual-review-lifecycle.md)
+covers individual requests/shared jobs, user pause/resume/cancel, usage guidance,
+and retention cleanup. It is in development, not the v0.3.0 release. The legacy
+flow and common display rules below remain distinct; the follow-up document
+defines new commands, v2 state, process ownership, and the notice watcher.
+
 ## Contents
 
 - [Design Goal](#design-goal)

@@ -14,12 +14,14 @@ from pathlib import Path
 import re
 import secrets
 import stat
+import time
 from typing import BinaryIO
 
 from .config import Config, Source
-from .locking import sync_lock
+from .locking import conversation_lock as project_write_lock, sync_lock
+from .operations import recover_document_operation
 from .safety import _open_owned_directory, reject_linked_file, require_owned_path
-from .state import now
+from .state import LibraryState, now
 
 
 MAX_PDF_BYTES = 256 * 1024 * 1024
@@ -163,10 +165,18 @@ def _validate_pdf(path: Path) -> None:
 
 
 def import_pdf(config: Config, stream: BinaryIO, *, name: str,
-               origin_path: str | None = None) -> dict[str, object]:
+               origin_path: str | None = None, request_id: str | None = None,
+               item_id: str | None = None) -> dict[str, object]:
     """Store one PDF snapshot. Conversion is a separate resumable sync step."""
     name = _filename(name)
+    if (request_id is None) != (item_id is None):
+        raise ValueError("접수 요청 ID와 항목 ID를 함께 지정해야 합니다")
     with sync_lock(config.root):
+        with project_write_lock(config.root):
+            with LibraryState(config.state, config.root):
+                pass
+            recover_document_operation(config, lock_held=True)
+            _validate_intake_authority(config, request_id, item_id)
         recover_imports(config)
         parent_fd, directory = _open_owned_directory(
             _directory(config), config.root, label="첨부 PDF 저장 폴더", create=True)
@@ -199,38 +209,44 @@ def import_pdf(config: Config, stream: BinaryIO, *, name: str,
                 source_id = "import-" + sha256
                 if any(source.id == source_id for source in config.sources):
                     raise ValueError("첨부 PDF와 원본 위치의 ID가 충돌합니다")
-                if target.exists() or target.is_symlink():
-                    require_owned_path(target, config.root, label="첨부 PDF 항목")
-                    existing = _source(config, target)
-                    with existing.path.open("rb") as saved:
-                        if hashlib.file_digest(saved, "sha256").hexdigest() != sha256:
-                            raise ValueError("기존 첨부 PDF 내용이 변경되었습니다")
-                    source = existing
-                    duplicate = True
-                else:
-                    metadata = {"schema_version": 1, "sha256": sha256,
-                                "original_name": name, "origin_path": origin_path,
-                                "imported_at": now(), "size": size}
-                    body = json.dumps(metadata, ensure_ascii=False).encode("utf-8")
-                    if len(body) > 8192:
-                        raise ValueError("첨부 PDF 정보가 너무 큽니다")
-                    metadata_fd = os.open("metadata.json", os.O_WRONLY | os.O_CREAT
-                                          | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=fd)
-                    with os.fdopen(metadata_fd, "wb") as output:
-                        output.write(body)
-                        output.flush()
-                        os.fsync(output.fileno())
-                    os.fsync(fd)
-                    os.rename(staging, sha256, src_dir_fd=parent_fd,
-                              dst_dir_fd=parent_fd)
-                    published = True
-                    os.fsync(parent_fd)
-                    source = _source(config, target)
-                    duplicate = False
-                return {"document_key": f"{source.id}:{source.original_name}",
-                        "sha256": sha256, "original_name": source.original_name,
-                        "stored_pdf": str(source.path), "duplicate": duplicate,
-                        "stored": True, "next_step": "sync"}
+                with project_write_lock(config.root), LibraryState(config.state, config.root) as state:
+                    if target.exists() or target.is_symlink():
+                        require_owned_path(target, config.root, label="첨부 PDF 항목")
+                        existing = _source(config, target)
+                        with existing.path.open("rb") as saved:
+                            if hashlib.file_digest(saved, "sha256").hexdigest() != sha256:
+                                raise ValueError("기존 첨부 PDF 내용이 변경되었습니다")
+                        source = existing
+                        duplicate = True
+                        _record_import_intake(config, request_id, item_id, f"{source.id}:{source.original_name}", sha256, state=state)
+                    else:
+                        metadata = {"schema_version": 1, "sha256": sha256,
+                                    "original_name": name, "origin_path": origin_path,
+                                    "imported_at": now(), "size": size}
+                        body = json.dumps(metadata, ensure_ascii=False).encode("utf-8")
+                        if len(body) > 8192:
+                            raise ValueError("첨부 PDF 정보가 너무 큽니다")
+                        metadata_fd = os.open("metadata.json", os.O_WRONLY | os.O_CREAT
+                                              | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=fd)
+                        with os.fdopen(metadata_fd, "wb") as output:
+                            output.write(body)
+                            output.flush()
+                            os.fsync(output.fileno())
+                        os.fsync(fd)
+                        # Durable association precedes publication. If the caller
+                        # dies after rename, the receipt finds this owned copy even
+                        # after the original attachment path has disappeared.
+                        _record_import_intake(config, request_id, item_id, f"{source_id}:{name}", sha256, state=state)
+                        os.rename(staging, sha256, src_dir_fd=parent_fd,
+                                  dst_dir_fd=parent_fd)
+                        published = True
+                        os.fsync(parent_fd)
+                        source = _source(config, target)
+                        duplicate = False
+                    return {"document_key": f"{source.id}:{source.original_name}",
+                            "sha256": sha256, "original_name": source.original_name,
+                            "stored_pdf": str(source.path), "duplicate": duplicate,
+                            "stored": True, "next_step": "sync"}
             finally:
                 os.close(fd)
         finally:
@@ -241,7 +257,45 @@ def import_pdf(config: Config, stream: BinaryIO, *, name: str,
                 os.close(parent_fd)
 
 
-def import_pdf_path(config: Config, path: Path) -> dict[str, object]:
+def _validate_intake_authority(config: Config, request_id: str | None,
+                               item_id: str | None) -> None:
+    """Recheck current intake intent under storage; never acquire control."""
+    if request_id is None:
+        return  # Explicit standalone import remains a separate operation.
+    from .review_lifecycle import DIRECTORY, STATE_FILE, read_record
+    lifecycle = reject_linked_file(config.root / DIRECTORY / STATE_FILE,
+                                   config.root, label="첨부 접수 권한")
+    if not lifecycle.exists():
+        return  # Compatibility for stores that have never adopted lifecycle.
+    request = read_record(config.root)["requests"].get(request_id)
+    if (request is None or request.get("state") in {"cancelled", "expired"}
+            or (request.get("expires_at") is not None
+                and request["expires_at"] <= time.time())):
+        raise ValueError("첨부 접수 요청의 저장 권한이 없거나 만료되었습니다")
+    item = request["items"].get(item_id)
+    if item is None or item.get("state") == "deleted":
+        raise ValueError("삭제되었거나 없는 첨부 접수 항목은 다시 가져올 수 없습니다")
+    intent = next((item for item in request["spec"]["items"]
+                   if item["item_id"] == item_id), None)
+    if intent is None or "attachment" not in intent:
+        raise ValueError("첨부 저장이 허용된 정확한 접수 항목이 필요합니다")
+
+
+def _record_import_intake(config: Config, request_id: str | None,
+                          item_id: str | None, document_key: str, sha256: str,
+                          *, state: LibraryState) -> None:
+    # The caller holds storage through both this durable receipt and publishing
+    # the copy. A concurrent deletion therefore either rejects this intake or
+    # runs after publication; it cannot fall between validation and publication.
+    _validate_intake_authority(config, request_id, item_id)
+    if request_id is not None:
+        state.record_intake_receipt({"request_id": request_id, "item_id": item_id, "document_key": document_key, "sha256": sha256, "stage": "stored"})
+    state.clear_document_exclusions(document_key=document_key)
+    state.commit()
+
+
+def import_pdf_path(config: Config, path: Path, *, request_id: str | None = None,
+                    item_id: str | None = None) -> dict[str, object]:
     requested = path.expanduser()
     name = _filename(requested.name)
     if requested.is_symlink():
@@ -255,4 +309,5 @@ def import_pdf_path(config: Config, path: Path) -> dict[str, object]:
         if info.st_size > MAX_PDF_BYTES:
             raise ValueError("첨부 PDF는 256 MiB 이하여야 합니다")
         return import_pdf(config, stream, name=name,
-                          origin_path=str(requested.resolve()))
+                          origin_path=str(requested.resolve()),
+                          request_id=request_id, item_id=item_id)

@@ -6,8 +6,9 @@ window.RESEARCH_GUIDE_EN = {
     stageNav: 'Installation guide steps',
     back: 'Previous step',
     forward: 'Next step',
-    firstTask: 'Start by attaching a PDF',
-    folderTask: 'Connect existing PDF folders',
+    saveChoice: 'Choose how to save your PDFs.',
+    firstTask: 'Attach and save PDFs',
+    folderTask: 'Save PDFs from connected folders',
     stages: [
       {
         label: 'Open Terminal',
@@ -32,7 +33,7 @@ window.RESEARCH_GUIDE_EN = {
       {
         label: 'Choose folders',
         question: 'How do I connect my PDF folders?',
-        answer: 'Add folders to the list, check your choices, then connect them. Your original files stay unchanged.',
+        answer: 'Choose your folders, check the list, then click “연결하고 PDF 저장하기” (Connect and save PDFs). Saving starts for those folders, followed by checks of figures, equations, and tables. Your original files stay unchanged.',
         notice: 'Development preview: this flow is not yet included in v0.3.0, which the current installation command installs.',
         flow: [
           {
@@ -54,12 +55,12 @@ window.RESEARCH_GUIDE_EN = {
             }
           },
           {
-            title: 'Check the list and connect',
-            body: 'Check the folder list, then click “이 폴더들 연결하기” (Connect these folders). To add another location first, click “폴더 더 추가하기” (Add more folders).',
+            title: 'Check the list and start saving',
+            body: 'Check the list, then click “연결하고 PDF 저장하기” (Connect and save PDFs). To add another location first, click “폴더 더 추가하기” (Add more folders). Saved text is searchable while visual review continues.',
             capture: {
               key: 'folder-draft-confirmation',
-              caption: 'Three folders selected, before connecting. The black outline is a guide annotation around the connect button.',
-              alt: 'The confirmation list with three folders checked and the “이 폴더들 연결하기” (Connect these folders) button'
+              caption: 'The confirmation screen with three folders selected. The black outline marks “연결하고 PDF 저장하기” (Connect and save PDFs) for this guide.',
+              alt: 'The confirmation list with three folders checked and the “연결하고 PDF 저장하기” (Connect and save PDFs) button'
             }
           }
         ],
@@ -82,8 +83,12 @@ window.RESEARCH_GUIDE_EN = {
             answer: 'Click the picker window once, then hold ⌘ Command and click the folder names. If an error appears, share its message with Codex. Do not switch to Full access.'
           },
           {
+            question: 'The folders are connected, but saving has not started?',
+            answer: 'A connection is not proof of completed storage. If the Codex executable is unavailable or startup fails, connections stay saved and processing is reported as deferred or failed. Share that message with Codex to continue. An existing library-wide review pause keeps visual work on hold after text storage until you ask to resume.'
+          },
+          {
             question: 'Why does my window look different?',
-            answer: 'Published v0.3.0 uses the earlier picker, where “선택” (Select) finishes selection directly. The draft-list flow shown here is an upcoming development version.'
+            answer: 'Published v0.3.0 uses the earlier picker, where “선택” (Select) finishes selection directly. The draft-list flow and automatic saving are upcoming changes. In v0.3.0, ask Codex to organize PDFs after connecting folders.'
           }
         ]
       },
@@ -101,12 +106,12 @@ window.RESEARCH_GUIDE_EN = {
       }
     ],
     prev: 'overview',
-    next: 'connect'
+    next: 'organize'
   },
   connect: {
     title: 'Connect PDF folders',
     question: 'Can my PDFs stay in different folders?',
-    answer: 'Yes. Leave your PDFs where they are and connect their folders. This step only registers the locations. PDFs are processed when you ask to organize them.',
+    answer: 'Yes. Leave your PDFs where they are and connect their folders. Published v0.3.0 needs a separate organization request. The development version starts saving PDFs from the confirmed folders automatically.',
     capture: 'Folder selection and connection result screen',
     steps: [
       'Use the prompt below to ask Codex to connect your folders.',
@@ -115,39 +120,60 @@ window.RESEARCH_GUIDE_EN = {
       'Check that the folders you want are selected, release the key, then click “선택” (Select) at the bottom right.',
       'Connect other folders the same way, then ask, “Organize my newly added documents.”'
     ],
-    note: 'If you connected folders during installation, you do not need to register them again. These instructions describe published v0.3.0. The development version adds a draft list: exclude or add folders before connecting. Canceling the inner picker preserves the list; canceling the whole flow registers nothing from that draft. Reopening through a Codex request is being prepared. These improvements are not yet released.',
+    note: 'If you connected folders during installation, you do not need to register them again. These instructions describe published v0.3.0. The development version lets you confirm the list with “연결하고 PDF 저장하기” (Connect and save PDFs), then saves PDFs from those folders and hands off to visual review. Canceling the inner picker preserves the list; canceling the whole flow registers nothing from that draft. Reopening through a Codex request is being prepared. These improvements are not yet released.',
     prompt: '@Research Agent Connect the folders containing my PDFs.',
     prev: 'start',
-    next: 'attach'
-  },
-  attach: {
-    title: 'Attach PDFs directly',
-    question: 'Can I send PDFs without connecting a folder?',
-    answer: 'Yes. Attach one or more PDFs to your Codex conversation and ask Research Agent to work with them. PDF copies and searchable content are saved in your library so you can find them in future conversations.',
-    capture: 'PDF attachments and saved results screen',
-    steps: [
-      'Attach the PDFs you need to your usual Codex conversation.',
-      'Select Research Agent from the @ menu and use the prompt below.',
-      'Check which documents were saved and whether any files could not be processed. Once text processing finishes, you can continue asking questions.'
-    ],
-    note: 'Attaching a PDF alone does not save it automatically. Codex must be able to read the attachment. If you do not want to save it, say, “Do not save this; explain it only in this conversation.” Reviewing figures, equations, and tables may take longer.',
-    prompt: '@Research Agent Organize the attached PDFs and find what they have in common with my existing materials.',
-    prev: 'connect',
     next: 'organize'
   },
-  organize: {
-    title: 'Organize PDFs',
-    question: 'How do I organize PDFs I have just added?',
-    answer: 'Ask to organize your documents, and Research Agent will find and process new or changed PDFs in connected folders. Once text processing finishes, you can search or continue the conversation while any needed review of figures, equations, and tables continues in the background.',
-    capture: 'Document processing progress and results screen',
+  attach: {
+    title: 'Save attached PDFs',
+    question: 'Can I send PDFs without connecting a folder?',
+    answer: 'Yes. Attach one or more PDFs to your Codex conversation and ask Research Agent to save them. PDF copies and searchable content are saved in your library so you can find them in future conversations.',
+    capture: 'An actual Korean conversation saving three attached PDFs and summarizing each. The response reports that text saving is complete while review of equations, tables, and figures is pending.',
+    captureAlt: 'Three attached PDFs, TinyBERT, MiniLM, and Dense Passage Retrieval, a save-and-summarize request, and a Korean response reporting new saves, document summaries, and 27 pages awaiting visual review',
     steps: [
-      'Connect the folders containing your PDFs. For individual PDFs, you can use “Attach PDFs directly” instead.',
-      'Paste the prompt below into Codex to start organizing.',
-      'Check the organized documents and pages still under review. If needed, ask, “How far along is the review of equations and figures?”'
+      'Attach one or more PDFs together in a local Codex conversation.',
+      'Type @research, select Research Agent, and use the prompt below to save and summarize the attached PDFs.',
+      'Check which documents were saved and whether any files could not be processed. Once text processing finishes, you can continue asking questions.'
     ],
+    alternative: {route: 'organize', label: 'Already connected folders? Save their PDFs'},
+    note: 'Attaching a PDF alone does not save it automatically. Codex must be able to read the attachment. If you do not want to save it, say, “Do not save this; explain it only in this conversation.” Reviewing figures, equations, and tables may take longer.',
+    prompt: '@Research Agent Save the attached PDFs to my research library and summarize the key points of each attached document.',
+    prev: 'start',
+    next: 'compare'
+  },
+  organize: {
+    title: 'Save PDFs from folders',
+    question: 'How do I save PDFs from the folders I connected during installation?',
+    answer: 'Published v0.3.0 needs the prompt below for the first save after connecting folders. The development version starts saving after folder confirmation, so check its progress instead. Use the prompt later to update added or changed PDFs. Your originals stay unchanged.',
+    capture: 'Request and results for converting and saving PDFs from connected folders',
+    steps: [
+      'If you connected folders during installation, you do not need to reconnect them or attach their PDFs.',
+      'Select Research Agent in a local Codex conversation. In v0.3.0, request saving with the prompt below. If the development version already started, ask “What is the storage status of the folders I just connected?”',
+      'Check how many documents were saved and whether any files could not be processed. Documents can be searched once their text is saved. Figures, equations, and tables may still be under review.',
+      'Use the same request after adding or changing PDFs in those folders. New and changed documents will be updated.'
+    ],
+    alternative: {route: 'connect', label: 'No folders connected yet? Connect PDF folders'},
     note: 'Visual content still under review is not treated as verified. macOS notifications can report completion, errors, and progress on longer tasks. Notifications may not appear depending on your settings, and they do not add new messages to the conversation automatically. If processing stops, use the same request to check the saved state and continue the remaining work.',
-    prompt: '@Research Agent Organize my newly added documents.',
-    prev: 'attach',
+    prompt: '@Research Agent Convert and save the PDFs in my connected folders to my research library. Tell me which documents were saved and what is still being processed.',
+    prev: 'start',
+    next: 'compare'
+  },
+  compare: {
+    title: 'Use new PDFs with saved materials',
+    question: 'Can I save new PDFs and summarize them with materials already in my library?',
+    answer: 'Yes. Attach new PDFs and ask to save and compare them in one request. Research Agent saves the attachments, finds related PDFs and conversation records already in your library, and summarizes them together with sources.',
+    capture: 'A response showing newly saved PDFs alongside citations to previously saved materials',
+    steps: [
+      'Save the existing materials you want to compare first. If you connected folders, first check that saving finished in “Save PDFs from folders.”',
+      'Attach one or more new PDFs in a local Codex conversation and select Research Agent.',
+      'Use the prompt below to save the PDFs and summarize them with existing materials in one request.',
+      'Check that the answer cites both the new PDFs and existing materials. If no related saved materials are found, it may explain that the summary uses only the attachments.'
+    ],
+    alternative: {route: 'organize', label: 'Save PDFs from connected folders first'},
+    note: 'Research Agent retrieves saved content relevant to your question. Having saved materials does not guarantee a relevant match. Check whether any figures, equations, or tables needed for the answer are still under review.',
+    prompt: '@Research Agent Save the attached PDFs and summarize them together with related materials already in my library. Explain their similarities and differences, and identify the documents supporting your answer.',
+    prev: 'organize',
     next: 'search'
   },
   search: {
@@ -162,7 +188,7 @@ window.RESEARCH_GUIDE_EN = {
     ],
     note: 'You can ask in Korean about English PDFs. Research Agent searches with relevant Korean and English keywords. If figures or equations needed for your answer are still under review, it will explain their status.',
     prompt: '@Research Agent Find ways to improve optical device coupling efficiency in my materials.',
-    prev: 'organize',
+    prev: 'compare',
     next: 'save'
   },
   save: {

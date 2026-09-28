@@ -23,7 +23,7 @@ from .progress import progress_renderer
 from .search import search_library
 from .safety import find_project_root
 from .sources import (
-    add_sources,
+    add_sources_with_selection,
     default_config_path,
     initialize_config,
     remove_sources,
@@ -112,9 +112,15 @@ def _parser() -> argparse.ArgumentParser:
     pdf_import.add_argument("path", type=Path, nargs="?")
     pdf_import.add_argument("--stdin", action="store_true", help="PDF 바이트를 EOF까지 읽기")
     pdf_import.add_argument("--name", help="표준 입력 PDF의 원래 파일 이름")
+    pdf_import.add_argument("--request-id")
+    pdf_import.add_argument("--item-id")
 
     sync = subparsers.add_parser("sync", help="신규·변경 PDF를 Markdown으로 변환")
     sync.add_argument("--imported-document", help="저장한 첨부 PDF의 정확한 문서 키 하나만 정리")
+    sync.add_argument("--request-id")
+    sync.add_argument("--item-id")
+    sync.add_argument("--source-id", action="append", dest="source_ids")
+    sync.add_argument("--intake-manifest", help="고정된 문서 키와 SHA-256 JSON")
     sync.add_argument(
         "--progress",
         choices=("auto", "off", "jsonl"),
@@ -131,11 +137,13 @@ def _parser() -> argparse.ArgumentParser:
     search.add_argument("--offset", type=int, default=0, help="추가 결과의 시작 위치")
     search.add_argument("--snapshot", help="이전 검색에서 받은 자료 버전")
     subparsers.add_parser("review-list", help="이미지 판독이 필요한 페이지 목록")
+    subparsers.add_parser("review-snapshot", help="현재 문서 버전과 저장된 페이지 검토 상태")
 
     render = subparsers.add_parser("render-review", help="검토할 PDF 페이지를 PNG로 렌더링")
     render.add_argument("document", help="review-list에 표시된 document_key")
     render.add_argument("--page", type=int, action="append", dest="pages")
     render.add_argument("--dpi", type=int, default=220)
+    render.add_argument("--execution-id", help="시각 검토 실행 소유권 ID")
 
     reviewed = subparsers.add_parser("review-complete", help="페이지 이미지 판독 상태 기록")
     reviewed.add_argument("document", help="review-list에 표시된 document_key")
@@ -155,6 +163,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     reviewed.add_argument("--model", default="gpt-5.6-sol")
     reviewed.add_argument("--notes", help="짧은 작업 메모(시각 검토 노트를 대체하지 않음)")
+    reviewed.add_argument("--fence", help="시각 검토 실행 권한 JSON")
     reviewed.add_argument(
         "--visual-notes-stdin",
         action="store_true",
@@ -219,7 +228,7 @@ def main() -> None:
             paths = list(args.paths)
             if not paths:
                 paths = choose_sources()
-            added = add_sources(config_path, paths) if paths else []
+            added, selected = add_sources_with_selection(config_path, paths) if paths else ([], [])
             result = {
                 "added": [
                     {
@@ -228,6 +237,14 @@ def main() -> None:
                         "access": "read-only",
                     }
                     for source in added
+                ],
+                "selected": [
+                    {
+                        "id": source.id,
+                        "path": str(source.path),
+                        "access": "read-only",
+                    }
+                    for source in selected
                 ],
                 "cancelled": not paths,
             }
@@ -239,8 +256,10 @@ def main() -> None:
             if not args.stdin and args.name:
                 raise ValueError("--name은 --stdin과 함께 사용하세요")
             config = load_config(initialize_config(config_path))
-            result = (import_pdf(config, sys.stdin.buffer, name=args.name)
-                      if args.stdin else import_pdf_path(config, args.path))
+            result = (import_pdf(config, sys.stdin.buffer, name=args.name,
+                                 request_id=args.request_id, item_id=args.item_id)
+                      if args.stdin else import_pdf_path(config, args.path,
+                                 request_id=args.request_id, item_id=args.item_id))
         elif args.command == "source-list":
             initialize_config(config_path)
             rows = source_rows(config_path)
@@ -275,6 +294,10 @@ def main() -> None:
                         config,
                         progress=progress_renderer(args.progress),
                         imported_document=args.imported_document,
+                        request_id=args.request_id,
+                        item_id=args.item_id,
+                        source_ids=args.source_ids,
+                        expected_documents=json.loads(args.intake_manifest) if args.intake_manifest is not None else None,
                     )
                 )
                 if result["registered_sources"] == 0:
@@ -290,9 +313,12 @@ def main() -> None:
                 )
             elif args.command == "review-list":
                 result = pending_reviews(config)
+            elif args.command == "review-snapshot":
+                from .sync import review_snapshot
+                result = review_snapshot(config)
             elif args.command == "render-review":
                 rendered = render_review_pages(
-                    config, args.document, args.pages, args.dpi
+                    config, args.document, args.pages, args.dpi, execution_id=args.execution_id
                 )
                 result = {
                     "document": args.document,
@@ -318,6 +344,7 @@ def main() -> None:
                         reviewer_model=args.model,
                         notes=args.notes,
                         visual_notes=visual_notes,
+                        fence=json.loads(args.fence) if args.fence else None,
                     )
                 }
             elif args.command == "conversation-list":

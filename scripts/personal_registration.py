@@ -209,14 +209,15 @@ def _render_agent(template: Path, root: Path, skill_link: Path) -> str:
         f"Read {root / RUNTIME_INSTRUCTIONS} before acting.",
     )
     prefix = (
-        f"The research-agent store root is {root}. Use only the personal launcher "
-        f"at {launcher} for library operations, regardless of the current working "
+        f"The research-agent store root is {root}. Use the personal storage launcher "
+        f"at {launcher} and the managed review launcher at {skill_link / 'scripts/research-review'} "
+        f"for library operations, regardless of the current working "
         f"directory. Read {root / RUNTIME_INSTRUCTIONS} and {skill_link / 'SKILL.md'} before "
         "acting. This agent is read-only. Never write to the current project or any "
         "configured source; invoke the launcher directly for every permitted store "
-        "change. A narrow Codex rule permits only that launcher, which immediately "
-        "re-enters an isolated permission profile that can write only inside the "
-        "research-agent store.\n\n"
+        "change. Exact launcher rules re-enter the existing isolated storage or "
+        "review permission profiles. Storage writes stay inside the store; review "
+        "also permits narrowly owned Codex runtime paths, never original sources.\n\n"
     )
     instructions = prefix + instructions
 

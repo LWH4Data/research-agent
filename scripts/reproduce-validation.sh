@@ -61,7 +61,8 @@ run_permission() {
     echo "이 모드는 Codex 내부 터미널이 아닌 일반 macOS 터미널에서 실행해 주세요."
     echo
     RESEARCH_AGENT_RUN_SANDBOX_TEST=1 \
-        "$PYTHON" -m unittest -v tests.test_permission_profile_integration
+        "$PYTHON" -m unittest -v tests.test_permission_profile_integration \
+        tests.test_process_identity_integration
 }
 
 case "$MODE" in

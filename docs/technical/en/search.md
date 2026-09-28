@@ -83,6 +83,13 @@ with the read-only `research-root` launcher. Read only the installed README's
 language. For a specific how-to or error explanation, read the matching section.
 README remains the feature source; do not duplicate it in a separate help file.
 
+For a broad introduction, present a one-sentence purpose, a short capability
+list, and a request the user can send next. Do not repeat installation or skill
+selection when the skill is already selected. Use the connection or storage
+context already confirmed in the conversation; otherwise start with attaching
+one PDF and requesting storage and a summary. A question about one feature
+needs only that answer. Guide links supplement the actionable example.
+
 An introduction alone requires no operational rules, task references, agent
 configuration, research data, or status checks. If the user also requests a
 save, search, or actual status check, read the runtime rules and relevant

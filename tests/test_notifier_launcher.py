@@ -14,7 +14,7 @@ LAUNCHER = (Path(__file__).resolve().parents[1]
 
 
 class NotifierLauncherTests(TestCase):
-    def test_notifier_failure_does_not_turn_successful_review_start_into_failure(self) -> None:
+    def test_notifier_failure_does_not_turn_successful_review_resume_into_failure(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory).resolve()
             root = base / "research-agent"
@@ -53,7 +53,7 @@ class NotifierLauncherTests(TestCase):
             codex.chmod(0o700)
 
             result = subprocess.run(
-                [str(launcher), "start"],
+                [str(launcher), "resume", "--library"],
                 env={**os.environ, "HOME": str(home),
                      "FAKE_PYTHON_ARGS": str(fake_python_args),
                      "PATH": f"{bin_dir}:{os.environ.get('PATH', '')}"},
@@ -62,4 +62,5 @@ class NotifierLauncherTests(TestCase):
             self.assertEqual(result.returncode, 0, result.stderr.decode())
             self.assertEqual(json.loads(result.stdout), {"state": "running"})
             self.assertIn("알림", result.stderr.decode("utf-8"))
-            self.assertIn("--launch-notifier", fake_python_args.read_text())
+            self.assertIn("background_notifier.py", fake_python_args.read_text())
+            self.assertIn("--launch", fake_python_args.read_text())

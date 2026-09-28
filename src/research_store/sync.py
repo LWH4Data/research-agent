@@ -9,8 +9,10 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import tempfile
 import unicodedata
+import uuid
 
 from .config import Config, Source
 from .imports import ImportedSource, library_sources, recover_imports
@@ -68,6 +70,7 @@ class SyncStats:
     pages_needing_review: int = 0
     unavailable_sources: int = 0
     source_errors: list[dict[str, str]] = field(default_factory=list)
+    committed_documents: list[dict[str, object]] = field(default_factory=list)
 
 
 _PROGRESS_COUNTER_FIELDS = (
@@ -108,6 +111,7 @@ def _pending_review_records(
             "reviewed_at": None,
             "reviewer_model": None,
             "notes": None,
+            "result_fence_json": None,
         }
         for page_number, reasons in sorted(reviews.items())
     ]
@@ -941,6 +945,7 @@ def _document_record(
                 "sha256": None,
                 "parser_version": None,
                 "converted_at": None,
+                "incarnation": uuid.uuid4().hex,
             }
         )
     record.update({
@@ -965,7 +970,26 @@ def sync_library(
     progress: ProgressCallback | None = None,
     *,
     imported_document: str | None = None,
+    request_id: str | None = None,
+    item_id: str | None = None,
+    source_ids: list[str] | None = None,
+    expected_documents: dict[str, str] | None = None,
 ) -> SyncStats:
+    if (request_id is None) != (item_id is None):
+        raise ValueError("접수 요청 ID와 항목 ID를 함께 지정해야 합니다")
+    if imported_document is not None and source_ids is not None:
+        raise ValueError("첨부 문서와 연결 원본 범위를 동시에 지정할 수 없습니다")
+    if request_id is not None and imported_document is None and not source_ids:
+        raise ValueError("접수 항목 동기화에는 정확한 첨부 문서 키 또는 원본 ID가 필요합니다")
+    if expected_documents is not None:
+        if source_ids is None or not isinstance(expected_documents, dict):
+            raise ValueError("고정된 문서 목록에는 정확한 원본 범위가 필요합니다")
+        for key, digest in expected_documents.items():
+            if (not isinstance(key, str) or ":" not in key
+                    or key.split(":", 1)[0] not in source_ids
+                    or not isinstance(digest, str)
+                    or not re.fullmatch(r"[0-9a-f]{64}", digest)):
+                raise ValueError("고정된 문서 목록의 문서 키 또는 SHA-256이 올바르지 않습니다")
     stats = SyncStats()
     seen: set[str] = set()
     scanned_source_ids: set[str] = set()
@@ -983,6 +1007,13 @@ def sync_library(
     with sync_lock(config.root):
         recover_imports(config)
         enabled_sources = [source for source in library_sources(config) if source.enabled]
+        if source_ids is not None:
+            if not source_ids or any(not isinstance(value, str) or not value for value in source_ids):
+                raise ValueError("동기화할 원본 ID가 필요합니다")
+            allowed = {source.id for source in config.sources if source.enabled}
+            if set(source_ids) - allowed:
+                raise ValueError("등록되어 활성화된 원본 ID만 동기화할 수 있습니다")
+            enabled_sources = [source for source in enabled_sources if source.id in source_ids]
         if imported_document is not None:
             enabled_sources = [
                 source for source in enabled_sources
@@ -1007,7 +1038,7 @@ def sync_library(
                     raise
                 migrate_schema = True
         if migrate_schema:
-            with LibraryState(config.state, config.root):
+            with project_write_lock(config.root), LibraryState(config.state, config.root):
                 pass
         recovered_document = recover_document_operation(config)
         with LibraryState(config.state, config.root) as state:
@@ -1108,6 +1139,10 @@ def sync_library(
                             for pdf in source_pdfs:
                                 relative = source.relative_path(pdf)
                                 key = f"{source.id}:{relative.as_posix()}"
+                                if expected_documents is not None and key not in expected_documents:
+                                    continue
+                                if state.is_document_excluded(key):
+                                    continue
                                 inventory.append((source, pdf, relative, key))
                                 seen.add(key)
                     stats.discovered = len(inventory)
@@ -1163,6 +1198,11 @@ def sync_library(
                     config, state.documents()
                 )
                 for source, pdf, relative, key in inventory:
+                    receipt_item_id = item_id
+                    parent_item_id = None
+                    if request_id is not None and source_ids is not None:
+                        parent_item_id = item_id
+                        receipt_item_id = item_id + "#" + hashlib.sha256(key.encode("utf-8")).hexdigest()
                     file_stat: os.stat_result | None = None
                     previous = state.get_document(key)
                     canonical_output = _output_path(config, source, relative)
@@ -1188,6 +1228,7 @@ def sync_library(
                             previous
                             and not requires_conversion
                             and not isinstance(source, ImportedSource)
+                            and expected_documents is None
                             and previous["size"] == file_stat.st_size
                             and previous["modified_ns"] == file_stat.st_mtime_ns
                             and previous["parser_version"] == PARSER_VERSION
@@ -1195,19 +1236,26 @@ def sync_library(
                             and previous["error"] is None
                             and output.is_file()
                         ):
-                            state.begin_immediate()
-                            state.update_library_run(
-                                run_id,
-                                phase=phase,
-                                current=processed + 1,
-                                total=document_total,
-                                counters=_progress_counters(
-                                    stats, unchanged=stats.unchanged + 1
-                                ),
-                                last_item=item_name,
-                            )
-                            state.commit()
-                            stats.unchanged += 1
+                            with project_write_lock(config.root):
+                                if state.is_document_excluded(key):
+                                    processed += 1
+                                    continue
+                                state.begin_immediate()
+                                if request_id is not None:
+                                    state.record_intake_receipt(_committed_receipt(request_id, receipt_item_id, previous, parent_item_id))
+                                state.update_library_run(
+                                    run_id,
+                                    phase=phase,
+                                    current=processed + 1,
+                                    total=document_total,
+                                    counters=_progress_counters(
+                                        stats, unchanged=stats.unchanged + 1
+                                    ),
+                                    last_item=item_name,
+                                )
+                                state.commit()
+                                stats.unchanged += 1
+                                stats.committed_documents.append({**_review_document_snapshot(state, previous), **({"receipt_item_id": receipt_item_id, "parent_item_id": parent_item_id} if source_ids is not None and request_id is not None else {})})
                             processed += 1
                             emit_progress(
                                 progress,
@@ -1226,6 +1274,8 @@ def sync_library(
                         with _copy_for_conversion(
                             pdf, config.temporary, config.root
                         ) as (copied, digest):
+                            if expected_documents is not None and digest != expected_documents[key]:
+                                raise ValueError("접수 이후 원본 PDF 버전이 변경되어 기존 요청에 저장하지 않습니다")
                             if (isinstance(source, ImportedSource)
                                     and digest != source.content_sha256):
                                 raise ValueError("저장한 첨부 PDF 내용이 변경되었습니다")
@@ -1236,35 +1286,42 @@ def sync_library(
                                 and previous["parser_version"] == PARSER_VERSION
                                 and output.is_file()
                             ):
-                                state.begin_immediate()
-                                state.upsert_document(
-                                    _document_record(
-                                        key=key,
-                                        source=source,
-                                        relative=relative,
-                                        output=output,
-                                        config=config,
-                                        size=file_stat.st_size,
-                                        modified_ns=file_stat.st_mtime_ns,
-                                        previous=previous,
-                                        present=1,
-                                        checked_at=now(),
-                                        missing_since=None,
-                                        error=None,
+                                with project_write_lock(config.root):
+                                    if state.is_document_excluded(key):
+                                        processed += 1
+                                        continue
+                                    state.begin_immediate()
+                                    state.upsert_document(
+                                        _document_record(
+                                            key=key,
+                                            source=source,
+                                            relative=relative,
+                                            output=output,
+                                            config=config,
+                                            size=file_stat.st_size,
+                                            modified_ns=file_stat.st_mtime_ns,
+                                            previous=previous,
+                                            present=1,
+                                            checked_at=now(),
+                                            missing_since=None,
+                                            error=None,
+                                        )
                                     )
-                                )
-                                state.update_library_run(
-                                    run_id,
-                                    phase=phase,
-                                    current=processed + 1,
-                                    total=document_total,
-                                    counters=_progress_counters(
-                                        stats, unchanged=stats.unchanged + 1
-                                    ),
-                                    last_item=item_name,
-                                )
-                                state.commit()
-                                stats.unchanged += 1
+                                    if request_id is not None:
+                                        state.record_intake_receipt(_committed_receipt(request_id, receipt_item_id, state.get_document(key), parent_item_id))
+                                    state.update_library_run(
+                                        run_id,
+                                        phase=phase,
+                                        current=processed + 1,
+                                        total=document_total,
+                                        counters=_progress_counters(
+                                            stats, unchanged=stats.unchanged + 1
+                                        ),
+                                        last_item=item_name,
+                                    )
+                                    state.commit()
+                                    stats.unchanged += 1
+                                    stats.committed_documents.append({**_review_document_snapshot(state, state.get_document(key)), **({"receipt_item_id": receipt_item_id, "parent_item_id": parent_item_id} if source_ids is not None and request_id is not None else {})})
                                 processed += 1
                                 emit_progress(
                                     progress,
@@ -1311,6 +1368,9 @@ def sync_library(
                                     ),
                                 )
                             with project_write_lock(config.root):
+                                if state.is_document_excluded(key):
+                                    processed += 1
+                                    continue
                                 current_document = state.get_document(key)
                                 base_reviews = state.document_reviews(key)
                                 target_document = _document_record(
@@ -1369,7 +1429,9 @@ def sync_library(
                                     target_reviews=target_reviews,
                                     target_markdown=content,
                                     after_state_update=update_progress,
+                                    intake_receipt=None if request_id is None else _committed_receipt(request_id, receipt_item_id, target_document, parent_item_id),
                                 )
+                                stats.committed_documents.append({**_review_document_snapshot(state, target_document), **({"receipt_item_id": receipt_item_id, "parent_item_id": parent_item_id} if source_ids is not None and request_id is not None else {})})
                             stats.converted += 1
                             stats.pages_needing_review += len(review_pages)
                             processed += 1
@@ -1393,47 +1455,51 @@ def sync_library(
                         # behind an ordinary per-document error row.
                         if state.get_pending_document_operation() is not None:
                             raise
-                        current_document = state.get_document(key)
-                        fallback_output = previous_output or output
-                        state.begin_immediate()
-                        state.upsert_document(
-                            _document_record(
-                                key=key,
-                                source=source,
-                                relative=relative,
-                                output=fallback_output,
-                                config=config,
-                                size=(
-                                    file_stat.st_size
-                                    if file_stat is not None
-                                    else int(current_document.get("size", 0))
-                                    if current_document
-                                    else 0
-                                ),
-                                modified_ns=(
-                                    file_stat.st_mtime_ns
-                                    if file_stat is not None
-                                    else int(current_document.get("modified_ns", 0))
-                                    if current_document
-                                    else 0
-                                ),
-                                previous=current_document,
-                                present=1,
-                                checked_at=now(),
-                                error=str(error),
+                        with project_write_lock(config.root):
+                            current_document = state.get_document(key)
+                            if state.is_document_excluded(key):
+                                processed += 1
+                                continue
+                            fallback_output = previous_output or output
+                            state.begin_immediate()
+                            state.upsert_document(
+                                _document_record(
+                                    key=key,
+                                    source=source,
+                                    relative=relative,
+                                    output=fallback_output,
+                                    config=config,
+                                    size=(
+                                        file_stat.st_size
+                                        if file_stat is not None
+                                        else int(current_document.get("size", 0))
+                                        if current_document
+                                        else 0
+                                    ),
+                                    modified_ns=(
+                                        file_stat.st_mtime_ns
+                                        if file_stat is not None
+                                        else int(current_document.get("modified_ns", 0))
+                                        if current_document
+                                        else 0
+                                    ),
+                                    previous=current_document,
+                                    present=1,
+                                    checked_at=now(),
+                                    error=str(error),
+                                )
                             )
-                        )
-                        state.update_library_run(
-                            run_id,
-                            phase=phase,
-                            current=processed + 1,
-                            total=document_total,
-                            counters=_progress_counters(
-                                stats, failed=stats.failed + 1
-                            ),
-                            last_item=item_name,
-                        )
-                        state.commit()
+                            state.update_library_run(
+                                run_id,
+                                phase=phase,
+                                current=processed + 1,
+                                total=document_total,
+                                counters=_progress_counters(
+                                    stats, failed=stats.failed + 1
+                                ),
+                                last_item=item_name,
+                            )
+                            state.commit()
                         stats.failed += 1
                         processed += 1
                         emit_progress(
@@ -1451,28 +1517,34 @@ def sync_library(
                         )
 
                 phase = "finalize"
-                state.begin_immediate()
-                stats.missing = state.mark_missing_except(
-                    seen, scanned_source_ids
-                )
-                final_status = (
-                    "completed_with_errors"
-                    if stats.failed or stats.unavailable_sources
-                    else "completed"
-                )
-                state.finish_library_run(
-                    run_id,
-                    status=final_status,
-                    phase=phase,
-                    current=processed,
-                    total=document_total,
-                    counters=_progress_counters(stats),
-                )
-                state.set_metadata("last_sync", now())
-                state.set_metadata(
-                    "last_stats", json.dumps(asdict(stats), ensure_ascii=False)
-                )
-                state.commit()
+                with project_write_lock(config.root):
+                    state.begin_immediate()
+                    stats.missing = state.mark_missing_except(
+                        seen, scanned_source_ids,
+                        document_keys=None if expected_documents is None else set(expected_documents),
+                    )
+                    final_status = (
+                        "completed_with_errors"
+                        if stats.failed or stats.unavailable_sources
+                        else "completed"
+                    )
+                    state.finish_library_run(
+                        run_id,
+                        status=final_status,
+                        phase=phase,
+                        current=processed,
+                        total=document_total,
+                        counters=_progress_counters(stats),
+                    )
+                    state.set_metadata("last_sync", now())
+                    state.set_metadata(
+                        "last_stats", json.dumps(
+                            {key: value for key, value in asdict(stats).items()
+                             if key != "committed_documents"},
+                            ensure_ascii=False,
+                        )
+                    )
+                    state.commit()
                 emit_progress(
                     progress,
                     ProgressEvent(
@@ -1537,6 +1609,150 @@ def sync_library(
     return stats
 
 
+def _review_document_snapshot(state: LibraryState, document: dict[str, object]) -> dict[str, object]:
+    reviews = state.document_reviews(str(document["document_key"]))
+    pages = {str(review["page_number"]): review["status"] for review in reviews}
+    verified = {int(review["page_number"]): review for review in reviews if review["status"] == "verified"}
+    if verified:
+        # The accepted journal is authoritative, but a missing or externally
+        # damaged note must not become reusable verified evidence on restart.
+        output = reject_linked_file(state.root / str(document["output_path"]), state.root, label="검토 근거 Markdown")
+        proven: set[int] = set()
+        try:
+            content = output.read_text(encoding="utf-8")
+            _validated_document_frontmatter(content, expected_sha256=str(document["sha256"]), expected_source_id=str(document["source_id"]), expected_source_path=str(document["source_path"]))
+            section, blocks = _review_section_and_blocks(content, expected_sha256=str(document["sha256"]))
+            if section is not None and section.managed:
+                body = content[section.body_start:section.body_end]
+                for page, review in verified.items():
+                    matching = [block for block in blocks if block.pages == (page,)]
+                    if len(matching) != 1:
+                        continue
+                    block = body[matching[0].start:matching[0].end]
+                    expected = {"status": "verified", "model": review["reviewer_model"], "reviewed-at": review["reviewed_at"]}
+                    if all(re.findall(rf"(?m)^<!-- visual-review-{key}: ([^\r\n]+) -->$", block) == [value] for key, value in expected.items()):
+                        proven.add(page)
+        except (FileNotFoundError, UnicodeError, ValueError):
+            pass
+        for page in verified.keys() - proven:
+            pages[str(page)] = "needs_review"
+    return {
+        "document_key": document["document_key"],
+        "sha256": document["sha256"],
+        "incarnation": document["incarnation"],
+        "pages": pages,
+        "page_fences": {str(review["page_number"]): None if review.get("result_fence_json") is None else json.loads(str(review["result_fence_json"])) for review in reviews},
+        "output_path": document["output_path"],
+    }
+
+
+def _committed_receipt(request_id: str, item_id: str, document: dict[str, object], parent_item_id: str | None = None) -> dict[str, object]:
+    return {"request_id": request_id, "item_id": item_id, "parent_item_id": parent_item_id, "document_key": document["document_key"], "sha256": document["sha256"], "incarnation": document["incarnation"], "stage": "committed"}
+
+
+def review_snapshot_locked(config: Config, state: LibraryState | None = None) -> list[dict[str, object]]:
+    """Return committed current versions; caller already holds storage lock."""
+    if not config.state.exists():
+        return []
+    if state is None:
+        # A lifecycle operation is an explicit schema migration boundary.
+        with LibraryState(config.state, config.root):
+            pass
+        recover_document_operation(config, lock_held=True)
+        with LibraryState(config.state, config.root, read_only=True) as opened:
+            return review_snapshot_locked(config, opened)
+    if state.get_pending_document_operation() is not None or state.pending_document_deletions():
+        recover_document_operation(config, lock_held=True)
+    return [_review_document_snapshot(state, document) for document in state.documents()
+            if document.get("sha256") and document.get("parser_version")
+            and not state.is_document_excluded(str(document["document_key"]))]
+
+
+def review_snapshot(config: Config) -> list[dict[str, object]]:
+    with project_write_lock(config.root):
+        return review_snapshot_locked(config)
+
+
+def intake_receipts_locked(config: Config, request_id: str, state: LibraryState | None = None) -> list[dict[str, object]]:
+    if not config.state.exists():
+        return []
+    if state is None:
+        review_snapshot_locked(config)
+        with LibraryState(config.state, config.root, read_only=True) as opened:
+            return intake_receipts_locked(config, request_id, opened)
+    receipts = state.intake_receipts(request_id)
+    sources = {f"{source.id}:{source.original_name}": source for source in library_sources(config) if isinstance(source, ImportedSource)}
+    for receipt in receipts:
+        document = state.get_document(str(receipt["document_key"]))
+        source = sources.get(str(receipt["document_key"]))
+        receipt["stored"] = source is not None and source.available and source.content_sha256 == receipt["sha256"]
+        receipt["committed"] = (receipt["stage"] == "committed" and document is not None
+                                and document["sha256"] == receipt["sha256"]
+                                and document["incarnation"] == receipt["incarnation"])
+        if receipt["committed"]:
+            receipt.update(_review_document_snapshot(state, document))
+    return receipts
+
+
+def intake_receipts(config: Config, request_id: str) -> list[dict[str, object]]:
+    with project_write_lock(config.root):
+        return intake_receipts_locked(config, request_id)
+
+
+def delete_intake_receipts_locked(config: Config, request_id: str, state: LibraryState | None = None) -> None:
+    """Forget expired intake metadata after lifecycle revocation and recovery."""
+    if not config.state.exists():
+        return
+    if state is None:
+        review_snapshot_locked(config)
+        with LibraryState(config.state, config.root) as opened:
+            opened.delete_intake_receipts(request_id)
+    else:
+        state.delete_intake_receipts(request_id)
+
+
+def delete_document_locked(config: Config, document_key: str, state: LibraryState | None = None) -> dict[str, object]:
+    """Delete owned material after the lifecycle caller revoked/stopped work.
+
+    This helper acquires no control or sync lock. The exclusion is committed
+    before any removal, so an in-flight text conversion cannot resurrect it.
+    """
+    if not config.state.exists():
+        raise ValueError(f"문서를 찾을 수 없습니다: {document_key}")
+    if state is None:
+        with LibraryState(config.state, config.root):
+            pass
+        recover_document_operation(config, lock_held=True)
+        with LibraryState(config.state, config.root) as opened:
+            return delete_document_locked(config, document_key, opened)
+    if state.get_pending_document_operation() is not None:
+        raise RuntimeError("문서 삭제 전에 저장 저널을 복구해야 합니다")
+    document = state.get_document(document_key)
+    if document is None:
+        if state.is_document_excluded(document_key):
+            return {"document_key": document_key, "deleted": True}
+        raise ValueError(f"문서를 찾을 수 없습니다: {document_key}")
+    if any(other["document_key"] != document_key and other["output_path"] == document["output_path"] for other in state.documents()):
+        raise ValueError("다른 문서도 사용하는 Markdown은 삭제할 수 없습니다. 먼저 경로 충돌을 해결하세요")
+    files = [str(document["output_path"])]
+    directories = []
+    source_id = str(document["source_id"])
+    if source_id.startswith("import-") and re.fullmatch(r"[0-9a-f]{64}", source_id[7:]) and source_id not in {source.id for source in config.sources}:
+        directory = Path(".research-store/imports") / source_id[7:]
+        files.extend((directory / name).as_posix() for name in ("document.pdf", "metadata.json"))
+        directories.append(directory.as_posix())
+    state.prepare_document_deletion(document, files, directories)
+    recover_document_operation(config, lock_held=True)
+    return {"document_key": document_key, "incarnation": document["incarnation"], "deleted": True}
+
+
+def delete_document(config: Config, document_key: str) -> dict[str, object]:
+    # Lifecycle command callers must first revoke every linked execution and
+    # confirm child exit; storage itself never acquires the control lock.
+    with project_write_lock(config.root):
+        return delete_document_locked(config, document_key)
+
+
 def library_status(config: Config) -> dict[str, object]:
     recover_document_operation(config)
     with LibraryState(config.state, config.root) as state:
@@ -1563,8 +1779,11 @@ def pending_reviews(config: Config) -> list[dict[str, object]]:
 
 
 def render_review_pages(
-    config: Config, document_key: str, pages: list[int] | None = None, dpi: int = 220
+    config: Config, document_key: str, pages: list[int] | None = None, dpi: int = 220,
+    *, execution_id: str | None = None,
 ) -> RenderResult:
+    if execution_id is not None and not re.fullmatch(r"[0-9a-f]{32}", execution_id):
+        raise ValueError("페이지 렌더링 실행 ID가 올바르지 않습니다")
     recover_document_operation(config)
     if dpi < 120 or dpi > 400:
         raise ValueError("DPI는 120에서 400 사이여야 합니다")
@@ -1613,10 +1832,37 @@ def render_review_pages(
             config.root,
             label="페이지 렌더링 폴더",
         )
-        output_directory = Path(tempfile.mkdtemp(prefix="render-", dir=review_root))
+        if execution_id is None:
+            output_directory = Path(tempfile.mkdtemp(prefix="render-", dir=review_root))
+        else:
+            # The controller records these deterministic paths before calling
+            # us, closing the crash gap between rendering and owning artifacts.
+            output_directory = require_owned_path(review_root / f"render-{execution_id}", config.root, label="실행 페이지 렌더링 폴더")
+            output_directory.mkdir(mode=0o700, exist_ok=False)
         require_owned_path(output_directory, config.root, label="페이지 렌더링 폴더")
         document_pdf = pdfium.PdfDocument(str(copied))
         try:
+            ownership: dict[Path, tuple[int, int]] = {}
+            if execution_id is not None:
+                directory_info = output_directory.stat()
+                files = []
+                for page_number in selected:
+                    if type(page_number) is not int or page_number < 1 or page_number > len(document_pdf):
+                        raise ValueError(f"페이지 번호는 1에서 {len(document_pdf)} 사이여야 합니다")
+                    output = output_directory / f"page-{page_number:04d}.png"
+                    descriptor = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+                    try:
+                        info = os.fstat(descriptor)
+                        ownership[output] = (info.st_dev, info.st_ino)
+                        files.append({"path": output.relative_to(config.root).as_posix(), "device": info.st_dev, "inode": info.st_ino})
+                        os.fsync(descriptor)
+                    finally:
+                        os.close(descriptor)
+                atomic_text(output_directory / "owned-manifest.json", json.dumps({
+                    "version": 1, "execution_id": execution_id,
+                    "directory": {"path": output_directory.relative_to(config.root).as_posix(), "device": directory_info.st_dev, "inode": directory_info.st_ino},
+                    "files": files,
+                }, sort_keys=True) + "\n", config.root)
             for page_number in selected:
                 if page_number < 1 or page_number > len(document_pdf):
                     raise ValueError(
@@ -1632,7 +1878,17 @@ def render_review_pages(
                     bitmap = page.render(scale=dpi / 72)
                     try:
                         image = bitmap.to_pil()
-                        image.save(output, format="PNG")
+                        if execution_id is None:
+                            image.save(output, format="PNG")
+                        else:
+                            descriptor = os.open(output, os.O_WRONLY | os.O_NOFOLLOW)
+                            with os.fdopen(descriptor, "wb") as image_file:
+                                info = os.fstat(image_file.fileno())
+                                if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or (info.st_dev, info.st_ino) != ownership[output]:
+                                    raise ValueError("실행 페이지 이미지 소유 정보가 변경되었습니다")
+                                image.save(image_file, format="PNG")
+                                image_file.flush()
+                                os.fsync(image_file.fileno())
                     finally:
                         bitmap.close()
                 finally:
@@ -1653,8 +1909,11 @@ def complete_reviews(
     reviewer_model: str,
     notes: str | None,
     visual_notes: str | None = None,
+    fence: dict[str, object] | None = None,
 ) -> int:
     normalized_pages = normalize_review_pages(pages)
+    if fence is not None and (not isinstance(fence, dict) or fence.get("document_key") != document_key or fence.get("sha256") != expected_sha256 or fence.get("page") != normalized_pages[0]):
+        raise ValueError("검토 결과의 문서·해시·페이지와 실행 권한이 일치하지 않습니다")
     if status not in {"verified", "needs_review"}:
         raise ValueError(f"지원하지 않는 검토 상태입니다: {status}")
     if len(normalized_pages) != 1:
@@ -1691,6 +1950,7 @@ def complete_reviews(
     with project_write_lock(config.root), LibraryState(
         config.state, config.root
     ) as state:
+        recover_document_operation(config, lock_held=True)
         document = state.get_document(document_key)
         if document is None:
             raise ValueError(f"문서를 찾을 수 없습니다: {document_key}")
@@ -1758,6 +2018,7 @@ def complete_reviews(
             review["reviewed_at"] = reviewed_at
             review["reviewer_model"] = reviewer_model
             review["notes"] = notes
+            review["result_fence_json"] = None if fence is None else json.dumps(fence, sort_keys=True)
             updated += 1
         if updated != len(normalized_pages):
             raise ValueError("검토 대기 중인 페이지와 요청한 페이지가 일치하지 않습니다")
@@ -1810,5 +2071,6 @@ def complete_reviews(
             base_reviews=base_reviews,
             target_reviews=target_reviews,
             target_markdown=content,
+            review_fence=fence,
         )
         return updated

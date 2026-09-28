@@ -21,9 +21,20 @@ explanation, locate the matching heading and read that section only. Keep
 README as the feature source; do not duplicate a separate help manual.
 
 Answer in the user's language with a short explanation and one relevant next
-step. Link to the matching guide section when useful. Do not enumerate the
-bundle, read operational references, runtime rules, scripts, agents or research
-data, delegate work, or query library/review status just to explain usage.
+step. For a broad first introduction, use a one-sentence purpose, a short list
+of the main capabilities, and one request the user can send next. Keep parallel
+features out of a dense paragraph. Base the starting action on context already
+given: if none is known, attaching one PDF and asking to save and summarize it
+is a simple start without choosing folders. If folders or documents are already
+known to be connected or saved, continue from there without claiming unqueried
+state. Do not repeat installation or skill-selection instructions when the user
+has already invoked this skill, unless they ask about that setup. A specific
+feature question needs only its answer, not the full introduction. An optional
+guide link supplements the concrete next action; it does not replace it.
+
+Do not enumerate the bundle, read operational references, runtime rules, scripts,
+agents or research data, delegate work, or query library/review status just to
+explain usage.
 Reading the guide does not establish that installation or saved data is healthy.
 When the user also asks to perform a task or inspect actual state, continue below
 for that requested work; a general introduction alone does not authorize it.
@@ -59,7 +70,9 @@ exact accessible paths or resolved IDs; the manager does not delegate itself.
 When already running as that manager, perform the delegated work rather than
 delegating again. Users never need to choose an agent or model.
 Opening or reopening the folder connection window without supplied paths stays
-with the primary session; follow the source reference's exact launcher call.
+with the primary session; follow the source reference's exact launcher call
+and wait for its completed result. Opening the window alone is a progress update,
+not the final response; report cancellation or the storage/review handoff result.
 
 | Request | Read before acting |
 |---|---|
@@ -74,13 +87,25 @@ requested set unless the user asks not to save. Mere attachment does not.
 Import and targeted sync precede evidence-based answers; combine the attachment,
 sync, and search references only when the request needs all three.
 
-After the manager returns text results and exact pending pages, the primary
-session starts the detached Sol high reviewer and checks its saved startup
-status. Limit attachment review to returned document keys. Return control once
-text is ready and the launch result is known; text-based answers can proceed
-while visual review runs. The manager must never open page images, invoke
-`review-complete`, or create a nested converter as a fallback. Do not dispatch
-an active background queue to a foreground converter too.
+A successful public folder-connection flow already owns managed intake; use its
+receipt and do not issue a second submit. For other saved-PDF requests, use the
+managed `research-review submit` command. Its
+caller-persisted expiring key distinguishes a retry from a new request. One
+command records intent, stores and converts each exact input, links committed
+versions, and returns a request receipt plus the detached review handoff.
+Do not split normal saving into an import followed by an optional remembered
+start command. Return control when text and the handoff result are available.
+The manager must never open page images, invoke `review-complete`, or create a
+nested converter as a fallback. Time/page guidance warns only; the user decides
+whether to stop. Use request/document/library controls from the sync reference.
+
+In user-facing operation updates, give the confirmed storage result and visual
+review status in plain language; include an actionable failure or next step when
+needed. Keep request IDs, retry/idempotency keys, input specifications, and raw
+receipts in tool context and agent-to-agent handoffs for recovery. Do not append
+them to ordinary replies or ask users to copy them. Show technical identifiers
+only when the user explicitly requests diagnostic or recovery details. This
+presentation rule does not remove or regenerate the underlying recovery data.
 
 For a visual claim, reuse a current-SHA verified page note only when it supports
 that specific claim. Otherwise label the missing evidence and follow the

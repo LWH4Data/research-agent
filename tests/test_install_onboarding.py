@@ -33,10 +33,14 @@ class InstallOnboardingTests(unittest.TestCase):
             mock.patch.object(onboarding, "offer_source_selection", return_value=True)
         )
         self.run = self.enterContext(mock.patch.object(onboarding.subprocess, "run"))
+        self.which = self.enterContext(mock.patch.object(onboarding.shutil, "which", return_value="/fixture/codex"))
 
-    def response(self, added=None, cancelled=False) -> None:
+    def response(self, added=None, cancelled=False, processing=None, code=0) -> None:
+        rows = added or []
         self.run.return_value = subprocess.CompletedProcess(
-            [], 0, json.dumps({"added": added or [], "cancelled": cancelled}), ""
+            [], code, json.dumps({"added": rows, "selected": rows or [{"id": "existing"}],
+                "cancelled": cancelled, "registration": "registered",
+                "processing": processing or {"state": "submitted", "request": {"state": "queued"}}}), ""
         )
 
     def test_multiple_folders_connect_in_one_call_without_reprompt(self) -> None:
@@ -44,10 +48,11 @@ class InstallOnboardingTests(unittest.TestCase):
         onboarding.run_onboarding(self.root)
         self.offer.assert_called_once_with()
         self.run.assert_called_once_with(
-            [str(self.root / "research-store"), "source-add"],
-            check=False, capture_output=True, text=True,
+            [str(self.root / "resources/skills/research-library/scripts/research-store"), "source-add"],
+            check=False, stdout=subprocess.PIPE, text=True,
         )
         self.assertIn("폴더 3개를 연결했습니다", self.output.getvalue())
+        self.assertIn("시각 검토를 접수했습니다", self.output.getvalue())
 
     def test_later_does_not_open_picker_or_register_sources(self) -> None:
         self.offer.return_value = False
@@ -67,6 +72,31 @@ class InstallOnboardingTests(unittest.TestCase):
         self.response()
         onboarding.run_onboarding(self.root)
         self.assertIn("이미 연결되어 있습니다", self.output.getvalue())
+        self.assertIn("시각 검토를 접수했습니다", self.output.getvalue())
+
+    def test_missing_codex_install_registers_only_and_truthfully_defers(self) -> None:
+        self.which.return_value = None
+        self.response(processing={"state": "deferred", "reason": "codex_unavailable"})
+        onboarding.run_onboarding(self.root)
+        command = self.run.call_args.args[0]
+        self.assertIn(str(self.root / "scripts/select_sources.py"), command)
+        self.assertIn("--installation", command)
+        self.assertNotIn("--codex", command)
+        self.assertIn("저장과 검토는 아직 시작하지 않았습니다", self.output.getvalue())
+
+    def test_intake_failure_preserves_registration_and_reports_request(self) -> None:
+        self.response(added=[{"id": "one"}], code=1, processing={"state": "deferred",
+            "request": {"request_id": "a" * 32, "state": "intake"}, "error": "접수 실패"})
+        onboarding.run_onboarding(self.root)
+        self.assertIn("폴더 연결은 유지됩니다", self.output.getvalue())
+        self.assertIn("a" * 32, self.output.getvalue())
+        self.assertNotIn("시각 검토를 접수했습니다", self.output.getvalue())
+
+    def test_existing_hold_is_reported_without_claiming_review_running(self) -> None:
+        self.response(processing={"state": "submitted", "request": {"state": "held"}})
+        onboarding.run_onboarding(self.root)
+        self.assertIn("사용자가 중지한 상태를 유지", self.output.getvalue())
+        self.assertNotIn("시각 검토를 접수했습니다", self.output.getvalue())
 
     def test_noninteractive_install_never_opens_ui_or_reads_input(self) -> None:
         self.terminal.return_value = False
@@ -112,6 +142,7 @@ class InstallOnboardingTests(unittest.TestCase):
              mock.patch.object(sys, "argv", [str(SCRIPT), "--root", str(self.root)]):
             self.assertEqual(onboarding.main(), 0)
         self.assertIn("설치는 완료되었습니다", self.output.getvalue())
+        self.assertIn("저장이나 검토가 시작되었을 수 있습니다", self.output.getvalue())
 
 
 if __name__ == "__main__":

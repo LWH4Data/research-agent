@@ -117,8 +117,9 @@ class PersonalRegistrationTests(unittest.TestCase):
             ).read_text(encoding="utf-8")
             self.assertIn("references/visual-review.md", converter_text)
             self.assertTrue((skill_link / "references/visual-review.md").is_file())
-            self.assertIn("primary Codex session, not this manager", manager_text)
-            self.assertIn("Do not try to create a nested agent", manager_text)
+            self.assertIn("managed submit command deterministically stores text", manager_text)
+            self.assertIn("Do not create a nested agent", manager_text)
+            self.assertIn(str(skill_link / "scripts/research-review"), manager_text)
             rule = home / ".codex/rules/research-library.rules"
             rule_text = rule.read_text(encoding="utf-8")
             self.assertTrue(rule_text.startswith("# research-agent-registration-v1\n"))

@@ -1371,4 +1371,15 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    if any(flag in sys.argv[1:] for flag in ("--worker", "--notifier", "--launch-notifier")):
+        # Existing v1 children may drain before explicit migration. Public
+        # intake/status always uses the request lifecycle, never the old queue.
+        main()
+    else:
+        import importlib.util
+        specification = importlib.util.spec_from_file_location(
+            "managed_review", Path(__file__).resolve().with_name("background_lifecycle.py"))
+        assert specification and specification.loader
+        managed = importlib.util.module_from_spec(specification)
+        specification.loader.exec_module(managed)
+        managed.main()
