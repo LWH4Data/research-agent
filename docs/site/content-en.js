@@ -129,8 +129,16 @@ window.RESEARCH_GUIDE_EN = {
     title: 'Save attached PDFs',
     question: 'Can I send PDFs without connecting a folder?',
     answer: 'Yes. Attach one or more PDFs and ask to save and summarize them. Once the text is saved, you can ask questions immediately. Figures, equations, and tables that need checking are then reviewed in the background, while you keep chatting.',
-    capture: 'An earlier Korean capture showing three PDFs saved and summarized. Visual review is only marked as pending, so this does not confirm that it started. A new capture showing review startup and results will replace it.',
-    captureAlt: 'Three attached PDFs, TinyBERT, MiniLM, and Dense Passage Retrieval, a save-and-summarize request, and a Korean response reporting new saves, document summaries, and 27 pages awaiting visual review',
+    capture: 'An actual Korean reply reporting three PDFs saved, their text converted, and each document summarized. It reports visual review complete for DistilBERT, with remaining pages of Sentence-BERT and SimCSE being checked in the background.',
+    captureAlt: 'Three attached PDFs, DistilBERT, Sentence-BERT, and SimCSE, a save-and-summarize request, and a Korean response reporting completed storage and text conversion, individual summaries, DistilBERT review complete, and some pages of the other two documents still under review',
+    followUp: {
+      title: 'Check the visual review results',
+      explanation: 'If the save response says review is still running, ask for the results later in the same conversation. Check both the reviewed pages and anything that remains unconfirmed.',
+      prompt: '@Research Agent Tell me the visual review results for the three PDFs I just attached. If anything remains unconfirmed, include the document, page, and reason.',
+      result: 'Completion of the selected review pages does not mean every page of a PDF was visually checked. In the example below, some pages were not selected for automatic review and have no verification record. If you need figures, equations, or tables from those pages, name the document and pages and ask for an additional review.',
+      capture: 'This actual Korean reply reports all 24 selected pages checked, with no pending pages or reported reading failures. Sentence-BERT page 2 and SimCSE pages 10–12 were not selected for automatic review and have no verification record; the precise reason for their exclusion is not available from the current records.',
+      captureAlt: 'A request for visual review results for three attached PDFs. The Korean reply reports 24 selected pages checked: DistilBERT pages 1–4, Sentence-BERT pages 1 and 3–8, and SimCSE pages 1–9 and 13–16. Four other pages were not selected and have no verification record; current records do not explain their exclusion.'
+    },
     steps: [
       'Attach one or more PDFs together in a local Codex conversation.',
       'Type @research, select Research Agent, and use the prompt below to save and summarize the attached PDFs.',
@@ -178,7 +186,18 @@ window.RESEARCH_GUIDE_EN = {
     title: 'Use new PDFs with saved materials',
     question: 'Can I save new PDFs and summarize them with materials already in my library?',
     answer: 'Yes. Attach new PDFs and ask to save and compare them in one request. Research Agent saves the attachments, finds related PDFs and conversation records already in your library, and summarizes them together with sources.',
-    capture: 'A response showing newly saved PDFs alongside citations to previously saved materials',
+    captures: [
+      {
+        key: 'compare-request',
+        caption: '1. An actual Korean request with three new PDFs attached, asking to save and summarize them with existing materials.',
+        alt: 'MobileBERT, ConSERT, and DeCLUTR PDF attachments with a Korean request to Research Agent to save and compare them, distinguishing sources from new and previously saved documents'
+      },
+      {
+        key: 'compare-result',
+        caption: '2. The Korean reply summarizes the newly saved MobileBERT, ConSERT, and DeCLUTR papers and cites existing DistilBERT, Sentence-BERT, and SimCSE papers. It reports completed storage, text extraction, and verification of the pages selected for review.',
+        alt: 'A Korean reply reporting three PDFs saved, text extracted, and selected pages verified; summaries and comparisons citing existing DistilBERT, Sentence-BERT, and SimCSE papers, with a note that results from different experimental settings cannot be compared directly'
+      }
+    ],
     steps: [
       'Save the existing materials you want to compare first. If you connected folders, first check that saving finished in “Save PDFs from folders.”',
       'Attach one or more new PDFs in a local Codex conversation and select Research Agent.',
@@ -187,7 +206,7 @@ window.RESEARCH_GUIDE_EN = {
     ],
     alternative: {route: 'organize', label: 'Save PDFs from connected folders first'},
     note: 'Research Agent retrieves saved content relevant to your question. Having saved materials does not guarantee a relevant match. Check whether any figures, equations, or tables needed for the answer are still under review.',
-    prompt: '@Research Agent Save the attached PDFs and summarize them together with related materials already in my library. Explain their similarities and differences, and identify the documents supporting your answer.',
+    prompt: '@Research Agent Save the attached PDFs and summarize them together with related materials already in my library. Explain their similarities and differences, and identify which new or previously saved documents support your answer.',
     prev: 'organize',
     next: 'search'
   },

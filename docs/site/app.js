@@ -99,8 +99,16 @@ const pages={
     "title": "PDF 첨부해서 저장하기",
     "question": "폴더를 연결하지 않고 PDF만 보내도 되나요?",
     "answer": "네. PDF를 한 개 또는 여러 개 첨부하고 저장과 요약을 요청하세요. 본문이 저장되면 바로 질문할 수 있고, 필요한 수식·표·그림은 이어서 백그라운드에서 확인해요. 검토가 진행되는 동안에도 대화를 계속할 수 있어요.",
-    "capture": "PDF 3개를 저장하고 요약한 기존 캡처예요. 시각 검토는 ‘대기 중’으로만 표시되어 시작 여부를 확인할 수 없어요. 개선된 흐름의 검토 시작·결과 화면으로 교체할 예정이에요.",
-    "captureAlt": "TinyBERT, MiniLM, Dense Passage Retrieval PDF 3개와 저장·요약 요청, 새 저장 완료 및 문서별 요약, 시각 검토 27쪽 대기 안내가 담긴 Codex 응답",
+    "capture": "PDF 3개의 저장·텍스트 변환과 문서별 요약을 확인할 수 있는 실제 화면이에요. 시각 검토는 DistilBERT가 끝났고, Sentence-BERT와 SimCSE는 남은 페이지를 백그라운드에서 확인 중이라고 안내해요.",
+    "captureAlt": "DistilBERT, Sentence-BERT, SimCSE PDF 3개와 저장·요약 요청, 저장·텍스트 변환 완료 및 문서별 요약, DistilBERT 검토 완료와 나머지 두 문서의 일부 페이지 검토 진행을 안내하는 Codex 응답",
+    "followUp": {
+      "title": "시각 검토 결과 확인하기",
+      "explanation": "저장 답변에서 검토 중이라고 안내받았다면, 나중에 같은 대화에서 결과를 물어보세요. 확인한 페이지와 아직 확인하지 못한 부분을 함께 살펴볼 수 있어요.",
+      "prompt": "@Research Agent 방금 첨부한 PDF 3개의 시각 검토 결과를 알려줘. 확인하지 못한 부분이 있다면 문서와 페이지, 이유도 알려줘.",
+      "result": "‘검토 대상 확인 완료’는 PDF의 모든 페이지를 눈으로 확인했다는 뜻은 아니에요. 아래 사례에는 자동 검토 대상에 포함되지 않아 확인 기록이 없는 페이지도 있어요. 그 페이지의 수식·표·그림이 필요하면 문서명과 페이지를 지정해 추가로 확인해 달라고 요청하세요.",
+      "capture": "검토 대상으로 지정된 24쪽은 모두 확인됐고, 대기·판독 실패는 없다고 안내해요. Sentence-BERT 2쪽과 SimCSE 10–12쪽은 자동 검토 대상에 포함되지 않아 확인 기록이 없으며, 제외 이유도 현재 기록만으로는 알 수 없다고 설명해요.",
+      "captureAlt": "첨부 PDF 3개의 시각 검토 결과를 묻는 요청과 검토 대상 24쪽 완료 응답. DistilBERT 1–4쪽, Sentence-BERT 1쪽과 3–8쪽, SimCSE 1–9쪽과 13–16쪽 확인. 나머지 4쪽은 자동 대상에 포함되지 않아 확인 기록과 구체적인 제외 이유가 없다는 안내"
+    },
     "steps": [
       "Codex의 로컬 대화에 PDF를 한 개 또는 여러 개 함께 첨부해요.",
       "@research를 입력해 Research Agent를 선택하고, 아래 문장으로 첨부한 PDF의 저장과 요약을 요청해요.",
@@ -148,7 +156,18 @@ const pages={
     "title": "새 PDF와 기존 자료 함께 정리하기",
     "question": "새 PDF를 저장하면서 기존 자료와 함께 정리할 수 있나요?",
     "answer": "네. 새 PDF를 대화에 첨부하고 저장과 비교를 함께 요청하세요. 첨부한 PDF를 저장한 뒤, 이미 저장된 관련 PDF와 대화 기록을 찾아 함께 정리하고 출처를 알려줘요.",
-    "capture": "새 PDF의 저장 결과와 기존 자료의 출처가 함께 보이는 응답 화면",
+    "captures": [
+      {
+        "key": "compare-request",
+        "caption": "1. 새 PDF 3개를 첨부하고, 기존 자료와 함께 정리해 달라고 요청한 화면이에요.",
+        "alt": "MobileBERT, ConSERT, DeCLUTR PDF 3개를 첨부하고 Research Agent에 저장·비교와 새 문서 및 기존 문서의 출처 구분을 요청한 화면"
+      },
+      {
+        "key": "compare-result",
+        "caption": "2. 새로 저장한 MobileBERT·ConSERT·DeCLUTR를 요약하고, 기존 DistilBERT·Sentence-BERT·SimCSE를 출처로 연결한 응답이에요. 이 응답에서는 저장·텍스트 추출과 검토 대상 페이지의 확인을 마쳤다고 안내해요.",
+        "alt": "새 PDF 3개의 저장·텍스트 추출과 검토 대상 페이지 확인 완료 안내, 문서별 요약, 기존 DistilBERT·Sentence-BERT·SimCSE를 인용한 공통점·차이점 비교와 논문별 수치를 직접 비교할 수 없다는 설명"
+      }
+    ],
     "steps": [
       "비교할 기존 자료를 먼저 저장해 두세요. 폴더를 연결했다면 ‘폴더의 PDF 저장하기’에서 저장 완료 여부부터 확인해요.",
       "Codex의 로컬 대화에 새 PDF를 한 개 또는 여러 개 첨부하고 Research Agent를 선택하세요.",
@@ -157,7 +176,7 @@ const pages={
     ],
     "alternative": {"route": "organize", "label": "연결한 폴더의 PDF부터 저장하려면"},
     "note": "저장된 자료 중 질문과 관련된 내용을 찾아 활용해요. 기존 자료가 있어도 관련 내용을 찾지 못할 수 있어요. 답변에 필요한 그림·수식·표의 확인이 아직 끝나지 않았다면 그 상태를 함께 확인하세요.",
-    "prompt": "@Research Agent 첨부한 PDF들을 저장하고, 기존에 저장된 관련 자료와 함께 핵심 내용을 정리해줘. 공통점과 차이점을 설명하고, 어떤 문서에 근거했는지도 알려줘.",
+    "prompt": "@Research Agent 첨부한 PDF들을 저장하고, 기존에 저장된 관련 자료와 함께 핵심 내용을 정리해줘. 공통점과 차이점을 설명하고, 새 문서와 기존 문서 중 어떤 자료에 근거했는지도 알려줘.",
     "prev": "organize",
     "next": "search"
   },
@@ -219,9 +238,12 @@ const installationCaptures={
   'codex-invocation':{src:'assets/screenshots/codex-introduction.png?v=20260928-introduction',width:1584,height:722}
 };
 const featureCaptures={
-  attach:{src:'assets/screenshots/pdf-attachments-save.png',width:1652,height:1352},
+  attach:{src:'assets/screenshots/pdf-attachments-save.png?v=20260928-background-review',width:1636,height:1666},
+  'attach-review':{src:'assets/screenshots/pdf-attachments-review-result.png',width:1588,height:1066},
   organize:{src:'assets/screenshots/folder-pdf-status.png',width:1614,height:648},
-  'organize-review':{src:'assets/screenshots/folder-pdf-review-result.png',width:1622,height:712}
+  'organize-review':{src:'assets/screenshots/folder-pdf-review-result.png',width:1622,height:712},
+  'compare-request':{src:'assets/screenshots/pdf-compare-request.png?v=20260929-crop2',width:1080,height:578,fullSize:true},
+  'compare-result':{src:'assets/screenshots/pdf-compare-result.png',width:1610,height:1556,fullSize:true}
 };
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ui={ko:{guide:'사용 가이드',overview:'가이드 둘러보기',menu:'메뉴',skip:'본문으로 이동',nav:'가이드 메뉴',first:'처음이라면',features:'기능',me:'나',assistant:'Research Agent 안내',howto:'사용 방법',note:'알아두세요',previous:'이전',next:'다음',related:'관련 가이드',blank:'실제 캡처를 넣을 빈 영역',capturePending:'캡처 준비 중',copy:'복사',copied:'복사됨',manualCopy:'직접 복사',copiedNotice:'복사했어요.',failedCopy:'복사할 문장을 선택했어요. ⌘ + C 또는 Ctrl + C로 직접 복사하세요.',prompt:'Codex에서 사용할 문장',invocationLabel:'VS Code·CLI에서 사용하려면',invocationNote:'문장 앞의 @Research Agent를 $research-library로 바꾸세요. 또는 /skills에서 research-library를 선택한 뒤 요청을 입력하세요.',install:'터미널에서 실행할 설치 명령',paste:'복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.',installNote:'명령을 복사해도 설치가 실행되지는 않아요. 터미널에서 직접 실행하세요.',sideNote:'사용 가이드 · v0.3.0\n실제 작업은 Codex에서 진행해요.',overviewQuestion:'Research Agent로 무엇을 할 수 있나요?',overviewAnswer:'흩어진 PDF와 중요한 연구 대화를 정리하고, 필요할 때 다시 찾아볼 수 있어요. 궁금한 기능을 선택해 보세요.',featureDescriptions:{attach:'PDF를 대화에 첨부해 바로 저장하고 질문해요.',organize:'연결한 폴더의 PDF를 변환해 검색할 수 있도록 저장해요.',compare:'새 PDF를 저장하고 기존 자료와 함께 정리해요.',search:'여러 PDF와 저장한 대화에서 관련 내용을 찾아요.',save:'연구 아이디어와 실험 설계를 선택해서 보관해요.'},startLink:'처음이라면 설치부터 시작하세요.',overviewEnd:'현재 지원 환경은 macOS의 Codex예요. 이 웹은 사용 방법을 안내합니다.',},en:{guide:'User guide',overview:'Explore the guide',menu:'Menu',skip:'Skip to content',nav:'Guide navigation',first:'Getting started',features:'Features',me:'You',assistant:'Research Agent guide',howto:'How to use it',note:'Good to know',previous:'Previous',next:'Next',related:'Related guides',blank:'Empty frame reserved for a real screenshot',capturePending:'Screenshot coming soon',copy:'Copy',copied:'Copied',manualCopy:'Copy manually',copiedNotice:'Copied to clipboard.',failedCopy:'The text is selected. Press ⌘ + C or Ctrl + C to copy it.',prompt:'Prompt to use in Codex',invocationLabel:'Using VS Code or the CLI?',invocationNote:'Replace @Research Agent at the start of the prompt with $research-library. Or choose research-library from /skills, then enter your request.',install:'Installation command for Terminal',paste:'Paste this into your usual Codex conversation.',installNote:'Copying does not install anything. Run the command yourself in Terminal.',sideNote:'User guide · v0.3.0\nActual work takes place in Codex.',overviewQuestion:'What can I do with Research Agent?',overviewAnswer:'Organize scattered PDFs and important research conversations, then find them again when you need them. Choose a feature to learn more.',featureDescriptions:{attach:'Attach PDFs in Codex to save them and ask questions.',organize:'Convert and save PDFs from your connected folders.',compare:'Save new PDFs and summarize them with existing materials.',search:'Find related information across PDFs and saved conversations.',save:'Keep selected research ideas and experiment plans.'},startLink:'New here? Start with installation.',overviewEnd:'The supported environment is Codex on macOS. This website explains how to use it.',}};
@@ -246,13 +268,14 @@ function savePreferences(){
 }
 function renderCapture(capture, route, language){
   const t=ui[language];
-  const asset=route==='start'?installationCaptures[capture.key]:featureCaptures[route];
+  const asset=route==='start'?installationCaptures[capture.key]:featureCaptures[capture.key];
   const caption=escapeHTML(capture.caption);
+  const fullSizeLink=asset?.fullSize?` <a href="${asset.src}" target="_blank" rel="noopener noreferrer">${language==='ko'?'크게 보기':'View full size'}</a>`:'';
   const attributes=`data-capture-language="${language}" data-capture-feature="${route}" data-capture-key="${escapeHTML(capture.key)}"`;
   const highlight=asset?.highlight;
   const annotation=highlight?`<span class="screenshot-highlight" aria-hidden="true" style="left:${(highlight.x/asset.width*100).toFixed(4)}%;top:${(highlight.y/asset.height*100).toFixed(4)}%;width:${(highlight.width/asset.width*100).toFixed(4)}%;height:${(highlight.height/asset.height*100).toFixed(4)}%"></span>`:'';
   return asset
-    ? `<figure class="screenshot"><figcaption>${caption}</figcaption><div class="screenshot-frame has-capture" style="max-width:${asset.width+2}px" ${attributes}><img src="${asset.src}" width="${asset.width}" height="${asset.height}" alt="${escapeHTML(capture.alt||capture.caption)}">${annotation}</div></figure>`
+    ? `<figure class="screenshot"><figcaption>${caption}${fullSizeLink}</figcaption><div class="screenshot-frame has-capture" style="max-width:${asset.width+2}px" ${attributes}><img src="${asset.src}" width="${asset.width}" height="${asset.height}" alt="${escapeHTML(capture.alt||capture.caption)}">${annotation}</div></figure>`
     : `<figure class="screenshot"><figcaption>${caption} · ${t.capturePending}</figcaption><div class="screenshot-frame" role="img" aria-label="${caption} — ${t.blank}" ${attributes}></div></figure>`;
 }
 function renderGuideCopy(stage,t,key){
@@ -322,7 +345,7 @@ function render(){
     renderInstallation(translated.start,t,language);
   }else{
     const p={...translated[route],steps:[...translated[route].steps]};
-    const captureFigures=renderCapture({key:route,caption:p.capture,alt:p.captureAlt},route,language);
+    const captureFigures=(p.captures||[{key:route,caption:p.capture,alt:p.captureAlt}]).map(c=>renderCapture(c,route,language)).join('');
     const followUp=renderFollowUp(p.followUp,route,t,language);
     const promptCopy=renderGuideCopy({composer:'prompt',prompt:p.prompt},t,route);
     const help=p.help?`<details class="howto installation-help"><summary>${escapeHTML(p.helpLabel)}</summary><dl>${p.help.map(item=>`<dt>${escapeHTML(item.question)}</dt><dd>${escapeHTML(item.answer)}</dd>`).join('')}</dl></details>`:'';
