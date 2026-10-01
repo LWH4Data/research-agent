@@ -232,6 +232,31 @@ window.RESEARCH_GUIDE_EN = {
       'Check the supporting documents and pages. If saved conversations appear among the sources, distinguish PDF evidence from your saved ideas.'
     ],
     note: 'You can ask in Korean about English PDFs. Research Agent searches with relevant Korean and English keywords. Document links open saved text extracts, and page numbers count from the first PDF page. If figures or equations needed for your answer are still under review, it will explain their status.',
+    "followUp": {
+      "key": "search-memory",
+      "open": true,
+      "title": "Find saved conversations with related PDFs",
+      "explanation": "First keep your experiment plan or selection criteria using “Save a conversation.” Later, you can ask for that saved record and related papers in another local Codex conversation. You do not need to attach the discussion or PDFs again.",
+      "prompt": "@Research Agent Find the DistilBERT/MobileBERT comparison experiment plan and my selection criteria that I saved earlier. Summarize them with supporting evidence from related papers.",
+      "result": "Distinguish your decisions from the saved conversation and research results from the papers. This example retrieves a saved plan, not measured experiment results. Concrete thresholds were to be determined after initial measurements. The § references identify paper sections, not pages.",
+      "captures": [
+        {
+          "key": "memory-search-request",
+          "caption": "1. Ask for the previously saved experiment plan and selection criteria, together with supporting evidence from related papers.",
+          "alt": "A Korean request to Research Agent to find the previously saved DistilBERT/MobileBERT comparison experiment plan and selection criteria, with related paper evidence"
+        },
+        {
+          "key": "memory-search-selection",
+          "caption": "2. This Korean reply reports finding the saved record and quotes the selection criterion the user stated at the time.",
+          "alt": "A Korean reply reporting retrieval of the saved DistilBERT/MobileBERT plan. It quotes the decision to choose the configuration using the least memory among those meeting accuracy and response-time requirements, with concrete thresholds set after initial measurements."
+        },
+        {
+          "key": "memory-search-plan",
+          "caption": "3. The saved experiment plan is summarized in a table and linked to DistilBERT and MobileBERT paper sections. Measurements and thresholds remain undecided, and the reply explains why published acceleration figures are not directly comparable.",
+          "alt": "A saved experiment plan covering four DistilBERT/MobileBERT and FP32/INT8 configurations, matched training, Accuracy/macro-F1, response time, RAM, and input length. It preserves the selection sequence and undecided setup, cites DistilBERT sections 2–4 and MobileBERT sections 3 and 4.3–4.5, and says to compare measurements on the same target phone."
+        }
+      ]
+    },
     prompt: '@Research Agent Find ways to make BERT smaller and faster in my saved materials. Briefly summarize the key differences between methods and cite the supporting documents and pages.',
     prev: 'compare',
     next: 'save'
@@ -242,8 +267,13 @@ window.RESEARCH_GUIDE_EN = {
     answer: 'Ask to save the conversation, and Research Agent will first ask which parts to keep. Only the content you choose is saved as research notes, which you can later search alongside your PDFs.',
     captures: [
       {
+        key: 'save-scope-choice',
+        caption: 'This Korean reply chooses “the current DistilBERT/MobileBERT topic (recommended)” as the save scope. Choose the topic or range you want to keep.',
+        alt: 'A collapsed save-scope question and a Korean reply choosing the current DistilBERT/MobileBERT topic (recommended). Only part of the question is visible; the full list of choices is not shown.'
+      },
+      {
         key: 'save-result',
-        caption: 'This Korean reply reports saving the DistilBERT/MobileBERT experiment plan and selection criteria, then checking the record again. It says the saved record includes four selected verbatim messages, a summary, and the final decision.',
+        caption: 'A separate save-completion example. This Korean reply reports saving the DistilBERT/MobileBERT experiment plan and selection criteria, then checking the record again. It says the saved record includes four selected verbatim messages, a summary, and the final decision.',
         alt: 'A Korean reply reporting that the DistilBERT/MobileBERT mobile sentence-classification experiment plan and selection criteria were saved and checked again, including four verbatim messages and a summary. The decision is to minimize peak RAM among configurations meeting accuracy and response-time requirements, with concrete thresholds determined after initial measurements.'
       }
     ],
@@ -254,7 +284,7 @@ window.RESEARCH_GUIDE_EN = {
       'Check that the completion reply describes the right content and final decisions. Later, you can ask to find this record again.'
     ],
     alternative: {route: 'search', label: 'Find your saved conversations again'},
-    note: 'Conversations are not all saved automatically. If the exact text of an older conversation is unavailable, Research Agent will explain that limitation. The four messages in this example reflect the selected scope, not a limit on how many messages can be saved.',
+    note: 'Conversations are not all saved automatically. If the exact text of an older conversation is unavailable, Research Agent will explain that limitation. The four messages in the completion example reflect its selected scope, not a limit on how many messages can be saved.',
     prompt: '@Research Agent Save the DistilBERT/MobileBERT comparison experiment plan we just discussed and my selection criteria as a research note.',
     prev: 'search',
     next: 'manage'
@@ -263,14 +293,63 @@ window.RESEARCH_GUIDE_EN = {
     title: 'Manage saved conversations',
     question: 'Can I edit or delete saved records?',
     answer: 'View your saved conversations, then ask to change a record’s title, summary, or tags, or to delete that saved record.',
-    capture: 'Saved conversation list and edit results screen',
+    captures: [
+      {
+        key: 'manage-list',
+        caption: 'This Korean reply lists two saved conversations with their titles and save times in Korea time. It reports that all original messages within each saved scope are preserved.',
+        alt: 'A Korean list of two saved conversations, identified by title and save time: a DistilBERT/MobileBERT experiment-plan and selection-criteria review saved on October 1, 2026 at 19:34, and the mobile sentence-classification experiment plan and selection criteria saved that day at 09:48. The reply reports preservation of the original messages within each saved scope.'
+      }
+    ],
     steps: [
       'Use the prompt below to view your saved conversations.',
-      'Say which record you want to edit or delete, and what you want to change.',
-      'If several records look similar, confirm the right one first.'
+      'Choose a record by its title and save time. If several records look similar, confirm the right one first.',
+      'Identify the record by title and save time, then ask to change its title, summary, or tags, or to delete that record.',
+      'Check the completion reply for the right record and changes. After an edit, you can request the list again to check the new title.'
     ],
     note: 'The conversation text captured when you saved it is not edited. Deleting a saved record cannot be undone. Your original Codex conversation and PDF files remain unchanged.',
     prompt: '@Research Agent Show my saved conversations.',
+    followUps: [
+      {
+        key: 'manage-update',
+        open: true,
+        title: 'Edit a title and tags',
+        explanation: 'Identify a record from the list by its title and save time. Replace the example title, save time, new title, and tag below with your own.',
+        prompt: '@Research Agent Rename the record “DistilBERT/MobileBERT comparison experiment plan and selection criteria review,” saved on October 1, 2026 at 19:34 Korea time, to “DistilBERT/MobileBERT experiment plan review notes” and add the “mobile model comparison” tag. Keep the original messages, existing summary, and selection criteria, then check the record again and tell me the result.',
+        result: 'Check the completion reply for the new title and added tag. This example reports preserving the original messages, existing summary and selection criteria, other tags, and original save time.',
+        captures: [
+          {
+            key: 'manage-update-request',
+            caption: 'The request identifies the record by title and save time, asks to rename it and add the “mobile model comparison” tag, and requests another check while preserving the original messages, summary, and selection criteria.',
+            alt: 'A Korean request identifying the DistilBERT/MobileBERT comparison experiment plan and selection criteria review saved on October 1, 2026 at 19:34. It asks to rename it to experiment plan review notes, add the mobile model comparison tag, preserve the original messages, existing summary, and selection criteria, and check the record again.'
+          },
+          {
+            key: 'manage-update-result',
+            caption: 'This Korean reply reports checking the record again after changing its title and adding a tag. It reports that the original messages, existing summary and selection criteria, other tags, and original save time were preserved.',
+            alt: 'A Korean reply reporting another check after the edit. The new title is DistilBERT/MobileBERT experiment plan review notes and the added tag is mobile model comparison. It reports that the original messages, existing summary and selection criteria, other tags, and original save time were preserved.'
+          }
+        ]
+      },
+      {
+        key: 'manage-delete',
+        open: true,
+        title: 'Delete a saved record',
+        explanation: 'Identify the record by its title and save time. Replace the example below with your own and check the target before requesting deletion. Deleting a saved record cannot be undone. The actual Codex conversation and original PDFs are not deleted.',
+        prompt: '@Research Agent Delete “DistilBERT/MobileBERT experiment plan review notes,” saved on October 1, 2026 at 19:34 Korea time. Show the remaining saved conversations afterward. Keep other saved records, the actual Codex conversation, and original PDFs.',
+        result: 'Check the completion reply for the deleted title and remaining list. This example reports deleting the review note and keeping one record containing the original experiment plan.',
+        captures: [
+          {
+            key: 'manage-delete-request',
+            caption: 'The request identifies the review note by title and save time, asks to delete it and show the remaining list, and asks to preserve other saved records, the actual Codex conversation, and original PDFs.',
+            alt: 'A Korean request to delete the DistilBERT/MobileBERT experiment plan review notes saved on October 1, 2026 at 19:34 Korea time. It asks to show the remaining list and preserve other saved records, the actual Codex conversation, and original PDFs.'
+          },
+          {
+            key: 'manage-delete-result',
+            caption: 'This Korean reply reports deleting the review note while preserving other saved records, the actual Codex conversation, and original PDFs. It lists one remaining record containing the original experiment plan.',
+            alt: 'A Korean reply reporting deletion of the review note and preservation of other saved records, the actual Codex conversation, and original PDFs. After another check, the remaining record is the DistilBERT/MobileBERT mobile sentence-classification experiment plan and selection criteria, saved on October 1, 2026 at 09:48:55 Korea time.'
+          }
+        ]
+      }
+    ],
     prev: 'save',
     next: 'search'
   }

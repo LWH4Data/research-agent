@@ -202,6 +202,31 @@ const pages={
       "답변의 문서·페이지 근거를 확인하세요. 저장한 대화가 출처에 포함됐다면 PDF의 근거와 내 생각을 구분해 확인하세요."
     ],
     "note": "영어 PDF에도 한국어로 질문할 수 있어요. 관련 한국어·영어 핵심어로 자료를 찾아요. 문서 링크는 저장된 텍스트 추출본이며, 페이지 번호는 PDF의 첫 장부터 센 번호예요. 답변에 필요한 그림·수식이 아직 확인 중이면 그 상태를 함께 안내해요.",
+    "followUp": {
+      "key": "search-memory",
+      "open": true,
+      "title": "저장한 대화와 PDF 함께 찾아보기",
+      "explanation": "실험 계획이나 선택 기준을 ‘대화 저장하기’에서 먼저 보관해 두세요. 나중에 다른 Codex 로컬 대화에서도 저장한 기록과 관련 논문을 함께 찾아 달라고 요청할 수 있어요. 대화 내용이나 PDF를 다시 첨부할 필요는 없어요.",
+      "prompt": "@Research Agent 전에 저장한 DistilBERT·MobileBERT 비교 실험 계획과 내 선택 기준을 찾아줘. 관련 논문 근거도 함께 정리해줘.",
+      "result": "내가 결정한 기준은 저장한 대화에서, 연구 결과는 논문에서 가져온 것인지 구분해 확인하세요. 이 예시는 저장한 계획을 다시 찾은 답변이며 실제 실험 결과는 아니에요. 구체적인 기준값은 초기 측정 후 정하기로 했다는 내용도 남아 있어요. 논문 근거의 § 표시는 페이지가 아닌 절 번호예요.",
+      "captures": [
+        {
+          "key": "memory-search-request",
+          "caption": "1. 전에 저장한 실험 계획과 선택 기준을 찾고, 관련 논문 근거도 함께 정리해 달라고 요청해요.",
+          "alt": "Research Agent에 전에 저장한 DistilBERT·MobileBERT 비교 실험 계획과 선택 기준을 찾아 관련 논문 근거와 함께 정리해 달라고 요청한 한국어 화면"
+        },
+        {
+          "key": "memory-search-selection",
+          "caption": "2. 저장한 기록을 찾았다고 안내하고, 당시 직접 정한 선택 기준을 인용한 답변이에요.",
+          "alt": "저장한 DistilBERT·MobileBERT 실험 계획을 찾았다는 한국어 답변. 정확도와 응답 시간 기준을 충족하는 구성 중 메모리 사용량이 가장 적은 것을 선택하고, 구체적인 기준값은 초기 측정 후 정한다는 사용자의 기준을 인용해요."
+        },
+        {
+          "key": "memory-search-plan",
+          "caption": "3. 저장한 실험 계획을 표로 정리하고, DistilBERT·MobileBERT 논문의 절 번호를 근거로 연결해요. 측정 결과와 기준값은 아직 미정이며, 논문별 가속 수치를 직접 비교하기 어렵다는 설명도 있어요.",
+          "alt": "DistilBERT·MobileBERT와 FP32·INT8의 네 구성, 동일 학습 조건, Accuracy·macro-F1, 응답 시간, RAM, 입력 길이를 포함한 저장된 실험 계획 표. 초기 측정 후 성능·응답 시간 기준을 정하고 최대 RAM이 가장 작은 구성을 고른다는 순서, 아직 정하지 않은 실험 조건, DistilBERT §2–4와 MobileBERT §3 및 §4.3–4.5 근거, 같은 목표 휴대폰에서 직접 비교해야 한다는 설명이 있어요."
+        }
+      ]
+    },
     "prompt": "@Research Agent 내 자료에서 BERT를 더 작고 빠르게 만드는 방법을 찾아줘. 방법별 핵심 차이를 간단히 정리하고, 근거가 된 문서와 페이지도 알려줘.",
     "prev": "compare",
     "next": "save"
@@ -212,8 +237,13 @@ const pages={
     "answer": "대화를 저장해 달라고 요청하면 먼저 저장할 범위를 물어봐요. 선택한 내용만 연구 메모로 보관하고, 나중에 PDF와 함께 찾아볼 수 있어요.",
     "captures": [
       {
+        "key": "save-scope-choice",
+        "caption": "저장 범위를 묻는 질문에 ‘이번 DistilBERT·MobileBERT 주제 (추천)’로 답한 화면이에요. 남기고 싶은 주제나 범위로 답하세요.",
+        "alt": "연구 메모로 저장할 범위를 묻는 접힌 질문과 ‘이번 DistilBERT·MobileBERT 주제 (추천)’를 선택한 한국어 응답. 질문은 일부만 보이며 전체 선택지 목록은 표시되지 않아요."
+      },
+      {
         "key": "save-result",
-        "caption": "DistilBERT·MobileBERT 비교 실험 계획과 선택 기준을 저장하고, 다시 조회해 완료를 확인했다고 안내한 응답이에요. 선택한 대화 원문 4개와 요약, 최종 선택 기준을 포함했다고 설명해요.",
+        "caption": "별도의 저장 완료 예시예요. DistilBERT·MobileBERT 비교 실험 계획과 선택 기준을 저장하고, 다시 조회해 완료를 확인했다고 안내해요. 선택한 대화 원문 4개와 요약, 최종 선택 기준을 포함했다고 설명해요.",
         "alt": "DistilBERT·MobileBERT 모바일 문장 분류 비교 실험 계획과 선택 기준의 저장 및 재조회 완료를 보고한 한국어 응답. 대화 원문 4개와 요약을 포함했고, 정확도·응답 시간 기준을 충족하는 구성 중 최대 RAM을 최소화하며 구체적인 기준값은 초기 측정 후 정한다는 결정이 반영됐다고 안내해요."
       }
     ],
@@ -224,7 +254,7 @@ const pages={
       "완료 답변에서 저장한 내용과 최종 결정이 맞는지 확인해요. 나중에는 이 기록을 찾아 달라고 질문할 수 있어요."
     ],
     "alternative": {"route": "search", "label": "저장한 대화를 다시 찾아보려면"},
-    "note": "모든 대화가 자동으로 저장되는 것은 아니에요. 오래된 대화의 정확한 원문을 확인할 수 없으면 그 한계도 안내해요. 예시의 대화 원문 4개는 이때 선택한 범위의 결과이며, 저장 가능한 개수의 제한이 아니에요.",
+    "note": "모든 대화가 자동으로 저장되는 것은 아니에요. 오래된 대화의 정확한 원문을 확인할 수 없으면 그 한계도 안내해요. 저장 완료 예시의 대화 원문 4개는 이때 선택한 범위의 결과이며, 저장 가능한 개수의 제한이 아니에요.",
     "prompt": "@Research Agent 지금 논의한 DistilBERT·MobileBERT 비교 실험 계획과 내 선택 기준을 연구 메모로 저장해줘.",
     "prev": "search",
     "next": "manage"
@@ -233,14 +263,63 @@ const pages={
     "title": "저장한 대화 관리하기",
     "question": "저장한 기록을 수정하거나 삭제할 수도 있나요?",
     "answer": "저장한 목록을 확인한 뒤 원하는 기록의 제목·요약·태그를 수정하거나, 해당 저장 기록을 삭제해 달라고 요청할 수 있어요.",
-    "capture": "저장한 대화 조회와 수정 결과 화면",
+    "captures": [
+      {
+        "key": "manage-list",
+        "caption": "저장한 대화 2건의 제목과 한국 시간 기준 저장 시각을 보여주는 응답이에요. 두 기록 모두 저장한 범위의 대화 원문이 완전히 보존됐다고 안내해요.",
+        "alt": "저장한 대화 2건을 제목과 저장 시각으로 구분한 한국어 목록. 2026년 10월 1일 19시 34분의 DistilBERT·MobileBERT 비교 실험 계획과 선택 기준 재확인, 같은 날 9시 48분의 모바일 문장 분류 비교 실험 계획과 선택 기준이 있으며, 저장한 범위의 원문이 보존됐다고 안내해요."
+      }
+    ],
     "steps": [
       "아래 문장으로 저장한 대화 목록을 확인해요.",
-      "어떤 기록을 어떻게 수정하거나 삭제할지 말해요.",
-      "비슷한 기록이 여러 개라면 먼저 대상을 확인해요."
+      "제목과 저장 시각으로 원하는 기록을 골라요. 비슷한 기록이 여러 개라면 먼저 대상을 확인해요.",
+      "고른 기록의 제목과 저장 시각을 말하고, 제목·요약·태그를 어떻게 수정할지 또는 그 기록을 삭제할지 요청해요.",
+      "완료 답변에서 대상 기록과 변경 내용을 확인해요. 수정 후 목록을 다시 요청하면 바뀐 제목도 확인할 수 있어요."
     ],
     "note": "저장 당시의 대화 원문은 수정하지 않아요. 삭제한 저장 기록은 복구할 수 없지만, 실제 Codex 대화나 원본 PDF는 지워지지 않아요.",
     "prompt": "@Research Agent 저장한 대화 목록을 보여줘.",
+    "followUps": [
+      {
+        "key": "manage-update",
+        "open": true,
+        "title": "제목·태그 수정하기",
+        "explanation": "목록에서 고른 기록을 제목과 저장 시각으로 지정해요. 아래 예시의 제목·저장 시각과 새 제목·태그를 내 기록에 맞게 바꾸세요.",
+        "prompt": "@Research Agent 2026년 10월 1일 19:34(한국 시간)에 저장한 ‘DistilBERT·MobileBERT 비교 실험 계획과 선택 기준 재확인’의 제목을 ‘DistilBERT·MobileBERT 실험 계획 재검토 메모’로 바꾸고, ‘모바일 모델 비교’ 태그를 추가해줘. 대화 원문과 기존 요약·선택 기준은 유지하고, 수정 후 다시 조회해서 결과를 알려줘.",
+        "result": "완료 답변에서 바뀐 제목과 추가한 태그를 확인하세요. 이 예시는 원문·기존 요약·선택 기준·나머지 태그·원래 저장 시각을 유지했다고 안내해요.",
+        "captures": [
+          {
+            "key": "manage-update-request",
+            "caption": "제목과 저장 시각으로 기록을 지정하고, 제목 변경과 ‘모바일 모델 비교’ 태그 추가를 요청해요. 원문·기존 요약·선택 기준은 유지하고 수정 후 다시 확인하도록 요청해요.",
+            "alt": "2026년 10월 1일 19시 34분에 저장한 DistilBERT·MobileBERT 비교 실험 계획과 선택 기준 재확인을 지정한 한국어 요청. 제목을 실험 계획 재검토 메모로 바꾸고 모바일 모델 비교 태그를 추가하며, 원문과 기존 요약·선택 기준을 유지하고 다시 조회해 달라고 요청해요."
+          },
+          {
+            "key": "manage-update-result",
+            "caption": "제목·태그를 수정한 뒤 다시 조회했다고 안내한 응답이에요. 원문·기존 요약·선택 기준·나머지 태그·원래 저장 시각이 유지됐다고 보고해요.",
+            "alt": "수정 후 다시 조회했다고 안내한 한국어 응답. 제목은 DistilBERT·MobileBERT 실험 계획 재검토 메모, 추가 태그는 모바일 모델 비교이며, 대화 원문·기존 요약·선택 기준·나머지 태그·원래 저장 시각이 모두 유지됐다고 안내해요."
+          }
+        ]
+      },
+      {
+        "key": "manage-delete",
+        "open": true,
+        "title": "저장 기록 삭제하기",
+        "explanation": "삭제할 기록을 제목과 저장 시각으로 지정해요. 아래 예시를 내 기록에 맞게 바꾸고 대상을 확인한 뒤 요청하세요. 삭제한 저장 기록은 복구할 수 없어요. 실제 Codex 대화와 원본 PDF는 지워지지 않아요.",
+        "prompt": "@Research Agent 2026년 10월 1일 19:34(한국 시간)에 저장한 ‘DistilBERT·MobileBERT 실험 계획 재검토 메모’를 삭제해줘. 삭제 후 남은 대화 목록도 보여줘. 다른 저장 기록과 실제 Codex 대화, 원본 PDF는 유지해줘.",
+        "result": "완료 답변에서 삭제한 제목과 남은 목록을 확인하세요. 이 예시는 재검토 메모를 삭제하고 원래 실험 계획 기록 1건을 남겼다고 안내해요.",
+        "captures": [
+          {
+            "key": "manage-delete-request",
+            "caption": "제목과 저장 시각으로 삭제할 재검토 메모를 지정해요. 다른 저장 기록·실제 Codex 대화·원본 PDF를 유지하고 남은 목록도 보여 달라고 요청해요.",
+            "alt": "2026년 10월 1일 19시 34분 한국 시간에 저장한 DistilBERT·MobileBERT 실험 계획 재검토 메모를 삭제하는 한국어 요청. 삭제 후 남은 목록을 보여주고 다른 저장 기록, 실제 Codex 대화, 원본 PDF를 유지하도록 요청해요."
+          },
+          {
+            "key": "manage-delete-result",
+            "caption": "재검토 메모를 삭제하고 다른 저장 기록·실제 Codex 대화·원본 PDF는 유지했다고 보고한 응답이에요. 삭제 후 원래 실험 계획 기록 1건이 남았다고 안내해요.",
+            "alt": "재검토 메모 삭제와 다른 저장 기록, 실제 Codex 대화, 원본 PDF 보존을 보고한 한국어 응답. 다시 조회한 남은 기록은 DistilBERT·MobileBERT 모바일 문장 분류 비교 실험 계획과 선택 기준 1건이며, 한국 시간 기준 저장 시각은 2026년 10월 1일 09시 48분 55초예요."
+          }
+        ]
+      }
+    ],
     "prev": "save",
     "next": "search"
   }
@@ -265,10 +344,19 @@ const featureCaptures={
   'compare-result':{src:'assets/screenshots/pdf-compare-result.png',width:1610,height:1556,fullSize:true},
   'search-request':{src:'assets/screenshots/pdf-search-request.png',width:1052,height:160,fullSize:true},
   'search-result':{src:'assets/screenshots/pdf-search-result.png',width:1494,height:1126,fullSize:true},
-  'save-result':{src:'assets/screenshots/conversation-save-result.png',width:1492,height:170,fullSize:true}
+  'save-result':{src:'assets/screenshots/conversation-save-result.png',width:1492,height:170,fullSize:true},
+  'save-scope-choice':{src:'assets/screenshots/conversation-save-scope-choice.png',width:1046,height:151,fullSize:true},
+  'manage-list':{src:'assets/screenshots/conversation-list.png',width:1490,height:388,fullSize:true},
+  'manage-update-request':{src:'assets/screenshots/conversation-update-request.png',width:1045,height:286,fullSize:true},
+  'manage-update-result':{src:'assets/screenshots/conversation-update-result.png',width:1490,height:196,fullSize:true},
+  'manage-delete-request':{src:'assets/screenshots/conversation-delete-request.png',width:1047,height:196,fullSize:true},
+  'manage-delete-result':{src:'assets/screenshots/conversation-delete-result.png',width:1498,height:335,fullSize:true},
+  'memory-search-request':{src:'assets/screenshots/memory-search-request.png',width:1056,height:154,fullSize:true},
+  'memory-search-selection':{src:'assets/screenshots/memory-search-selection.png',width:1508,height:308,fullSize:true},
+  'memory-search-plan':{src:'assets/screenshots/memory-search-plan.png',width:1498,height:1292,fullSize:true}
 };
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const ui={ko:{guide:'사용 가이드',overview:'가이드 둘러보기',menu:'메뉴',skip:'본문으로 이동',nav:'가이드 메뉴',first:'처음이라면',features:'기능',me:'나',assistant:'Research Agent 안내',howto:'사용 방법',note:'알아두세요',previous:'이전',next:'다음',related:'관련 가이드',blank:'실제 캡처를 넣을 빈 영역',capturePending:'캡처 준비 중',copy:'복사',copied:'복사됨',manualCopy:'직접 복사',copiedNotice:'복사했어요.',failedCopy:'복사할 문장을 선택했어요. ⌘ + C 또는 Ctrl + C로 직접 복사하세요.',prompt:'Codex에서 사용할 문장',invocationLabel:'VS Code·CLI에서 사용하려면',invocationNote:'문장 앞의 @Research Agent를 $research-library로 바꾸세요. 또는 /skills에서 research-library를 선택한 뒤 요청을 입력하세요.',install:'터미널에서 실행할 설치 명령',paste:'복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.',installNote:'명령을 복사해도 설치가 실행되지는 않아요. 터미널에서 직접 실행하세요.',sideNote:'사용 가이드 · v0.3.0\n실제 작업은 Codex에서 진행해요.',overviewQuestion:'Research Agent로 무엇을 할 수 있나요?',overviewAnswer:'흩어진 PDF와 중요한 연구 대화를 정리하고, 필요할 때 다시 찾아볼 수 있어요. 궁금한 기능을 선택해 보세요.',featureDescriptions:{attach:'PDF를 대화에 첨부해 바로 저장하고 질문해요.',organize:'연결한 폴더의 PDF를 변환해 검색할 수 있도록 저장해요.',compare:'새 PDF를 저장하고 기존 자료와 함께 정리해요.',search:'여러 PDF와 저장한 대화에서 관련 내용을 찾아요.',save:'연구 아이디어와 실험 설계를 선택해서 보관해요.'},startLink:'처음이라면 설치부터 시작하세요.',overviewEnd:'현재 지원 환경은 macOS의 Codex예요. 이 웹은 사용 방법을 안내합니다.',},en:{guide:'User guide',overview:'Explore the guide',menu:'Menu',skip:'Skip to content',nav:'Guide navigation',first:'Getting started',features:'Features',me:'You',assistant:'Research Agent guide',howto:'How to use it',note:'Good to know',previous:'Previous',next:'Next',related:'Related guides',blank:'Empty frame reserved for a real screenshot',capturePending:'Screenshot coming soon',copy:'Copy',copied:'Copied',manualCopy:'Copy manually',copiedNotice:'Copied to clipboard.',failedCopy:'The text is selected. Press ⌘ + C or Ctrl + C to copy it.',prompt:'Prompt to use in Codex',invocationLabel:'Using VS Code or the CLI?',invocationNote:'Replace @Research Agent at the start of the prompt with $research-library. Or choose research-library from /skills, then enter your request.',install:'Installation command for Terminal',paste:'Paste this into your usual Codex conversation.',installNote:'Copying does not install anything. Run the command yourself in Terminal.',sideNote:'User guide · v0.3.0\nActual work takes place in Codex.',overviewQuestion:'What can I do with Research Agent?',overviewAnswer:'Organize scattered PDFs and important research conversations, then find them again when you need them. Choose a feature to learn more.',featureDescriptions:{attach:'Attach PDFs in Codex to save them and ask questions.',organize:'Convert and save PDFs from your connected folders.',compare:'Save new PDFs and summarize them with existing materials.',search:'Find related information across PDFs and saved conversations.',save:'Keep selected research ideas and experiment plans.'},startLink:'New here? Start with installation.',overviewEnd:'The supported environment is Codex on macOS. This website explains how to use it.',}};
+const ui={ko:{guide:'사용 가이드',overview:'가이드 둘러보기',menu:'메뉴',skip:'본문으로 이동',nav:'가이드 메뉴',first:'처음이라면',features:'기능',me:'나',assistant:'Research Agent 안내',howto:'사용 방법',note:'알아두세요',previous:'이전',next:'다음',related:'관련 가이드',blank:'실제 캡처를 넣을 빈 영역',capturePending:'캡처 준비 중',copy:'복사',copied:'복사됨',manualCopy:'직접 복사',copiedNotice:'복사했어요.',failedCopy:'복사할 문장을 선택했어요. ⌘ + C 또는 Ctrl + C로 직접 복사하세요.',prompt:'Codex에서 사용할 문장',invocationLabel:'VS Code·CLI에서 사용하려면',invocationNote:'문장 앞의 @Research Agent를 $research-library로 바꾸세요. 또는 /skills에서 research-library를 선택한 뒤 요청을 입력하세요.',install:'터미널에서 실행할 설치 명령',paste:'복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.',installNote:'명령을 복사해도 설치가 실행되지는 않아요. 터미널에서 직접 실행하세요.',sideNote:'사용 가이드 · v0.3.0\n실제 작업은 Codex에서 진행해요.',overviewQuestion:'Research Agent로 무엇을 할 수 있나요?',overviewAnswer:'흩어진 PDF와 중요한 연구 대화를 정리하고, 필요할 때 다시 찾아볼 수 있어요. 궁금한 기능을 선택해 보세요.',featureDescriptions:{attach:'PDF를 대화에 첨부해 바로 저장하고 질문해요.',organize:'연결한 폴더의 PDF를 변환해 검색할 수 있도록 저장해요.',compare:'새 PDF를 저장하고 기존 자료와 함께 정리해요.',search:'여러 PDF와 저장한 대화에서 관련 내용을 찾아요.',save:'연구 아이디어와 실험 설계를 선택해서 보관해요.',manage:'저장한 대화 목록을 보고 제목·태그를 수정하거나 기록을 삭제해요.'},startLink:'처음이라면 설치부터 시작하세요.',overviewEnd:'현재 지원 환경은 macOS의 Codex예요. 이 웹은 사용 방법을 안내합니다.',},en:{guide:'User guide',overview:'Explore the guide',menu:'Menu',skip:'Skip to content',nav:'Guide navigation',first:'Getting started',features:'Features',me:'You',assistant:'Research Agent guide',howto:'How to use it',note:'Good to know',previous:'Previous',next:'Next',related:'Related guides',blank:'Empty frame reserved for a real screenshot',capturePending:'Screenshot coming soon',copy:'Copy',copied:'Copied',manualCopy:'Copy manually',copiedNotice:'Copied to clipboard.',failedCopy:'The text is selected. Press ⌘ + C or Ctrl + C to copy it.',prompt:'Prompt to use in Codex',invocationLabel:'Using VS Code or the CLI?',invocationNote:'Replace @Research Agent at the start of the prompt with $research-library. Or choose research-library from /skills, then enter your request.',install:'Installation command for Terminal',paste:'Paste this into your usual Codex conversation.',installNote:'Copying does not install anything. Run the command yourself in Terminal.',sideNote:'User guide · v0.3.0\nActual work takes place in Codex.',overviewQuestion:'What can I do with Research Agent?',overviewAnswer:'Organize scattered PDFs and important research conversations, then find them again when you need them. Choose a feature to learn more.',featureDescriptions:{attach:'Attach PDFs in Codex to save them and ask questions.',organize:'Convert and save PDFs from your connected folders.',compare:'Save new PDFs and summarize them with existing materials.',search:'Find related information across PDFs and saved conversations.',save:'Keep selected research ideas and experiment plans.',manage:'View saved conversations, edit their titles and tags, or delete a saved record.'},startLink:'New here? Start with installation.',overviewEnd:'The supported environment is Codex on macOS. This website explains how to use it.',}};
 const preferences={language:'ko'};
 try{
   const stored=JSON.parse(localStorage.getItem('research-guide-preferences')||'{}');
@@ -341,8 +429,9 @@ function renderInstallation(page, t, language){
 }
 function renderFollowUp(followUp,route,t,language){
   if(!followUp)return '';
-  const key=`${route}-review`;
-  return `<details class="howto"><summary>${escapeHTML(followUp.title)}</summary><p class="note">${escapeHTML(followUp.explanation)}</p>${renderGuideCopy({composer:'prompt',prompt:followUp.prompt},t,key)}<p class="note">${escapeHTML(followUp.result)}</p>${renderCapture({key,caption:followUp.capture,alt:followUp.captureAlt},key,language)}</details>`;
+  const key=followUp.key||`${route}-review`;
+  const captures=(followUp.captures||[{key,caption:followUp.capture,alt:followUp.captureAlt}]).map(c=>renderCapture(c,key,language)).join('');
+  return `<details class="howto"${followUp.open?' open':''}><summary>${escapeHTML(followUp.title)}</summary><p class="note">${escapeHTML(followUp.explanation)}</p>${renderGuideCopy({composer:'prompt',prompt:followUp.prompt},t,key)}<p class="note">${escapeHTML(followUp.result)}</p>${captures}</details>`;
 }
 function render(){
   const {language}=preferences;const t=ui[language];const route=currentRoute();const translated=language==='en'?window.RESEARCH_GUIDE_EN:pages;
@@ -362,13 +451,13 @@ function render(){
   document.querySelector('.menu-toggle').setAttribute('aria-expanded','false');
   document.querySelector('#live-message').textContent='';
   if(route==='overview'){
-    main.innerHTML=`<div class="conversation overview"><div class="message user-message"><p class="speaker">${t.me}</p><p class="overview-question">${t.overviewQuestion}</p></div><div class="message assistant-message"><p class="speaker">${t.assistant}</p><p class="message-text">${t.overviewAnswer}</p><ul class="feature-list">${['attach','organize','compare','search','save'].map(key=>`<li><a href="#/${key}">${titleFor(key)}</a><p>${t.featureDescriptions[key]}</p></li>`).join('')}</ul><div class="overview-start"><a href="#/start">${t.startLink}</a><p>${t.overviewEnd}</p></div></div></div>`;
+    main.innerHTML=`<div class="conversation overview"><div class="message user-message"><p class="speaker">${t.me}</p><p class="overview-question">${t.overviewQuestion}</p></div><div class="message assistant-message"><p class="speaker">${t.assistant}</p><p class="message-text">${t.overviewAnswer}</p><ul class="feature-list">${['attach','organize','compare','search','save','manage'].map(key=>`<li><a href="#/${key}">${titleFor(key)}</a><p>${t.featureDescriptions[key]}</p></li>`).join('')}</ul><div class="overview-start"><a href="#/start">${t.startLink}</a><p>${t.overviewEnd}</p></div></div></div>`;
   }else if(route==='start'){
     renderInstallation(translated.start,t,language);
   }else{
     const p={...translated[route],steps:[...translated[route].steps]};
     const captureFigures=(p.captures||[{key:route,caption:p.capture,alt:p.captureAlt}]).map(c=>renderCapture(c,route,language)).join('');
-    const followUp=renderFollowUp(p.followUp,route,t,language);
+    const followUp=(p.followUps||(p.followUp?[p.followUp]:[])).map(item=>renderFollowUp(item,route,t,language)).join('');
     const promptCopy=renderGuideCopy({composer:'prompt',prompt:p.prompt},t,route);
     const help=p.help?`<details class="howto installation-help"><summary>${escapeHTML(p.helpLabel)}</summary><dl>${p.help.map(item=>`<dt>${escapeHTML(item.question)}</dt><dd>${escapeHTML(item.answer)}</dd>`).join('')}</dl></details>`:'';
     main.innerHTML=`<div class="conversation"><div class="message user-message"><p class="speaker">${t.me}</p><p class="message-text">${escapeHTML(p.question)}</p></div><div class="message assistant-message"><p class="speaker">${t.assistant}</p><p class="message-text">${escapeHTML(p.answer)}</p><details class="howto" open><summary>${t.howto}</summary><ol>${p.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join('')}</ol></details>${promptCopy}${captureFigures}${p.alternative?`<p class="note"><a href="#/${escapeHTML(p.alternative.route)}">${escapeHTML(p.alternative.label)}</a></p>`:''}<details class="howto"><summary>${t.note}</summary><p class="note">${escapeHTML(p.note)}</p></details>${help}${followUp}</div><nav class="related" aria-label="${t.related}"><a href="#/${p.prev}">${t.previous}: ${titleFor(p.prev)}</a><a href="#/${p.next}">${t.next}: ${titleFor(p.next)}</a></nav></div>`;
