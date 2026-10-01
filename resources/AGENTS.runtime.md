@@ -107,6 +107,14 @@ the installation root, whether this policy is read there or at
   Conversation JSON is limited to 8 MiB; visual notes to 1 MiB. Do not use a
   payload file, shell redirection, or a here-document. Binary PDF import uses
   EOF and must not contain this text sentinel.
+- With `exec_command` / `write_stdin`, conversation JSON and CLI visual notes
+  require `tty: true` and the `__RESEARCH_STORE_STDIN_READY__` stderr line before
+  sending content. The CLI prepares the terminal to preserve long input without
+  echo and restores its settings after normal completion, handled errors, or
+  Ctrl-C. Forced termination can prevent restoration. A real writable stdin pipe does not
+  need this handshake. Do not wrap the launcher in Node/Python subprocess code
+  to work around a transport failure; that inner command cannot use the exact
+  execution-rule exception. A launcher denial still requires stopping.
 - A stored PDF copy is not completed conversion; completed text extraction is
   not completed visual verification. `visual_review_pages` is the candidate
   set; `visual_review_pending_pages` and `review-list` retain both `pending` and

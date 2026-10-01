@@ -184,14 +184,25 @@ const pages={
     "title": "자료 검색하기",
     "question": "내 PDF에서 필요한 내용을 어떻게 찾나요?",
     "answer": "찾고 싶은 내용을 평소 말하듯 질문하세요. 여러 PDF와 저장한 대화에서 관련 내용을 찾고, 근거가 있는 문서와 페이지를 함께 안내해요.",
-    "capture": "질문, 답변과 출처가 보이는 실제 화면",
+    "captures": [
+      {
+        "key": "search-request",
+        "caption": "PDF를 다시 첨부하지 않고, 저장된 자료에서 BERT를 더 작고 빠르게 만드는 방법과 문서·페이지 근거를 찾아달라고 요청해요.",
+        "alt": "Research Agent에 저장된 자료에서 BERT 경량화 방법을 찾아 핵심 차이와 근거 문서·페이지를 알려달라고 요청한 한국어 화면"
+      },
+      {
+        "key": "search-result",
+        "caption": "답변은 DistilBERT·MobileBERT·MiniLMv2, 양자화, 가지치기를 비교하고 문서·페이지 근거를 안내해요. 가지치기 근거는 선행 연구를 소개하는 간접 인용이라고 구분해요.",
+        "alt": "BERT 경량화 방법을 비교한 한국어 답변. DistilBERT 2쪽, MobileBERT 1–4쪽, MiniLMv2 1–2쪽과 양자화·가지치기 근거를 안내하고, 가지치기는 간접 인용임을 밝혀요. 링크는 저장된 텍스트 추출본이며 페이지는 PDF 첫 장부터 센 번호라는 설명이 있어요."
+      }
+    ],
     "steps": [
       "연결한 폴더나 대화에 첨부한 PDF를 정리해 두세요.",
-      "평소 사용하던 Codex 대화에 아래 문장을 붙여 넣고, 원하는 주제로 바꿔 질문하세요.",
-      "답변에서 PDF의 근거와 저장한 내 생각을 구분해 확인하세요."
+      "PDF를 다시 첨부하지 않고, 평소 사용하던 Codex 대화에 아래 문장을 붙여 넣으세요. 원하는 주제로 바꿔 질문해도 돼요.",
+      "답변의 문서·페이지 근거를 확인하세요. 저장한 대화가 출처에 포함됐다면 PDF의 근거와 내 생각을 구분해 확인하세요."
     ],
-    "note": "영어 PDF에도 한국어로 질문할 수 있어요. 관련 한국어·영어 핵심어로 자료를 찾아요. 답변에 필요한 그림·수식이 아직 확인 중이면 그 상태를 함께 안내해요.",
-    "prompt": "@Research Agent 내 자료에서 광소자 결합 효율을 높이는 방법을 찾아줘.",
+    "note": "영어 PDF에도 한국어로 질문할 수 있어요. 관련 한국어·영어 핵심어로 자료를 찾아요. 문서 링크는 저장된 텍스트 추출본이며, 페이지 번호는 PDF의 첫 장부터 센 번호예요. 답변에 필요한 그림·수식이 아직 확인 중이면 그 상태를 함께 안내해요.",
+    "prompt": "@Research Agent 내 자료에서 BERT를 더 작고 빠르게 만드는 방법을 찾아줘. 방법별 핵심 차이를 간단히 정리하고, 근거가 된 문서와 페이지도 알려줘.",
     "prev": "compare",
     "next": "save"
   },
@@ -199,14 +210,22 @@ const pages={
     "title": "대화 저장하기",
     "question": "지금 논의한 연구 아이디어를 나중에 다시 보고 싶어요.",
     "answer": "대화를 저장해 달라고 요청하면 먼저 저장할 범위를 물어봐요. 선택한 내용만 연구 메모로 보관하고, 나중에 PDF와 함께 찾아볼 수 있어요.",
-    "capture": "저장 범위 선택과 대화 저장 결과 화면",
-    "steps": [
-      "저장하고 싶은 내용을 논의한 Codex 대화에서 아래 문장으로 요청해요.",
-      "현재 주제, 이번 대화 전체, 직접 지정한 범위 중에서 선택해요.",
-      "나중에 “지난번 실험에서 어떤 조건을 바꾸기로 했지?”처럼 질문하세요."
+    "captures": [
+      {
+        "key": "save-result",
+        "caption": "DistilBERT·MobileBERT 비교 실험 계획과 선택 기준을 저장하고, 다시 조회해 완료를 확인했다고 안내한 응답이에요. 선택한 대화 원문 4개와 요약, 최종 선택 기준을 포함했다고 설명해요.",
+        "alt": "DistilBERT·MobileBERT 모바일 문장 분류 비교 실험 계획과 선택 기준의 저장 및 재조회 완료를 보고한 한국어 응답. 대화 원문 4개와 요약을 포함했고, 정확도·응답 시간 기준을 충족하는 구성 중 최대 RAM을 최소화하며 구체적인 기준값은 초기 측정 후 정한다는 결정이 반영됐다고 안내해요."
+      }
     ],
-    "note": "모든 대화가 자동으로 저장되는 것은 아니에요. 오래된 대화의 정확한 원문을 확인할 수 없으면 그 한계도 안내해요.",
-    "prompt": "@Research Agent 지금 대화에서 실험 설계에 관한 부분을 저장해줘.",
+    "steps": [
+      "실험 계획이나 아이디어를 논의하고, 남겨둘 결정과 선택 기준도 대화에 적어 두세요.",
+      "그 Codex 대화에서 아래 문장으로 저장을 요청해요. 예시의 실험 주제는 내 주제로 바꿔도 돼요.",
+      "저장할 범위를 묻는 질문에 현재 주제나 직접 지정한 범위로 답하세요. 이번 대화 전체는 원문을 모두 확인할 수 있을 때 선택할 수 있어요.",
+      "완료 답변에서 저장한 내용과 최종 결정이 맞는지 확인해요. 나중에는 이 기록을 찾아 달라고 질문할 수 있어요."
+    ],
+    "alternative": {"route": "search", "label": "저장한 대화를 다시 찾아보려면"},
+    "note": "모든 대화가 자동으로 저장되는 것은 아니에요. 오래된 대화의 정확한 원문을 확인할 수 없으면 그 한계도 안내해요. 예시의 대화 원문 4개는 이때 선택한 범위의 결과이며, 저장 가능한 개수의 제한이 아니에요.",
+    "prompt": "@Research Agent 지금 논의한 DistilBERT·MobileBERT 비교 실험 계획과 내 선택 기준을 연구 메모로 저장해줘.",
     "prev": "search",
     "next": "manage"
   },
@@ -243,7 +262,10 @@ const featureCaptures={
   organize:{src:'assets/screenshots/folder-pdf-status.png',width:1614,height:648},
   'organize-review':{src:'assets/screenshots/folder-pdf-review-result.png',width:1622,height:712},
   'compare-request':{src:'assets/screenshots/pdf-compare-request.png?v=20260929-crop2',width:1080,height:578,fullSize:true},
-  'compare-result':{src:'assets/screenshots/pdf-compare-result.png',width:1610,height:1556,fullSize:true}
+  'compare-result':{src:'assets/screenshots/pdf-compare-result.png',width:1610,height:1556,fullSize:true},
+  'search-request':{src:'assets/screenshots/pdf-search-request.png',width:1052,height:160,fullSize:true},
+  'search-result':{src:'assets/screenshots/pdf-search-result.png',width:1494,height:1126,fullSize:true},
+  'save-result':{src:'assets/screenshots/conversation-save-result.png',width:1492,height:170,fullSize:true}
 };
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ui={ko:{guide:'사용 가이드',overview:'가이드 둘러보기',menu:'메뉴',skip:'본문으로 이동',nav:'가이드 메뉴',first:'처음이라면',features:'기능',me:'나',assistant:'Research Agent 안내',howto:'사용 방법',note:'알아두세요',previous:'이전',next:'다음',related:'관련 가이드',blank:'실제 캡처를 넣을 빈 영역',capturePending:'캡처 준비 중',copy:'복사',copied:'복사됨',manualCopy:'직접 복사',copiedNotice:'복사했어요.',failedCopy:'복사할 문장을 선택했어요. ⌘ + C 또는 Ctrl + C로 직접 복사하세요.',prompt:'Codex에서 사용할 문장',invocationLabel:'VS Code·CLI에서 사용하려면',invocationNote:'문장 앞의 @Research Agent를 $research-library로 바꾸세요. 또는 /skills에서 research-library를 선택한 뒤 요청을 입력하세요.',install:'터미널에서 실행할 설치 명령',paste:'복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.',installNote:'명령을 복사해도 설치가 실행되지는 않아요. 터미널에서 직접 실행하세요.',sideNote:'사용 가이드 · v0.3.0\n실제 작업은 Codex에서 진행해요.',overviewQuestion:'Research Agent로 무엇을 할 수 있나요?',overviewAnswer:'흩어진 PDF와 중요한 연구 대화를 정리하고, 필요할 때 다시 찾아볼 수 있어요. 궁금한 기능을 선택해 보세요.',featureDescriptions:{attach:'PDF를 대화에 첨부해 바로 저장하고 질문해요.',organize:'연결한 폴더의 PDF를 변환해 검색할 수 있도록 저장해요.',compare:'새 PDF를 저장하고 기존 자료와 함께 정리해요.',search:'여러 PDF와 저장한 대화에서 관련 내용을 찾아요.',save:'연구 아이디어와 실험 설계를 선택해서 보관해요.'},startLink:'처음이라면 설치부터 시작하세요.',overviewEnd:'현재 지원 환경은 macOS의 Codex예요. 이 웹은 사용 방법을 안내합니다.',},en:{guide:'User guide',overview:'Explore the guide',menu:'Menu',skip:'Skip to content',nav:'Guide navigation',first:'Getting started',features:'Features',me:'You',assistant:'Research Agent guide',howto:'How to use it',note:'Good to know',previous:'Previous',next:'Next',related:'Related guides',blank:'Empty frame reserved for a real screenshot',capturePending:'Screenshot coming soon',copy:'Copy',copied:'Copied',manualCopy:'Copy manually',copiedNotice:'Copied to clipboard.',failedCopy:'The text is selected. Press ⌘ + C or Ctrl + C to copy it.',prompt:'Prompt to use in Codex',invocationLabel:'Using VS Code or the CLI?',invocationNote:'Replace @Research Agent at the start of the prompt with $research-library. Or choose research-library from /skills, then enter your request.',install:'Installation command for Terminal',paste:'Paste this into your usual Codex conversation.',installNote:'Copying does not install anything. Run the command yourself in Terminal.',sideNote:'User guide · v0.3.0\nActual work takes place in Codex.',overviewQuestion:'What can I do with Research Agent?',overviewAnswer:'Organize scattered PDFs and important research conversations, then find them again when you need them. Choose a feature to learn more.',featureDescriptions:{attach:'Attach PDFs in Codex to save them and ask questions.',organize:'Convert and save PDFs from your connected folders.',compare:'Save new PDFs and summarize them with existing materials.',search:'Find related information across PDFs and saved conversations.',save:'Keep selected research ideas and experiment plans.'},startLink:'New here? Start with installation.',overviewEnd:'The supported environment is Codex on macOS. This website explains how to use it.',}};

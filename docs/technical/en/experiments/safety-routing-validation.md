@@ -474,3 +474,72 @@ a storage-device failure. PDF equation, table, and figure accuracy and Plus/Pro
 usage measurement were outside this validation. The task-level token count from
 the progress integration run is recorded as a preliminary observation in the
 [subscription usage experiment](./subscription-usage.md).
+
+
+<a id="conversation-pty-2026-10-01"></a>
+
+## Long terminal input for conversation saves · 2026-10-01
+
+The user's confirmed conversation save failed. Tool records show that the exact
+personal launcher started, but the long single-line JSON sent to its PTY was
+partly echoed and followed by BEL bytes and a stalled reader. A noninteractive
+invocation received EOF without JSON. A subsequent Node child-process call failed
+with `sandbox-exec: sandbox_apply: Operation not permitted`. The personal execution
+rule existed; the final denial does not establish a missing permission rule as
+the cause of the original failure.
+
+A synthetic macOS PTY reproduced the canonical-input failure: 12,045 input bytes
+produced 11,021 BEL bytes and the reader did not finish within eight seconds. Only
+the disposable process was stopped; no live library or original PDF was changed.
+
+The CLI now prepares terminal text input without canonical buffering, echo, or
+byte-transforming input flags, then emits `__RESEARCH_STORE_STDIN_READY__` on
+stderr. The caller waits for READY before sending JSON and the existing end
+sentinel. Original terminal settings are restored after success, errors, and
+Ctrl-C. Pipes, EOF, size limits, launchers, permission profiles, execution rules,
+and model routing remain unchanged.
+
+Validation:
+
+- Ten focused stdin tests passed, covering exact PTY transcript storage, CRLF and
+  input-byte preservation, malformed JSON/UTF-8, size limits, unsupported/setup
+  failures, Ctrl-C, and terminal restoration.
+- The developer's focused run passed 36 tests including 24 conversation-management
+  cases and two existing CLI pipe cases. A separate run passed 35 stdin,
+  conversation-management, and runtime-manifest checks.
+- A disposable installation and HOME used the actual public personal launcher and
+  `research-store` permission profile. A **92,183-byte** Korean JSON payload was
+  stored exactly without echo/BEL; terminal restoration and denial of writes to
+  an external synthetic original, with its hash preserved, passed. The fixture
+  used a test CLI entrypoint and does not validate a complete fresh installation.
+  There were no live library writes or model calls.
+- Version and Korean/English/web guide checks passed. Skill frontmatter is unchanged
+  and references were checked by the runtime-manifest test. The shared
+  `quick_validate.py` could not run because PyYAML is unavailable.
+
+- Final focused regression in the development checkout ran 78 cases: 76 passed,
+  two skipped because the filesystem does not preserve case-distinct filenames:
+  `test_case_variant_pdfs_are_converted_to_distinct_markdown` and
+  `test_colliding_legacy_document_paths_migrate_deterministically`.
+- Actual Codex `exec_command(tty: true)` and `write_stdin` also stored a 28,711-byte
+  synthetic JSON payload exactly after READY, in 400-character chunks. A large
+  single write was rejected by the tool's review-size limit, so smaller chunks
+  were used. This disposable fixture used a temporary HOME in its environment
+  and explicit development approval for execution outside the parent sandbox;
+  it does not retest the user's default chat policy and personal execution rule.
+- Independent review found no normal-path or permission-boundary regression.
+  Restoration wording was narrowed to normal completion, handled errors, and
+  Ctrl-C; restoration is not guaranteed after SIGTERM/SIGKILL.
+- The current personal installation's CLI, two product-policy locations, and two
+  conversation references were updated after backing up code. All 45 library
+  files retained their content and modification times. Personal registrations
+  and permission profiles were unchanged; disposable test stores were removed.
+
+After retrying the same confirmed scope, the user supplied a completion reply
+reporting that the DistilBERT/MobileBERT mobile sentence-classification experiment
+plan and selection criteria were saved and checked again. It reports four selected
+verbatim messages, a summary, and the final selection criterion. The result portion
+is preserved in the [conversation-save guide capture](../../../site/assets/screenshots/conversation-save-result.png).
+This evidence is a user-provided reply, not an independent inspection of the saved
+transcript or database. The scope-choice screen and later search reuse remain
+unverified.

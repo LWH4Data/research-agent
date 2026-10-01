@@ -214,14 +214,25 @@ window.RESEARCH_GUIDE_EN = {
     title: 'Search your library',
     question: 'How do I find what I need in my PDFs?',
     answer: 'Ask in your own words. Research Agent searches across your PDFs and saved conversations, then points you to the supporting documents and pages.',
-    capture: 'Question, answer, and sources screen',
+    captures: [
+      {
+        key: 'search-request',
+        caption: 'Ask Research Agent to find ways to make BERT smaller and faster in saved materials, with supporting documents and pages. No PDF is attached again in this request.',
+        alt: 'A Korean request to Research Agent to find BERT compression methods in saved materials and explain the key differences with supporting documents and pages'
+      },
+      {
+        key: 'search-result',
+        caption: 'The Korean reply compares DistilBERT, MobileBERT, MiniLMv2, quantization, and pruning with document/page references. It identifies the pruning evidence as a secondary citation.',
+        alt: 'A Korean reply comparing BERT compression methods, citing DistilBERT page 2, MobileBERT pages 1–4, MiniLMv2 pages 1–2, and evidence for quantization and pruning. It identifies pruning as a secondary citation and explains that links open saved text extracts and pages count from the first PDF page.'
+      }
+    ],
     steps: [
       'First, organize the PDFs from connected folders or conversation attachments.',
-      'Paste the prompt below into your usual Codex conversation and replace the topic with your own.',
-      'Check which parts of the answer come from PDF evidence and which come from your saved ideas.'
+      'Paste the prompt below into your usual Codex conversation without attaching the PDFs again. You can replace the topic with your own.',
+      'Check the supporting documents and pages. If saved conversations appear among the sources, distinguish PDF evidence from your saved ideas.'
     ],
-    note: 'You can ask in Korean about English PDFs. Research Agent searches with relevant Korean and English keywords. If figures or equations needed for your answer are still under review, it will explain their status.',
-    prompt: '@Research Agent Find ways to improve optical device coupling efficiency in my materials.',
+    note: 'You can ask in Korean about English PDFs. Research Agent searches with relevant Korean and English keywords. Document links open saved text extracts, and page numbers count from the first PDF page. If figures or equations needed for your answer are still under review, it will explain their status.',
+    prompt: '@Research Agent Find ways to make BERT smaller and faster in my saved materials. Briefly summarize the key differences between methods and cite the supporting documents and pages.',
     prev: 'compare',
     next: 'save'
   },
@@ -229,14 +240,22 @@ window.RESEARCH_GUIDE_EN = {
     title: 'Save a conversation',
     question: 'Can I revisit the research ideas we just discussed?',
     answer: 'Ask to save the conversation, and Research Agent will first ask which parts to keep. Only the content you choose is saved as research notes, which you can later search alongside your PDFs.',
-    capture: 'Save scope selection and result screen',
-    steps: [
-      'Use the prompt below in the Codex conversation containing the discussion you want to save.',
-      'Choose the current topic, the whole conversation, or a range you specify.',
-      'Later, ask something like, “Which conditions did we decide to change in the last experiment?”'
+    captures: [
+      {
+        key: 'save-result',
+        caption: 'This Korean reply reports saving the DistilBERT/MobileBERT experiment plan and selection criteria, then checking the record again. It says the saved record includes four selected verbatim messages, a summary, and the final decision.',
+        alt: 'A Korean reply reporting that the DistilBERT/MobileBERT mobile sentence-classification experiment plan and selection criteria were saved and checked again, including four verbatim messages and a summary. The decision is to minimize peak RAM among configurations meeting accuracy and response-time requirements, with concrete thresholds determined after initial measurements.'
+      }
     ],
-    note: 'Conversations are not all saved automatically. If the exact text of an older conversation is unavailable, Research Agent will explain that limitation.',
-    prompt: '@Research Agent Save the parts of this conversation about experimental design.',
+    steps: [
+      'Discuss your experiment plan or ideas, and state the decisions and selection criteria you want to keep.',
+      'Request saving in that Codex conversation using the prompt below. Replace the example experiment topic with your own.',
+      'When asked which scope to save, choose the current topic or specify a range. The whole conversation is an option when all its messages are available verbatim.',
+      'Check that the completion reply describes the right content and final decisions. Later, you can ask to find this record again.'
+    ],
+    alternative: {route: 'search', label: 'Find your saved conversations again'},
+    note: 'Conversations are not all saved automatically. If the exact text of an older conversation is unavailable, Research Agent will explain that limitation. The four messages in this example reflect the selected scope, not a limit on how many messages can be saved.',
+    prompt: '@Research Agent Save the DistilBERT/MobileBERT comparison experiment plan we just discussed and my selection criteria as a research note.',
     prev: 'search',
     next: 'manage'
   },

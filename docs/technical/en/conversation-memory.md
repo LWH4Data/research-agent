@@ -5,6 +5,7 @@
 ## Contents
 
 - [Design Goal](#design-goal)
+- [Conversation JSON Transport](#conversation-json-transport)
 - [User Requests and Internal Commands](#user-requests-and-internal-commands)
 - [Record Identity and Revision History](#record-identity-and-revision-history)
 - [Editable Content](#editable-content)
@@ -24,6 +25,27 @@ organization, and delete it when it is no longer wanted.
 Updates and deletions apply only to conversation records owned by Research
 Agent. They do not affect original PDFs, PDF-derived Markdown, other saved
 conversations, or the actual conversation in the Codex app.
+
+## Conversation JSON Transport
+
+Saving and updating send UTF-8 JSON, up to 8 MiB, to the constrained launcher
+through stdin. The standalone `__RESEARCH_STORE_STDIN_END__` line or EOF ends the
+input. No payload file, shell pipeline, or redirection is used.
+
+With Codex `exec_command` and `write_stdin`, start the exact absolute launcher
+with `tty: true`. Send JSON only after the CLI disables terminal line buffering
+and echo and writes `__RESEARCH_STORE_STDIN_READY__` to stderr. This prevents a
+long JSON line from being truncated by the macOS terminal input limit. The CLI
+restores the original terminal settings after normal completion, handled errors,
+and Ctrl-C. Forced termination such as SIGTERM/SIGKILL can prevent restoration.
+Real writable stdin pipes keep the existing protocol and do not
+wait for READY.
+
+A command tool that closes stdin immediately delivers EOF without the JSON.
+Switching to a Node/Python child-process call does not receive the execution-rule
+exception for the exact launcher and may encounter a nested sandbox denial.
+Distinguish input transport failure from launcher denial; never bypass denial
+by broadening permissions.
 
 ## User Requests and Internal Commands
 

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import argparse
-from contextlib import ExitStack
+from collections.abc import Iterator
+from contextlib import ExitStack, contextmanager
 from dataclasses import asdict
 import json
 from pathlib import Path
@@ -40,8 +41,56 @@ from .sync import (
 
 
 STDIN_SENTINEL = "__RESEARCH_STORE_STDIN_END__"
+STDIN_READY = "__RESEARCH_STORE_STDIN_READY__"
 CONVERSATION_STDIN_LIMIT = 8 * 1024 * 1024
 VISUAL_NOTES_STDIN_LIMIT = 1024 * 1024
+
+
+@contextmanager
+def _stdin_text_transport() -> Iterator[None]:
+    """Prepare a terminal before callers send bytes; leave ordinary pipes alone."""
+    if not sys.stdin.isatty():
+        yield
+        return
+
+    try:
+        import termios
+    except ImportError as error:
+        raise ValueError("이 터미널에서는 안전한 표준 입력을 준비할 수 없습니다") from error
+
+    try:
+        descriptor = sys.stdin.fileno()
+        original = termios.tcgetattr(descriptor)
+    except (OSError, ValueError, termios.error) as error:
+        raise ValueError("터미널 표준 입력의 현재 설정을 읽을 수 없습니다") from error
+
+    attributes = original.copy()
+    attributes[6] = original[6].copy()
+    # Canonical input can discard a long JSON line before Python receives it.
+    # Also disable input translations and flow control that consume body bytes.
+    for name in (
+        "IGNBRK", "BRKINT", "IGNPAR", "PARMRK", "INPCK", "ISTRIP",
+        "INLCR", "IGNCR", "ICRNL", "IXON", "IXOFF", "IXANY",
+    ):
+        attributes[0] &= ~getattr(termios, name, 0)
+    attributes[2] &= ~(termios.CSIZE | termios.PARENB)
+    attributes[2] |= termios.CS8
+    attributes[3] &= ~(termios.ICANON | termios.ECHO | termios.ECHONL | termios.IEXTEN)
+    attributes[3] |= termios.ISIG  # Keep Ctrl-C available for safe interruption.
+    attributes[6][termios.VMIN] = 1
+    attributes[6][termios.VTIME] = 0
+    try:
+        try:
+            termios.tcsetattr(descriptor, termios.TCSANOW, attributes)
+        except (OSError, ValueError, termios.error) as error:
+            raise ValueError("터미널 표준 입력을 안전하게 준비할 수 없습니다") from error
+        print(STDIN_READY, file=sys.stderr, flush=True)
+        yield
+    finally:
+        try:
+            termios.tcsetattr(descriptor, termios.TCSANOW, original)
+        except (OSError, ValueError, termios.error) as error:
+            raise ValueError("터미널 표준 입력의 설정을 복원할 수 없습니다") from error
 
 
 def _read_stdin_text(*, label: str, max_bytes: int) -> str:
@@ -49,19 +98,20 @@ def _read_stdin_text(*, label: str, max_bytes: int) -> str:
     sentinel = STDIN_SENTINEL.encode("ascii")
     chunks: list[bytes] = []
     total = 0
-    while True:
-        # The extra allowance lets a sentinel be recognized even when the payload
-        # itself has reached its limit. A non-sentinel line still counts in full.
-        allowance = max_bytes - total + len(sentinel) + 2
-        line = sys.stdin.buffer.readline(allowance)
-        if not line:
-            break
-        if line in (sentinel, sentinel + b"\n", sentinel + b"\r\n"):
-            break
-        total += len(line)
-        if total > max_bytes:
-            raise ValueError(f"{label}은 {max_bytes // (1024 * 1024)} MiB 이하여야 합니다")
-        chunks.append(line)
+    with _stdin_text_transport():
+        while True:
+            # The extra allowance lets a sentinel be recognized even when the payload
+            # itself has reached its limit. A non-sentinel line still counts in full.
+            allowance = max_bytes - total + len(sentinel) + 2
+            line = sys.stdin.buffer.readline(allowance)
+            if not line:
+                break
+            if line in (sentinel, sentinel + b"\n", sentinel + b"\r\n"):
+                break
+            total += len(line)
+            if total > max_bytes:
+                raise ValueError(f"{label}은 {max_bytes // (1024 * 1024)} MiB 이하여야 합니다")
+            chunks.append(line)
 
     try:
         return b"".join(chunks).decode("utf-8")

@@ -120,6 +120,8 @@ keep preventing the operation, report the conflict instead of looping.
 For updates, construct the complete mutable JSON object in memory and send it
 only through the command's process-stdin interface using the same 8 MiB limit
 and sentinel protocol as conversation saving.
+Follow [Conversation payload](conversation-payload.md) for the terminal READY
+handshake when using `exec_command` / `write_stdin`.
 Never create a payload file, use shell redirection or a here-document, or edit
 conversation Markdown or SQLite directly. Use the constrained commands for
 deletion as well; never remove a Markdown file with a general filesystem

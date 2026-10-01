@@ -15,6 +15,24 @@ UTF-8 JSON may be sent in chunks but must not exceed 8 MiB. Never create an
 intermediate payload file and never use shell redirection or a here-document.
 The CLI validates the object and writes the final Markdown atomically.
 
+For `exec_command` / `write_stdin`, start that exact launcher with `tty: true`.
+Wait for the standalone `__RESEARCH_STORE_STDIN_READY__` line on stderr before
+sending any JSON. The CLI has then disabled terminal line buffering and echo,
+so a long JSON line reaches the reader intact. Send the UTF-8 JSON and end
+sentinel through `write_stdin`, then collect the command's final result. Keep
+the process session ID; an empty poll supplies no input. Starting this command
+without a writable stdin session can deliver EOF before the JSON is sent.
+If the tool rejects an oversized write, reduce the chunk size rather than
+changing the launcher. Split text at Unicode character boundaries and do not
+insert separators between chunks; send the end sentinel only after all JSON.
+
+Do not send payload bytes before READY or compensate by repeatedly writing the
+end sentinel. If the launcher fails or is denied before READY, report that
+failure. Do not switch to a Node/Python child-process wrapper: its inner command
+does not receive the exact-launcher execution-rule exception and can fail with
+a nested macOS sandbox denial. A tool that provides a real writable stdin pipe
+may use that pipe directly; the READY handshake is only for a terminal session.
+
 Required fields:
 
 ```json
