@@ -3,7 +3,7 @@
 ## 범위와 현재 상태
 
 사용자가 한영 안내창을 포함한 설치 버전의 배포를 요청했다. 0.4.2 새 설치용
-사전 출시를 준비한다. 기존 태그와 Release 파일은 변경하지 않는다.
+사전 출시를 게시하고 공개 파일 검증을 완료했다. 기존 태그와 Release 파일은 변경하지 않는다.
 
 - 설치 완료 안내, 폴더 선택 설명, 확인 목록·빈 상태·선택 개수·버튼·관련 오류가 한국어와 영어를 지원한다.
 - 설치 안내는 macOS 선호 언어에서 첫 지원 언어를 사용하고, 지원 언어가 없거나 감지에 실패하면 영어를 사용한다.
@@ -43,5 +43,25 @@
 
 ## 원격 게시
 
-새 버전 태그의 검사와 게시, 공개 파일의 체크섬·내용 검증을 먼저 완료한 뒤
-같은 커밋의 main과 웹 가이드를 게시한다. 실행 결과는 완료 후 덧붙인다.
+- 배포 커밋 `c6d20112e1b6d8bd4c03240e9167ea1a943941f3`의 새 `v0.4.2` 태그를 먼저 푸시했다.
+  기존 태그와 Release는 변경하지 않았다.
+- [태그 검사·게시](https://github.com/LWH4Data/research-agent/actions/runs/37427013279)의
+  validate·publish가 성공했고 [v0.4.2 Prototype 사전 출시](https://github.com/LWH4Data/research-agent/releases/tag/v0.4.2)가 게시됐다.
+  CI 전체 559개 중 551개 통과·8개 조건부 제외, 87.539초. 실제 압축 시험 3개는 모두 통과, 12.581초.
+- 공개 첨부파일 3개를 내려받아 SHA256SUMS와 실제 압축·설치 파일의 해시를 검증했다.
+  58개 제품 파일 내용·권한과 canonical 규칙·설정, 내장 pyproject·lock 버전, Release 본문은 태그 소스와 일치한다.
+  공개 제품 압축 SHA-256: `2cc0e9faaebc7ab9f16f19b0c6fbf5339020455870d514f4975aba80d793aad6`.
+  설치 파일 SHA-256: `95d98dfee239188a40a76f8f908d758a6006f2ab78355c21b677b2d8f033a020`.
+- 공개 파일 검증 후 같은 배포 커밋의 main을 푸시했다. [main 검사](https://github.com/LWH4Data/research-agent/actions/runs/37427512477)의 validate가 성공하고 publish는 정상 제외됐다.
+  CI 전체 559개 중 551개 통과·8개 제외, 75.479초. 실제 압축 시험 3개는 모두 통과, 10.868초.
+
+공개 파일 검증: `/private/tmp/research-agent-v042-asset-audit.tXw57q/verification.json`.
+사용자의 개인 설치는 없는 상태를 유지한다. 원본 PDF와 휴지통에 보관한 기존 설치·자료는 변경하지 않았다.
+
+- [Pages 배포](https://github.com/LWH4Data/research-agent/actions/runs/37427512393)가 성공했다.
+  공개 `index.html`, `config.js`, `content-en.js`, `app.js`, `styles.css`는 배포 소스와 바이트 일치한다.
+  실제 Chrome의 한영 설치 페이지에서 v0.4.2 표시·Release 다운로드 URL·`--version 0.4.2`를 확인했다.
+  한영 폴더 안내에서는 macOS 언어 설명·웹 언어와의 구분·한국어 실제 캡처 표시와 영어 버튼명을 확인했다. 임시 탭은 닫았다.
+  공개 웹 검증: `/private/tmp/research-agent-0.4.2-pages-verification.json`.
+
+main 검사 기록: `/private/tmp/research-agent-v042-asset-audit.tXw57q/main-verification.json`.
