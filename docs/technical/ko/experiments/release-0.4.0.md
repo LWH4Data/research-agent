@@ -57,5 +57,30 @@ README·영문 안내에 선택창 포커스 문장을 마지막으로 추가한
 보존 안내는 사용자가 제공한 응답의 보고이며 이번 실제 저장소 조회가 아니다.
 영어 문구는 한국어 캡처를 설명한다.
 
-제품 Release가 성공하기 전에는 `main`의 웹 설치 링크를 갱신하지 않는다.
-원격 CI·Release·Pages 결과는 완료 후 로드맵의 현재 작업에 기록한다.
+## 원격 게시 결과 · 2026-10-06
+
+배포 커밋은 `93ff3a47b6fd3200846efaea91bb11333f8cb68a`다. 이 커밋의
+`v0.4.0` 태그를 먼저 푸시하고, 제품 Release와 실제 다운로드 검증이 성공한
+뒤 `main`을 푸시했다. 다음 완료 기록만 추가하는 커밋은 버전 태그를 변경하지 않는다.
+
+| 확인 | 결과 |
+| --- | --- |
+| [태그 CI](https://github.com/LWH4Data/research-agent/actions/runs/37393749310) | 성공. 버전·설치 안내·단위 검사·실제 제품 압축·임시 설치 검증 후 게시 |
+| [v0.4.0 Release](https://github.com/LWH4Data/research-agent/releases/tag/v0.4.0) | Prototype prerelease. 제품 압축·설치 실행기·SHA256SUMS 3개 자산 게시 |
+| 게시 파일 다운로드 | 두 파일의 SHA256SUMS 일치, 설치 실행기와 제품 58개 파일의 내용·권한이 배포 소스와 일치 |
+| [main CI](https://github.com/LWH4Data/research-agent/actions/runs/37394070856) | 배포 커밋 검증 성공 |
+| [Pages 배포](https://github.com/LWH4Data/research-agent/actions/runs/37394070895) | 성공 |
+| [공개 웹 가이드](https://lwh4data.github.io/research-agent/?lang=ko#/organize) | index.html·config.js·app.js·content-en.js·styles.css 5개가 소스와 바이트 일치 |
+| 공개 브라우저 확인 | 0.4.0 표기, 저장 결과·추가 검토 이미지 로드, 펼침 안내와 가로 넘침 없음 확인 |
+
+게시된 파일의 SHA-256:
+
+```text
+5cfcb03f4c451e70d6d40483686d117b08925382b37e61cc4ee187c529d0cc16  research-agent-0.4.0.tar.gz
+95d98dfee239188a40a76f8f908d758a6006f2ab78355c21b677b2d8f033a020  install-release.sh
+```
+
+게시 압축은 태그 커밋의 시각으로 생성하므로, 커밋 전 임시 압축과 gzip 파일
+전체 확인 값이 달라질 수 있다. 검증한 항목은 게시 SHA256SUMS와의 일치 및
+압축 내부 파일의 실제 내용·권한이다. 공개 검증에서는 파일을 내려받아 확인만
+했으며, 개인 환경에 설치하거나 실제 구독 모델을 호출하지 않았다.
