@@ -15,8 +15,8 @@ particular remote run. Check GitHub Actions and Releases to confirm publication.
 | Pull request or manual Actions run | Validation and installation rehearsal only |
 | Push a version tag | Publish a prerelease after validation succeeds |
 
-A tag names a particular commit. For example, `v0.3.0` must match the product
-version `0.3.0` in both `pyproject.toml` and `uv.lock`. A mismatch stops validation
+A tag names a particular commit. For example, `v0.4.0` must match the product
+version `0.4.0` in both `pyproject.toml` and `uv.lock`. A mismatch stops validation
 and publication. Creating a local tag does not publish anything; it must be
 pushed to GitHub.
 
@@ -56,11 +56,11 @@ The Release has three assets:
 
 | File | Purpose |
 | --- | --- |
-| `research-agent-0.3.0.tar.gz` | Versioned end-user product bundle |
+| `research-agent-0.4.0.tar.gz` | Versioned end-user product bundle |
 | `install-release.sh` | Starts a fresh installation of a specified version |
 | `SHA256SUMS` | SHA-256 values for the downloadable files |
 
-Users copy the command from the [version's README](https://github.com/LWH4Data/research-agent/tree/v0.3.0#readme).
+Users copy the command from the [version's README](https://github.com/LWH4Data/research-agent/tree/v0.4.0#readme).
 It downloads the installer, which downloads the
 bundle and checksum file, verifies the archive, and installs it. GitHub's
 **Code → Download ZIP**, `git clone`, and the Release's automatic **Source code**
@@ -89,26 +89,27 @@ Actions result as well.
 
 ## Publishing the next version
 
-1. Change the version in `pyproject.toml`. For example, a bug-fix release could use `0.3.1`.
+1. Change the version in `pyproject.toml`. For example, a bug-fix release could use `0.4.1`.
 2. Regenerate `uv.lock` with `uv lock` in the development environment. Do not manually replace only its version string.
 3. Update the pinned download tag and `--version` value in the README and Korean/English user guides, plus [`RELEASE_NOTES.md`](../../../packaging/RELEASE_NOTES.md). Review the manifest if runtime files were added.
-4. Run tests for the changed behavior, the full automated suite, and version validation. The `0.3.1` below is an example next release.
+4. Run tests for the changed behavior, the full automated suite, and version validation. The `0.4.1` below is an example next release.
 
 ```sh
 bash scripts/reproduce-validation.sh full
-.venv/bin/python -B scripts/check_release_version.py --tag v0.3.1
+.venv/bin/python -B scripts/check_release_version.py --tag v0.4.1
 .venv/bin/python -B scripts/check_guides.py
 ```
 
-5. Commit the intended changes, push `main`, and confirm that its Actions validation succeeds.
-6. Create a tag at the commit to release, then push that specific tag.
+5. Commit only the intended changes. Keep `main` local until the new installer assets exist, so Pages does not publish an unavailable installation link.
+6. Create a tag at the locally validated release commit and push only that tag. Its Actions run validates the commit and publishes the product.
 
 ```sh
-git tag -a v0.3.1 -m "Research Agent v0.3.1"
-git push origin v0.3.1
+git tag -a v0.4.1 -m "Research Agent v0.4.1"
+git push origin v0.4.1
 ```
 
 7. Open **Actions → Validate and release** and check that both `validate` and `publish` succeeded. Confirm the matching version and three assets under **Releases**.
+8. Confirm that the installer and checksums can be downloaded, then push the same commit to `main`. Check **Deploy web guide** and the installation command on the published website.
 
 If validation fails, fix the failed step. Do not move an already published tag to
 another commit or silently replace its files; publish a new fix version instead.

@@ -23,7 +23,7 @@ const pages={
       {
         "label": "설치하기",
         "question": "터미널에 무엇을 입력하나요?",
-        "answer": "아래 명령으로 v0.3.0 사전 출시 버전을 설치해요. 처음 설치할 때 한 번만 실행하세요.",
+        "answer": "아래 명령으로 v0.4.0 사전 출시 버전을 설치해요. 처음 설치할 때 한 번만 실행하세요.",
         "steps": ["아래 “복사”를 누르고, 터미널 창에서 ⌘ + V로 붙여 넣으세요.", "Enter를 누르고 “research-agent 설치가 완료되었습니다.”라는 안내가 나올 때까지 기다리세요."],
         "captures": [{"key": "install-complete", "caption": "터미널에 설치 완료 안내가 표시된 화면"}],
         "noteLabel": "기존 설치가 있거나 오류가 나타났나요?",
@@ -34,17 +34,16 @@ const pages={
         "label": "폴더 선택",
         "question": "PDF가 있는 폴더는 어떻게 연결하나요?",
         "answer": "폴더를 고르고 목록을 확인한 뒤 “연결하고 PDF 저장하기”를 누르세요. 선택한 폴더의 PDF 저장이 시작되고, 텍스트 저장 후 그림·수식·표 확인으로 이어져요. 원본 파일은 수정하지 않아요.",
-        "notice": "개발 중인 새 화면을 안내하고 있어요. 현재 설치 명령으로 받는 v0.3.0에는 아직 포함되지 않았어요.",
         "flow": [
           {
             "title": "1. 폴더 추가하기",
             "body": "‘연결할 폴더’ 창에서 “폴더 추가하기”를 누르세요.",
-            "capture": {"key": "folder-draft-empty", "caption": "검은 테두리는 눌러야 할 버튼을 알려주는 가이드용 표시예요.", "alt": "연결할 폴더 창의 폴더 추가하기 버튼"}
+            "capture": {"key": "folder-draft-empty", "caption": "“폴더 추가하기”를 누르세요. 검은 테두리는 가이드용 표시예요. 이 캡처의 비활성 연결 버튼에는 이전 문구가 남아 있어요.", "alt": "연결할 폴더 창의 폴더 추가하기 버튼"}
           },
           {
             "title": "2. 원하는 폴더 고르기",
-            "body": "스페이스바 옆 ⌘ Command 키를 누른 채 폴더 이름을 한 번씩 클릭하세요. 원하는 폴더들이 선택되면 키에서 손을 떼고 “목록에 추가”를 누르세요.",
-            "capture": {"key": "folder-selection", "caption": "선택된 세 폴더의 모습이에요. 이전 캡처에서 폴더 목록 부분만 잘랐어요.", "alt": "research-agent-test1, test2, test3 폴더가 함께 선택된 목록"}
+            "body": "선택창을 한 번 클릭한 뒤, 스페이스바 옆 ⌘ Command 키를 누른 채 폴더 이름을 한 번씩 클릭하세요. 원하는 폴더들이 선택되면 키에서 손을 떼고 “목록에 추가”를 누르세요.",
+            "capture": {"key": "folder-selection", "caption": "세 폴더를 함께 선택한 예시예요. 이전 캡처에서 목록만 잘라 “목록에 추가” 버튼은 보이지 않아요.", "alt": "research-agent-test1, test2, test3 폴더가 함께 선택된 목록"}
           },
           {
             "title": "3. 확인하고 PDF 저장 시작하기",
@@ -56,10 +55,10 @@ const pages={
         "help": [
           {"question": "아직 PDF가 준비되지 않았어요.", "answer": "‘연결할 폴더’ 창에서 “취소”를 누르고 다음 단계로 넘어가세요. 폴더를 연결하지 않아도 설치는 유지돼요."},
           {"question": "원하지 않는 폴더를 골랐어요.", "answer": "연결하기 전이라면 목록에서 해당 폴더의 체크를 해제하세요. 이번에 연결할 목록에서만 제외돼요. 이미 연결했다면 Codex에 잘못 연결한 폴더를 알려주고 연결 해제를 요청하세요. 해제할 폴더가 맞는지 확인하세요."},
-          {"question": "폴더를 다 고르기 전에 창을 닫았어요.", "answer": "안쪽 선택창에서 “취소”했다면 앞서 체크한 폴더들이 남아 있어요. “폴더 더 추가하기”로 이어가세요. 확인 목록 전체를 취소했다면 이번 선택은 저장되지 않아요. Codex에 “@Research Agent PDF 폴더 연결창 다시 열어줘”라고 요청하는 기능을 개발 중이며, 실제 Codex에서의 재열기는 확인 중이에요."},
+          {"question": "폴더를 다 고르기 전에 창을 닫았어요.", "answer": "안쪽 선택창에서 “취소”했다면 앞서 체크한 폴더들이 남아 있어요. “폴더 더 추가하기”로 이어가세요. 확인 목록 전체를 취소했다면 이번 선택은 저장되지 않아요. Codex에 “@Research Agent PDF 폴더 연결창 다시 열어줘”라고 요청하세요. 새 빈 목록에서 다시 고르면 돼요."},
           {"question": "여러 폴더가 선택되지 않거나 오류가 나요.", "answer": "선택창을 한 번 클릭한 뒤 ⌘ 키를 누르고 폴더 이름을 한 번씩 클릭해 보세요. 두 번 클릭하면 선택이 끝날 수 있어요. 오류가 계속되면 표시된 메시지를 Codex에 알려주세요. 해결을 위해 Full access로 바꾸지는 마세요."},
-          {"question": "연결했는데 저장이 시작되지 않았어요.", "answer": "연결 완료와 PDF 저장 완료는 다른 상태예요. Codex 실행기를 찾지 못했거나 시작 오류가 나면 연결은 유지하고 저장 대기 상태를 알려줘요. 그 메시지를 Codex에 전달해 이어서 저장하세요. 이전에 전체 시각 검토를 멈췄다면 텍스트 저장 후에도 검토는 재개 요청을 기다려요."},
-          {"question": "안내와 다른 창이 보여요.", "answer": "공개된 v0.3.0에서는 “폴더 선택하기”를 누른 뒤 폴더를 고르고 “선택”으로 바로 연결해요. 확인 목록과 저장 자동 시작은 다음 배포에 포함할 예정이에요. v0.3.0에서는 연결 후 Codex에 문서 정리를 요청하세요."}
+          {"question": "연결했는데 저장이 시작되지 않았어요.", "answer": "연결 완료와 PDF 저장 완료는 다른 상태예요. Codex 실행기를 찾지 못하면 연결을 유지하고 저장이 보류돼요. Codex에 저장 상태를 확인하고 이어서 저장해 달라고 요청하세요. 본문은 저장됐지만 시각 검토만 시작하지 못했다면 검토 상태 확인과 재개를 요청하세요. 이전에 전체 검토를 멈췄다면 전체 시각 검토 재개를 요청해야 해요."},
+          {"question": "안내와 다른 창이 보여요.", "answer": "이전 버전을 설치했다면 버튼과 순서가 다를 수 있어요. 표시된 화면이나 메시지를 Codex에 알려주세요. 현재 설치 명령은 새 설치용이며 기존 설치를 덮어쓰지 않아요. 업데이트를 위해 연구 자료실을 삭제하지 마세요."}
         ]
       },
       {
@@ -81,16 +80,32 @@ const pages={
   "connect": {
     "title": "PDF 폴더 연결하기",
     "question": "PDF가 여러 폴더에 흩어져 있는데 괜찮나요?",
-    "answer": "PDF를 옮길 필요 없어요. 원래 있는 폴더들을 연결하면 됩니다. 현재 배포된 v0.3.0은 연결 후 PDF 정리 요청이 필요해요. 개발본은 확인한 폴더의 PDF 저장을 바로 시작해요.",
-    "capture": "폴더 선택과 연결 결과 화면",
-    "steps": [
-      "Codex에 아래 문장으로 폴더 연결을 요청해요.",
-      "안내받은 명령을 일반 터미널에서 실행하면 폴더 선택창이 열려요.",
-      "여러 폴더를 고르려면 스페이스바 옆 ⌘ Command 키를 누른 채 폴더 이름을 한 번씩 클릭하세요. 두 번 클릭하면 바로 선택이 끝날 수 있어요.",
-      "원하는 폴더들이 선택됐는지 확인한 뒤 키에서 손을 떼고, 오른쪽 아래 “선택”을 누르세요.",
-      "다른 위치의 폴더도 연결한 뒤 “새로 추가된 문서를 정리해줘”라고 요청하세요."
+    "answer": "PDF를 옮길 필요 없어요. Codex에 연결창을 열어 달라고 요청하고, 원래 있는 폴더들을 목록에 모으세요. 확인 후 “연결하고 PDF 저장하기”를 누르면 선택한 폴더의 PDF 저장과 시각 검토로 이어져요.",
+    "captures": [
+      {
+        "key": "folder-draft-empty",
+        "caption": "먼저 “폴더 추가하기”를 누르세요. 검은 테두리는 가이드용 표시예요. 비활성 연결 버튼은 이전 문구가 남아 있는 캡처예요.",
+        "alt": "빈 연결할 폴더 목록과 폴더 추가하기 버튼"
+      },
+      {
+        "key": "folder-selection",
+        "caption": "세 폴더를 함께 선택한 목록 예시예요. “목록에 추가” 버튼은 이 목록 캡처에 보이지 않아요.",
+        "alt": "research-agent-test1, test2, test3 폴더가 함께 선택된 목록"
+      },
+      {
+        "key": "folder-draft-confirmation",
+        "caption": "목록을 확인하고 “연결하고 PDF 저장하기”를 눌러요. 검은 테두리는 가이드용 표시예요.",
+        "alt": "세 폴더가 체크된 확인 목록과 연결하고 PDF 저장하기 버튼"
+      }
     ],
-    "note": "설치 중 폴더를 연결했다면 다시 등록할 필요 없어요. 이 안내는 공개된 v0.3.0 기준이에요. 개발본에서는 목록을 확인하고 “연결하고 PDF 저장하기”를 누르면 선택한 폴더의 PDF 저장과 시각 검토로 이어져요. 선택창만 취소하면 목록이 유지되고, 전체를 취소하면 이번 선택은 등록되지 않아요. Codex에 “@Research Agent PDF 폴더 연결창 다시 열어줘”라고 요청하는 방식도 준비 중이며, 아직 공개 버전에는 포함되지 않았어요.",
+    "steps": [
+      "Codex에서 Research Agent를 선택하고 아래 문장으로 폴더 연결을 요청하세요.",
+      "열린 “연결할 폴더” 창에서 “폴더 추가하기”를 누르세요.",
+      "선택창을 한 번 클릭한 뒤 ⌘ Command 키를 누른 채 폴더 이름을 한 번씩 클릭하세요. 선택한 뒤 “목록에 추가”를 누르세요.",
+      "잘못 고른 폴더는 확인 목록에서 체크를 해제하세요. 다른 위치의 폴더도 고르려면 “폴더 더 추가하기”를 누르세요.",
+      "“연결하고 PDF 저장하기”를 누르고, Codex 답변에서 저장 결과와 시각 검토 상태를 확인하세요."
+    ],
+    "note": "설치 중 연결한 폴더는 다시 연결할 필요 없어요. 원본 폴더와 PDF는 수정하지 않아요. 안쪽 선택창을 취소하면 체크 목록이 유지되고, 전체 확인창을 취소하면 이번 선택은 저장되지 않아요. 창을 닫았다면 “@Research Agent PDF 폴더 연결창 다시 열어줘”라고 요청해 새 목록에서 다시 고르세요.",
     "prompt": "@Research Agent 내 PDF가 있는 폴더들을 연결해줘.",
     "prev": "start",
     "next": "organize"
@@ -120,7 +135,7 @@ const pages={
     "helpLabel": "검토가 시작되지 않거나, 잠시 멈추고 싶다면?",
     "help": [
       {"question": "‘대기 중’이거나 시작하지 못했다고 나오면?", "answer": "대기는 검토가 진행 중이라는 뜻이 아니에요. 답변에 표시된 이유를 확인하고 “첨부한 PDF의 시각 검토가 시작됐는지 확인하고, 시작하지 못했다면 이유를 알려줘”라고 요청하세요. 확인하지 못한 수식·표·그림은 검토 완료로 취급하지 않아요. 추가 검토가 필요하면 필요한 문서와 페이지만 다시 확인해 달라고 요청하세요."},
-      {"question": "시간이 오래 걸리거나 사용량이 부담된다면?", "answer": "현재 개발본에서는 “이 PDF의 시각 검토를 잠시 멈춰줘”라고 요청할 수 있어요. 저장된 본문은 계속 사용할 수 있고, 나중에 “이 PDF의 시각 검토를 이어서 해줘”라고 요청하면 돼요. 이 일시정지·재개 기능은 공개 v0.3.0에는 아직 포함되지 않았어요."}
+      {"question": "시간이 오래 걸리거나 사용량이 부담된다면?", "answer": "“이 PDF의 시각 검토를 잠시 멈춰줘”라고 요청하세요. 저장된 본문은 계속 사용할 수 있어요. 나중에 “이 PDF의 시각 검토를 이어서 해줘”라고 요청하면 돼요. 전체 시각 검토를 멈췄다면 “자료실 전체의 시각 검토를 재개해줘”라고 요청하세요. 시간·페이지 안내 기준을 정해도 자동 중단하지 않으며 중단은 직접 결정해요."}
     ],
     "prompt": "@Research Agent 첨부한 PDF들을 연구 자료실에 저장하고, 첨부한 문서의 핵심 내용을 각각 정리해줘.",
     "prev": "start",
@@ -128,29 +143,43 @@ const pages={
   },
   "organize": {
     "title": "폴더의 PDF 저장하기",
-    "question": "설치할 때 연결한 폴더의 PDF는 어떻게 저장하나요?",
-    "answer": "현재 배포된 v0.3.0은 연결 후 아래 문장으로 첫 저장을 요청해요. 개발본은 폴더 확인 후 저장이 시작되므로 처리 상태를 확인하면 돼요. 이후 PDF를 추가하거나 바꾸면 아래 문장으로 갱신하세요. 원본 PDF는 수정하지 않아요.",
+    "question": "연결한 폴더의 PDF가 저장됐는지 어떻게 확인하나요?",
+    "answer": "폴더 확인창에서 “연결하고 PDF 저장하기”를 누르면 저장이 시작돼요. 아래 문장으로 저장 결과와 시각 검토 상태를 확인하세요. 본문 저장과 시각 검토 완료는 따로 확인해요. 원본 PDF는 수정하지 않아요.",
     "capture": "저장 후 상태를 확인한 실제 화면이에요. 폴더 3개의 PDF 9개가 저장됐고, 시각 검토는 7개 문서가 완료됐어요. 나머지 2개는 각각 1쪽씩 추가 검토가 필요하며, 진행 중인 검토 작업은 없다고 안내해요.",
     "captureAlt": "연결한 폴더의 저장 결과와 시각 검토 상태를 묻는 질문, PDF 9개 저장·실패 없음, 7개 문서 시각 검토 완료·2개 문서 각 1쪽 추가 검토 필요·실행 중인 검토 없음이라는 Codex 응답",
-    "followUp": {
-      "title": "추가 검토가 필요하다고 나오면?",
-      "explanation": "PDF는 저장됐지만 그림·수식·표에 아직 확인하지 못한 부분이 있다는 뜻이에요. 기다리기만 하면 자동으로 반복 검토되지는 않아요. Codex에 필요한 페이지만 다시 확인해 달라고 요청하세요.",
-      "prompt": "@Research Agent 추가 검토가 필요한 문서와 페이지를 확인하고, 그 부분만 다시 검토해서 결과를 저장해줘. 끝나면 문서명과 페이지별로 완료 여부를 알려주고, 여전히 확인하지 못한 부분은 이유도 설명해줘.",
-      "result": "“검토 중”이라는 답변을 받았다면 대화를 계속해도 돼요. 이후 “방금 요청한 추가 검토 결과를 알려줘”라고 물어보세요. 결과에서 어느 문서의 몇 쪽이 확인됐는지 살펴보세요. 여전히 확인하기 어려운 부분은 이유와 함께 남을 수 있어요. 그 내용이나 수치를 검증 완료로 받아들이지 말고, 안내된 원본 페이지를 확인하세요. 이미 저장한 PDF와 확인이 끝난 내용은 그대로 사용할 수 있어요.",
-      "capture": "추가 검토를 요청한 뒤 받은 실제 답변이에요. BERT 15쪽과 Auto-Encoding Variational Bayes 14쪽을 다시 확인해 저장했고, 남은 검토나 실패는 없다고 안내해요.",
-      "captureAlt": "추가 검토가 필요한 페이지만 다시 확인해 저장해 달라는 요청과, BERT 15쪽·Auto-Encoding Variational Bayes 14쪽의 검토와 저장 완료, 대기·미해결·실패 각 0쪽이라는 Codex 응답"
-    },
     "steps": [
       "설치할 때 폴더를 연결했다면 다시 연결하거나 PDF를 첨부할 필요 없어요.",
-      "Codex의 로컬 대화에서 Research Agent를 선택하세요. v0.3.0은 아래 문장으로 저장을 요청하고, 개발본에서 이미 시작했다면 “방금 연결한 폴더의 저장 상태를 알려줘”라고 물어보세요.",
-      "결과에서 저장된 문서 수와 처리하지 못한 파일이 있는지 확인하세요. 텍스트 저장이 끝난 문서는 바로 검색할 수 있어요. 그림·수식·표는 확인 중일 수 있어요.",
-      "나중에 폴더에 PDF를 추가하거나 바꿨을 때도 같은 요청을 보내세요. 새로 추가되거나 변경된 문서를 갱신해요."
+      "Codex의 로컬 대화에서 Research Agent를 선택하고 아래 문장으로 저장 결과를 물어보세요.",
+      "저장된 문서 수와 처리하지 못한 파일을 확인하세요. 텍스트 저장이 끝난 문서는 바로 검색할 수 있어요.",
+      "시각 검토가 진행 중인지, 추가 확인이 필요한 문서·페이지가 있는지 따로 확인하세요. 남은 부분은 아래 안내에 따라 요청하세요."
     ],
-    "alternative": {"route": "connect", "label": "아직 폴더를 연결하지 않았다면: PDF 폴더 연결하기"},
-    "note": "아직 확인 중인 시각 자료는 검증된 결과로 취급하지 않아요. 완료·오류와 오래 걸리는 작업의 진행 상황은 macOS 알림으로 안내할 수 있어요. 알림 설정에 따라 보이지 않을 수 있고, 대화에 새 메시지가 자동으로 추가되지는 않아요. 중단 후 같은 요청을 하면 저장된 상태를 확인해 남은 작업을 이어가요.",
-    "prompt": "@Research Agent 연결한 폴더 안의 PDF들을 변환해서 연구 자료실에 저장해줘. 저장된 문서와 아직 처리 중인 부분을 알려줘.",
+    "alternative": {
+      "route": "connect",
+      "label": "아직 폴더를 연결하지 않았다면: PDF 폴더 연결하기"
+    },
+    "note": "아직 확인 중인 시각 자료는 검증된 결과로 취급하지 않아요. 시작·완료·추가 확인·오류와 오래 걸리는 작업의 진행 상황은 macOS 알림으로 안내할 수 있어요. 알림 설정에 따라 보이지 않을 수 있고, 대화에 새 메시지가 자동으로 추가되지는 않아요. 전체 시각 검토를 멈췄다면 새 저장 후에도 멈춘 상태가 유지돼요. 계속하려면 전체 검토 재개를 요청하세요.",
+    "prompt": "@Research Agent 연결한 폴더의 PDF 저장 결과와 시각 검토 상태를 간단히 알려줘.",
     "prev": "start",
-    "next": "compare"
+    "next": "compare",
+    "followUps": [
+      {
+        "key": "organize-refresh",
+        "title": "폴더에 PDF를 추가하거나 바꿨다면",
+        "explanation": "폴더를 계속 감시해 자동으로 갱신하지는 않아요. PDF를 새로 넣거나 수정한 뒤에는 아래 문장으로 갱신을 요청하세요. 연결한 위치에서 새로 추가되거나 바뀐 문서를 처리해요.",
+        "prompt": "@Research Agent 연결한 폴더에서 새로 추가되거나 변경된 PDF만 정리하고, 저장 결과와 시각 검토 상태를 알려줘.",
+        "result": "이미 연결한 폴더는 다시 고를 필요 없어요. 새 폴더라면 먼저 연결하세요. 새로 처리한 문서와 실패·대기 중인 부분을 답변에서 확인하세요.",
+        "captures": []
+      },
+      {
+        "title": "추가 검토가 필요하다고 나오면?",
+        "explanation": "PDF는 저장됐지만 그림·수식·표에 아직 확인하지 못한 부분이 있다는 뜻이에요. 기다리기만 하면 자동으로 반복 검토되지는 않아요. Codex에 필요한 페이지만 다시 확인해 달라고 요청하세요.",
+        "prompt": "@Research Agent 추가 검토가 필요한 문서와 페이지를 확인하고, 그 부분만 다시 검토해서 결과를 저장해줘. 끝나면 문서명과 페이지별로 완료 여부를 알려주고, 여전히 확인하지 못한 부분은 이유도 설명해줘.",
+        "result": "“검토 중”이라는 답변을 받았다면 대화를 계속해도 돼요. 이후 “방금 요청한 추가 검토 결과를 알려줘”라고 물어보세요. 결과에서 어느 문서의 몇 쪽이 확인됐는지 살펴보세요. 여전히 확인하기 어려운 부분은 이유와 함께 남을 수 있어요. 그 내용이나 수치를 검증 완료로 받아들이지 말고, 안내된 원본 페이지를 확인하세요. 이미 저장한 PDF와 확인이 끝난 내용은 그대로 사용할 수 있어요.",
+        "capture": "추가 검토를 요청한 뒤 받은 실제 답변이에요. BERT 15쪽과 Auto-Encoding Variational Bayes 14쪽을 다시 확인해 저장했고, 남은 검토나 실패는 없다고 안내해요.",
+        "captureAlt": "추가 검토가 필요한 페이지만 다시 확인해 저장해 달라는 요청과, BERT 15쪽·Auto-Encoding Variational Bayes 14쪽의 검토와 저장 완료, 대기·미해결·실패 각 0쪽이라는 Codex 응답",
+        "key": "organize-review"
+      }
+    ]
   },
   "compare": {
     "title": "새 PDF와 기존 자료 함께 정리하기",
@@ -356,7 +385,7 @@ const featureCaptures={
   'memory-search-plan':{src:'assets/screenshots/memory-search-plan.png',width:1498,height:1292,fullSize:true}
 };
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const ui={ko:{guide:'사용 가이드',overview:'가이드 둘러보기',menu:'메뉴',skip:'본문으로 이동',nav:'가이드 메뉴',first:'처음이라면',features:'기능',me:'나',assistant:'Research Agent 안내',howto:'사용 방법',note:'알아두세요',previous:'이전',next:'다음',related:'관련 가이드',blank:'실제 캡처를 넣을 빈 영역',capturePending:'캡처 준비 중',copy:'복사',copied:'복사됨',manualCopy:'직접 복사',copiedNotice:'복사했어요.',failedCopy:'복사할 문장을 선택했어요. ⌘ + C 또는 Ctrl + C로 직접 복사하세요.',prompt:'Codex에서 사용할 문장',invocationLabel:'VS Code·CLI에서 사용하려면',invocationNote:'문장 앞의 @Research Agent를 $research-library로 바꾸세요. 또는 /skills에서 research-library를 선택한 뒤 요청을 입력하세요.',install:'터미널에서 실행할 설치 명령',paste:'복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.',installNote:'명령을 복사해도 설치가 실행되지는 않아요. 터미널에서 직접 실행하세요.',sideNote:'사용 가이드 · v0.3.0\n실제 작업은 Codex에서 진행해요.',overviewQuestion:'Research Agent로 무엇을 할 수 있나요?',overviewAnswer:'흩어진 PDF와 중요한 연구 대화를 정리하고, 필요할 때 다시 찾아볼 수 있어요. 궁금한 기능을 선택해 보세요.',featureDescriptions:{attach:'PDF를 대화에 첨부해 바로 저장하고 질문해요.',organize:'연결한 폴더의 PDF를 변환해 검색할 수 있도록 저장해요.',compare:'새 PDF를 저장하고 기존 자료와 함께 정리해요.',search:'여러 PDF와 저장한 대화에서 관련 내용을 찾아요.',save:'연구 아이디어와 실험 설계를 선택해서 보관해요.',manage:'저장한 대화 목록을 보고 제목·태그를 수정하거나 기록을 삭제해요.'},startLink:'처음이라면 설치부터 시작하세요.',overviewEnd:'현재 지원 환경은 macOS의 Codex예요. 이 웹은 사용 방법을 안내합니다.',},en:{guide:'User guide',overview:'Explore the guide',menu:'Menu',skip:'Skip to content',nav:'Guide navigation',first:'Getting started',features:'Features',me:'You',assistant:'Research Agent guide',howto:'How to use it',note:'Good to know',previous:'Previous',next:'Next',related:'Related guides',blank:'Empty frame reserved for a real screenshot',capturePending:'Screenshot coming soon',copy:'Copy',copied:'Copied',manualCopy:'Copy manually',copiedNotice:'Copied to clipboard.',failedCopy:'The text is selected. Press ⌘ + C or Ctrl + C to copy it.',prompt:'Prompt to use in Codex',invocationLabel:'Using VS Code or the CLI?',invocationNote:'Replace @Research Agent at the start of the prompt with $research-library. Or choose research-library from /skills, then enter your request.',install:'Installation command for Terminal',paste:'Paste this into your usual Codex conversation.',installNote:'Copying does not install anything. Run the command yourself in Terminal.',sideNote:'User guide · v0.3.0\nActual work takes place in Codex.',overviewQuestion:'What can I do with Research Agent?',overviewAnswer:'Organize scattered PDFs and important research conversations, then find them again when you need them. Choose a feature to learn more.',featureDescriptions:{attach:'Attach PDFs in Codex to save them and ask questions.',organize:'Convert and save PDFs from your connected folders.',compare:'Save new PDFs and summarize them with existing materials.',search:'Find related information across PDFs and saved conversations.',save:'Keep selected research ideas and experiment plans.',manage:'View saved conversations, edit their titles and tags, or delete a saved record.'},startLink:'New here? Start with installation.',overviewEnd:'The supported environment is Codex on macOS. This website explains how to use it.',}};
+const ui={ko:{guide:'사용 가이드',overview:'가이드 둘러보기',menu:'메뉴',skip:'본문으로 이동',nav:'가이드 메뉴',first:'처음이라면',features:'기능',me:'나',assistant:'Research Agent 안내',howto:'사용 방법',note:'알아두세요',previous:'이전',next:'다음',related:'관련 가이드',blank:'실제 캡처를 넣을 빈 영역',capturePending:'캡처 준비 중',copy:'복사',copied:'복사됨',manualCopy:'직접 복사',copiedNotice:'복사했어요.',failedCopy:'복사할 문장을 선택했어요. ⌘ + C 또는 Ctrl + C로 직접 복사하세요.',prompt:'Codex에서 사용할 문장',invocationLabel:'VS Code·CLI에서 사용하려면',invocationNote:'문장 앞의 @Research Agent를 $research-library로 바꾸세요. 또는 /skills에서 research-library를 선택한 뒤 요청을 입력하세요.',install:'터미널에서 실행할 설치 명령',paste:'복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.',installNote:'명령을 복사해도 설치가 실행되지는 않아요. 터미널에서 직접 실행하세요.',sideNote:'사용 가이드 · v0.4.0\n실제 작업은 Codex에서 진행해요.',overviewQuestion:'Research Agent로 무엇을 할 수 있나요?',overviewAnswer:'흩어진 PDF와 중요한 연구 대화를 정리하고, 필요할 때 다시 찾아볼 수 있어요. 궁금한 기능을 선택해 보세요.',featureDescriptions:{attach:'PDF를 대화에 첨부해 바로 저장하고 질문해요.',organize:'연결한 폴더의 PDF를 변환해 검색할 수 있도록 저장해요.',compare:'새 PDF를 저장하고 기존 자료와 함께 정리해요.',search:'여러 PDF와 저장한 대화에서 관련 내용을 찾아요.',save:'연구 아이디어와 실험 설계를 선택해서 보관해요.',manage:'저장한 대화 목록을 보고 제목·태그를 수정하거나 기록을 삭제해요.'},startLink:'처음이라면 설치부터 시작하세요.',overviewEnd:'현재 지원 환경은 macOS의 Codex예요. 이 웹은 사용 방법을 안내합니다.',},en:{guide:'User guide',overview:'Explore the guide',menu:'Menu',skip:'Skip to content',nav:'Guide navigation',first:'Getting started',features:'Features',me:'You',assistant:'Research Agent guide',howto:'How to use it',note:'Good to know',previous:'Previous',next:'Next',related:'Related guides',blank:'Empty frame reserved for a real screenshot',capturePending:'Screenshot coming soon',copy:'Copy',copied:'Copied',manualCopy:'Copy manually',copiedNotice:'Copied to clipboard.',failedCopy:'The text is selected. Press ⌘ + C or Ctrl + C to copy it.',prompt:'Prompt to use in Codex',invocationLabel:'Using VS Code or the CLI?',invocationNote:'Replace @Research Agent at the start of the prompt with $research-library. Or choose research-library from /skills, then enter your request.',install:'Installation command for Terminal',paste:'Paste this into your usual Codex conversation.',installNote:'Copying does not install anything. Run the command yourself in Terminal.',sideNote:'User guide · v0.4.0\nActual work takes place in Codex.',overviewQuestion:'What can I do with Research Agent?',overviewAnswer:'Organize scattered PDFs and important research conversations, then find them again when you need them. Choose a feature to learn more.',featureDescriptions:{attach:'Attach PDFs in Codex to save them and ask questions.',organize:'Convert and save PDFs from your connected folders.',compare:'Save new PDFs and summarize them with existing materials.',search:'Find related information across PDFs and saved conversations.',save:'Keep selected research ideas and experiment plans.',manage:'View saved conversations, edit their titles and tags, or delete a saved record.'},startLink:'New here? Start with installation.',overviewEnd:'The supported environment is Codex on macOS. This website explains how to use it.',}};
 const preferences={language:'ko'};
 try{
   const stored=JSON.parse(localStorage.getItem('research-guide-preferences')||'{}');
@@ -378,7 +407,7 @@ function savePreferences(){
 }
 function renderCapture(capture, route, language){
   const t=ui[language];
-  const asset=route==='start'?installationCaptures[capture.key]:featureCaptures[capture.key];
+  const asset=featureCaptures[capture.key]||installationCaptures[capture.key];
   const caption=escapeHTML(capture.caption);
   const fullSizeLink=asset?.fullSize?` <a href="${asset.src}" target="_blank" rel="noopener noreferrer">${language==='ko'?'크게 보기':'View full size'}</a>`:'';
   const attributes=`data-capture-language="${language}" data-capture-feature="${route}" data-capture-key="${escapeHTML(capture.key)}"`;

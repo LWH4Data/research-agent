@@ -23,7 +23,7 @@ window.RESEARCH_GUIDE_EN = {
       {
         label: 'Install',
         question: 'What do I enter in Terminal?',
-        answer: 'The command below installs the v0.3.0 prerelease. Run it once for a fresh installation.',
+        answer: 'The command below installs the v0.4.0 prerelease. Run it once for a fresh installation.',
         steps: ['Click “Copy” below, then paste into Terminal with ⌘ + V.', 'Press Enter and wait for “research-agent 설치가 완료되었습니다.” — the Korean installation-complete message.'],
         captures: [{key: 'install-complete', caption: 'The installation-complete message in Terminal'}],
         noteLabel: 'Already installed, or seeing an error?',
@@ -34,23 +34,22 @@ window.RESEARCH_GUIDE_EN = {
         label: 'Choose folders',
         question: 'How do I connect my PDF folders?',
         answer: 'Choose your folders, check the list, then click “연결하고 PDF 저장하기” (Connect and save PDFs). Saving starts for those folders, followed by checks of figures, equations, and tables. Your original files stay unchanged.',
-        notice: 'Development preview: this flow is not yet included in v0.3.0, which the current installation command installs.',
         flow: [
           {
             title: 'Open the folder picker',
             body: 'Click “폴더 추가하기” (Add folders).',
             capture: {
               key: 'folder-draft-empty',
-              caption: 'The empty folder list. The black outline is a guide annotation.',
-              alt: 'The development version’s empty folder list and “폴더 추가하기” (Add folders) button'
+              caption: 'Click “폴더 추가하기” (Add folders). The black outline is a guide annotation. The disabled connection button in this earlier screenshot uses an older label.',
+              alt: 'The empty folder list and “폴더 추가하기” (Add folders) button'
             }
           },
           {
             title: 'Choose folders',
-            body: 'Hold ⌘ Command beside the spacebar and click each folder name once. Then click “목록에 추가” (Add to list).',
+            body: 'Click the picker window once, then hold ⌘ Command beside the spacebar and click each folder name once. Then click “목록에 추가” (Add to list).',
             capture: {
               key: 'folder-selection',
-              caption: 'An example of selected folders, cropped from an earlier screenshot.',
+              caption: 'Three selected folders, cropped from an earlier screenshot. The current “목록에 추가” (Add to list) button is not shown in this earlier crop.',
               alt: 'Three folder names selected and highlighted together'
             }
           },
@@ -76,7 +75,7 @@ window.RESEARCH_GUIDE_EN = {
           },
           {
             question: 'Closed a window?',
-            answer: 'Canceling the inner picker keeps your checked folders in the list. Canceling the whole flow discards this selection. Ask Codex to reopen the folder connection window; reopening directly from Codex is still being validated.'
+            answer: 'Canceling the inner picker keeps your checked folders in the list. Canceling the whole flow discards this draft. Ask “@Research Agent Reopen the PDF folder connection window.” It opens a new empty list where you can choose again.'
           },
           {
             question: 'Folders will not select, or an error appeared?',
@@ -84,11 +83,11 @@ window.RESEARCH_GUIDE_EN = {
           },
           {
             question: 'The folders are connected, but saving has not started?',
-            answer: 'A connection is not proof of completed storage. If the Codex executable is unavailable or startup fails, connections stay saved and processing is reported as deferred or failed. Share that message with Codex to continue. An existing library-wide review pause keeps visual work on hold after text storage until you ask to resume.'
+            answer: 'A connection is not proof of completed storage. If the Codex executable is unavailable, the connection stays saved and storage is deferred. Ask Codex to check and continue storage. If text is saved but visual review could not start, ask to check and resume review instead. A library-wide pause requires an explicit request to resume all visual reviews.'
           },
           {
             question: 'Why does my window look different?',
-            answer: 'Published v0.3.0 uses the earlier picker, where “선택” (Select) finishes selection directly. The draft-list flow and automatic saving are upcoming changes. In v0.3.0, ask Codex to organize PDFs after connecting folders.'
+            answer: 'An earlier installation may have different buttons or steps. Share the screen or message with Codex. The installation command is for fresh installations and does not overwrite an existing one. Do not delete your research library to update.'
           }
         ]
       },
@@ -111,16 +110,20 @@ window.RESEARCH_GUIDE_EN = {
   connect: {
     title: 'Connect PDF folders',
     question: 'Can my PDFs stay in different folders?',
-    answer: 'Yes. Leave your PDFs where they are and connect their folders. Published v0.3.0 needs a separate organization request. The development version starts saving PDFs from the confirmed folders automatically.',
-    capture: 'Folder selection and connection result screen',
-    steps: [
-      'Use the prompt below to ask Codex to connect your folders.',
-      'Run the command it gives you in a regular Terminal window to open the folder picker.',
-      'To choose several folders, hold down ⌘ Command beside the spacebar and click each folder name once. Double-clicking may finish selection immediately.',
-      'Check that the folders you want are selected, release the key, then click “선택” (Select) at the bottom right.',
-      'Connect other folders the same way, then ask, “Organize my newly added documents.”'
+    answer: 'Yes. Ask Codex to open the connection window, then collect the folders in its list. Confirm with “연결하고 PDF 저장하기” (Connect and save PDFs) to start saving PDFs from the selected folders, followed by visual review.',
+    captures: [
+      {key: 'folder-draft-empty', caption: 'Click “폴더 추가하기” (Add folders). The black outline is a guide annotation. The disabled connection button uses an older label in this screenshot.', alt: 'The empty folder list and Add folders button'},
+      {key: 'folder-selection', caption: 'Three folders selected together. The current Add to list button is not shown in this earlier crop.', alt: 'Three folder names selected and highlighted together'},
+      {key: 'folder-draft-confirmation', caption: 'Check the list and click “연결하고 PDF 저장하기” (Connect and save PDFs). The black outline is a guide annotation.', alt: 'Three checked folders and the Connect and save PDFs button'}
     ],
-    note: 'If you connected folders during installation, you do not need to register them again. These instructions describe published v0.3.0. The development version lets you confirm the list with “연결하고 PDF 저장하기” (Connect and save PDFs), then saves PDFs from those folders and hands off to visual review. Canceling the inner picker preserves the list; canceling the whole flow registers nothing from that draft. Reopening through a Codex request is being prepared. These improvements are not yet released.',
+    steps: [
+      'Select Research Agent in Codex and use the prompt below to connect your folders.',
+      'In the connection window, click “폴더 추가하기” (Add folders).',
+      'Click the picker window once, then hold ⌘ Command and click each folder name once. Click “목록에 추가” (Add to list).',
+      'Uncheck any unwanted folders in the confirmation list. Use “폴더 더 추가하기” (Add more folders) for another location.',
+      'Click “연결하고 PDF 저장하기” (Connect and save PDFs), then check the storage results and review status in the Codex reply.'
+    ],
+    note: 'Folders connected during installation do not need connecting again. Your original folders and PDFs stay unchanged. Canceling the inner picker keeps the checked list; canceling the whole confirmation window discards this draft. If you closed it, ask “@Research Agent Reopen the PDF folder connection window” and choose again in a new list.',
     prompt: '@Research Agent Connect the folders containing my PDFs.',
     prev: 'start',
     next: 'organize'
@@ -150,7 +153,7 @@ window.RESEARCH_GUIDE_EN = {
     helpLabel: 'Review has not started, or you want to pause?',
     help: [
       {question: 'What if review is pending or could not start?', answer: 'Pending does not mean a review is running. Check the reason in the reply and ask, “Check whether visual review of the attached PDFs has started. If it has not, tell me why.” Do not treat unconfirmed figures, equations, or tables as verified. If further review is needed, ask to recheck only the affected documents and pages.'},
-      {question: 'What if it takes too long or uses too much of your allowance?', answer: 'In the current development version, you can ask, “Pause visual review of this PDF.” Its saved text remains available. Later, ask, “Resume visual review of this PDF.” This pause and resume feature is not included in published v0.3.0 yet.'}
+      {question: 'What if it takes too long or uses too much of your allowance?', answer: 'Ask “Pause visual review of this PDF.” Its saved text remains available. Later, ask “Resume visual review of this PDF.” If you paused all reviews, ask “Resume visual review for the entire library.” Time and page guidance thresholds do not stop review automatically; you decide when to stop.'}
     ],
     prompt: '@Research Agent Save the attached PDFs to my research library and summarize the key points of each attached document.',
     prev: 'start',
@@ -158,27 +161,38 @@ window.RESEARCH_GUIDE_EN = {
   },
   organize: {
     title: 'Save PDFs from folders',
-    question: 'How do I save PDFs from the folders I connected during installation?',
-    answer: 'Published v0.3.0 needs the prompt below for the first save after connecting folders. The development version starts saving after folder confirmation, so check its progress instead. Use the prompt later to update added or changed PDFs. Your originals stay unchanged.',
+    question: 'How do I check whether PDFs from connected folders were saved?',
+    answer: 'Saving starts when you confirm with “연결하고 PDF 저장하기” (Connect and save PDFs). Use the prompt below to check storage and visual review status separately. Your original PDFs stay unchanged.',
     capture: 'An actual Korean status check after saving: nine PDFs from three folders are saved, and visual review is complete for seven documents. Each of the other two needs one page reviewed further; no review job is currently running.',
     captureAlt: 'A Korean storage and visual-review status request, with a Codex response reporting nine PDFs saved without failures, seven documents visually complete, one page needing further review in each of two documents, and no active review job',
-    followUp: {
-      title: 'What if further review is needed?',
-      explanation: 'The PDF is saved, but some details in figures, equations, or tables could not be confirmed. Waiting alone does not trigger repeated reviews. Ask Codex to check only the pages that still need attention.',
-      prompt: '@Research Agent Identify the documents and pages needing further review, review only those pages again, and save the results. When finished, report completion by document and page, and explain anything that remains unconfirmed.',
-      result: 'If the reply says review is in progress, you can keep chatting. Later ask “What are the results of the further review I requested?” Check which documents and pages were verified. Some details may remain unresolved, with an explanation. Do not treat those details or values as verified; check the indicated original page. Your saved PDFs and already verified content remain available.',
-      capture: 'An actual Korean reply after a request for further review. It reports that BERT page 15 and Auto-Encoding Variational Bayes page 14 were checked again and saved, with no pending review, unresolved pages, or failures remaining.',
-      captureAlt: 'A Korean request to recheck and save only pages needing further review, followed by a Codex response reporting BERT page 15 and Auto-Encoding Variational Bayes page 14 verified and saved, with zero pending, unresolved, or failed pages'
-    },
+    followUps: [
+      {
+        key: 'organize-refresh',
+        title: 'Added or changed PDFs in a connected folder?',
+        explanation: 'Folders are not continuously watched for changes. After adding or editing PDFs, use this prompt to process new and changed documents in connected locations.',
+        prompt: '@Research Agent Organize only new or changed PDFs in my connected folders, then tell me the storage results and visual review status.',
+        result: 'You do not need to reconnect existing folders. Connect a new folder first. Check the reply for newly processed documents, failures, and pending work.',
+        captures: []
+      },
+      {
+        key: 'organize-review',
+        title: 'What if further review is needed?',
+        explanation: 'The PDF is saved, but some details in figures, equations, or tables could not be confirmed. Waiting alone does not trigger repeated reviews. Ask Codex to check only the pages that still need attention.',
+        prompt: '@Research Agent Identify the documents and pages needing further review, review only those pages again, and save the results. When finished, report completion by document and page, and explain anything that remains unconfirmed.',
+        result: 'If the reply says review is in progress, you can keep chatting. Later ask “What are the results of the further review I requested?” Check which documents and pages were verified. Some details may remain unresolved, with an explanation. Do not treat those details or values as verified; check the indicated original page. Your saved PDFs and already verified content remain available.',
+        capture: 'An actual Korean reply after a request for further review. It reports that BERT page 15 and Auto-Encoding Variational Bayes page 14 were checked again and saved, with no pending review, unresolved pages, or failures remaining.',
+        captureAlt: 'A Korean request to recheck and save only pages needing further review, followed by a Codex response reporting BERT page 15 and Auto-Encoding Variational Bayes page 14 verified and saved, with zero pending, unresolved, or failed pages'
+      }
+    ],
     steps: [
       'If you connected folders during installation, you do not need to reconnect them or attach their PDFs.',
-      'Select Research Agent in a local Codex conversation. In v0.3.0, request saving with the prompt below. If the development version already started, ask “What is the storage status of the folders I just connected?”',
-      'Check how many documents were saved and whether any files could not be processed. Documents can be searched once their text is saved. Figures, equations, and tables may still be under review.',
-      'Use the same request after adding or changing PDFs in those folders. New and changed documents will be updated.'
+      'Select Research Agent in a local Codex conversation and use the prompt below to check the storage results.',
+      'Check how many documents were saved and whether any files could not be processed. Documents can be searched once their text is saved.',
+      'Check separately whether visual review is running and which documents or pages need further attention. Follow the instructions below for anything remaining.'
     ],
     alternative: {route: 'connect', label: 'No folders connected yet? Connect PDF folders'},
-    note: 'Visual content still under review is not treated as verified. macOS notifications can report completion, errors, and progress on longer tasks. Notifications may not appear depending on your settings, and they do not add new messages to the conversation automatically. If processing stops, use the same request to check the saved state and continue the remaining work.',
-    prompt: '@Research Agent Convert and save the PDFs in my connected folders to my research library. Tell me which documents were saved and what is still being processed.',
+    note: 'Visual content still under review is not treated as verified. macOS notifications can report the start, completion, further attention, errors, and progress on longer tasks. Notifications may not appear depending on your settings; they do not add conversation messages automatically. A library-wide pause stays active after new storage. Ask explicitly to resume all reviews when ready.',
+    prompt: '@Research Agent Briefly tell me the PDF storage results and visual review status for my connected folders.',
     prev: 'start',
     next: 'compare'
   },

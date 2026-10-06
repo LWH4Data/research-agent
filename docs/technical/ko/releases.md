@@ -15,8 +15,8 @@ GitHub 저장소는 개발 코드와 문서를 그대로 공개한다. Release�
 | Pull Request 또는 Actions 수동 실행 | 검사와 배포본 설치 시험만 실행 |
 | 버전 태그를 푸시 | 검사에 성공하면 사전 출시(pre-release) 게시 |
 
-태그는 특정 커밋에 붙이는 버전 이름이다. 예를 들어 `v0.3.0`은
-`pyproject.toml`과 `uv.lock`의 제품 버전 `0.3.0`과 일치해야 한다.
+태그는 특정 커밋에 붙이는 버전 이름이다. 예를 들어 `v0.4.0`은
+`pyproject.toml`과 `uv.lock`의 제품 버전 `0.4.0`과 일치해야 한다.
 이름이 다르면 검사를 중단하고 게시하지 않는다. 태그를 로컬에 만들기만 해서는
 게시되지 않으며, 태그를 GitHub에 푸시해야 한다.
 
@@ -53,11 +53,11 @@ Release에는 다음 세 파일이 올라간다.
 
 | 파일 | 용도 |
 | --- | --- |
-| `research-agent-0.3.0.tar.gz` | 버전별 사용자용 제품 묶음 |
+| `research-agent-0.4.0.tar.gz` | 버전별 사용자용 제품 묶음 |
 | `install-release.sh` | 지정한 버전의 새 설치를 시작하는 도구 |
 | `SHA256SUMS` | 다운로드 파일의 SHA-256 확인 값 |
 
-사용자는 [해당 버전 README](https://github.com/LWH4Data/research-agent/tree/v0.3.0#readme)의
+사용자는 [해당 버전 README](https://github.com/LWH4Data/research-agent/tree/v0.4.0#readme)의
 명령을 복사하면 된다. 명령이 설치 도구를 내려받고, 설치
 도구가 제품 묶음과 확인 값을 받아 압축 파일을 검증한 뒤 설치한다. GitHub의
 **Code → Download ZIP**, `git clone`, Release의 자동 **Source code** 다운로드는
@@ -82,26 +82,27 @@ Release에는 다음 세 파일이 올라간다.
 
 ## 다음 버전을 내는 순서
 
-1. `pyproject.toml`의 버전을 변경한다. 예를 들어 버그 수정이면 `0.3.1`을 사용할 수 있다.
+1. `pyproject.toml`의 버전을 변경한다. 예를 들어 버그 수정이면 `0.4.1`을 사용할 수 있다.
 2. 개발 환경의 `uv lock`으로 `uv.lock`을 다시 생성한다. 잠금 파일의 버전 문자열만 수동 교체하지 않는다.
 3. README와 한글·영문 사용자 안내에 고정한 다운로드 태그와 `--version` 값, [`RELEASE_NOTES.md`](../../../packaging/RELEASE_NOTES.md)를 함께 갱신한다. 실행 파일이 늘었다면 배포 목록도 확인한다.
-4. 변경한 동작의 테스트, 전체 자동 테스트와 버전 검사를 실행한다. 아래 `0.3.1`은 다음 배포의 예시다.
+4. 변경한 동작의 테스트, 전체 자동 테스트와 버전 검사를 실행한다. 아래 `0.4.1`은 다음 배포의 예시다.
 
 ```sh
 bash scripts/reproduce-validation.sh full
-.venv/bin/python -B scripts/check_release_version.py --tag v0.3.1
+.venv/bin/python -B scripts/check_release_version.py --tag v0.4.1
 .venv/bin/python -B scripts/check_guides.py
 ```
 
-5. 의도한 변경만 커밋해 `main`에 푸시하고, 해당 커밋의 Actions 검사가 성공했는지 확인한다.
-6. 배포할 커밋에서 태그를 만들고 해당 태그만 푸시한다.
+5. 의도한 변경만 커밋한다. 새 설치 링크가 준비되기 전에 웹 가이드가 게시되지 않도록 아직 `main`은 푸시하지 않는다.
+6. 로컬 검사를 마친 배포 커밋에서 태그를 만들고 해당 태그만 푸시한다. 태그의 Actions가 해당 커밋을 검증하고 제품을 게시한다.
 
 ```sh
-git tag -a v0.3.1 -m "Research Agent v0.3.1"
-git push origin v0.3.1
+git tag -a v0.4.1 -m "Research Agent v0.4.1"
+git push origin v0.4.1
 ```
 
 7. **Actions → Validate and release**에서 `validate`와 `publish`가 성공했는지 확인한다. **Releases**에서 같은 버전과 세 배포 파일이 보이면 게시된 것이다.
+8. 설치 파일과 확인 값이 내려받아지는지 확인한 뒤 같은 커밋을 `main`에 푸시한다. **Deploy web guide**의 성공과 공개 웹 설치 명령을 확인한다.
 
 검사가 실패하면 실패한 단계를 수정한다. 이미 게시한 태그를 다른 커밋으로
 옮기거나 같은 버전의 파일을 몰래 교체하지 않고, 수정 버전을 새로 배포한다.
