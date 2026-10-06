@@ -16,8 +16,8 @@
 [검토 제어 기록](./guide-review-controls-2026-10-06.md)에 남겼다.
 한국어 실제 캡처에 한영 설명을 제공한다. 실제 영문 화면과 ALBERT 추가 확인 결과는 후속 보완이다.
 
-버전과 가이드 검증을 완료했다. 태그·main·Pages는 아직 게시하지 않았으며,
-제품 태그 게시 후 공개 파일을 확인하고 웹 가이드를 게시한다.
+버전과 가이드 검증, 제품 태그·main 푸시와 Pages 게시 확인을 완료했다.
+제품 태그의 공개 배포 파일을 먼저 검증한 뒤 같은 커밋의 웹 가이드를 게시했다.
 
 ## 로컬 검증 완료
 
@@ -47,3 +47,29 @@
 자동 검사는 구독 모델을 호출하지 않는다. 개인 설치·연구 저장소·원본 PDF를
 변경하지 않는다. 실제 사용자 환경의 Codex 권한·알림·PDF 해석 정확도 전체는
 이번 배포 검사로 보증하지 않는다.
+
+## 원격 게시 완료
+
+- 배포 커밋 `03c3fa43fe224af40dfc3a1885a1c45f971b7ddc`에 새 `v0.4.1` 태그를 붙여 먼저 푸시했다.
+  기존 v0.4.0 태그는 변경하지 않았다.
+- [태그 검사·게시](https://github.com/LWH4Data/research-agent/actions/runs/37411107572)의
+  validate와 publish가 성공했고 [Prototype 사전 출시](https://github.com/LWH4Data/research-agent/releases/tag/v0.4.1)가 게시됐다.
+  원격 전체 테스트는 528개 중 520개 통과·8개 제외, 92.215초이다.
+  로컬의 7개 제외에 CI의 Codex CLI 미설치로 exact launcher prefix 검사 1개가 더 제외됐다.
+  실제 압축 설치 검사 3개는 모두 통과, 14.208초이다. 로컬 결과와 구분한다.
+- 공개 설치 파일·제품 압축·SHA256SUMS 세 파일을 내려받았다. 공개 확인 값과 모든 제품 파일 58개의
+  내용·권한, 제품 규칙·설정과 버전을 소스와 비교해 일치함을 확인했다.
+  제품 압축 SHA-256: `677a0f413859476470102d4ce5c76209e825f6f1d299e43f7e2295d1f453c83f`.
+  설치 파일 SHA-256: `95d98dfee239188a40a76f8f908d758a6006f2ab78355c21b677b2d8f033a020`.
+- 공개 파일 검증 후 같은 커밋의 main을 푸시했다.
+  [main 검사](https://github.com/LWH4Data/research-agent/actions/runs/37411397703)와
+  [Pages 배포](https://github.com/LWH4Data/research-agent/actions/runs/37411397723)가 성공했다.
+- [공개 웹 가이드](https://lwh4data.github.io/research-agent/?lang=ko&step=3#/start)의
+  HTML·스크립트·스타일·새 캡처 26개 파일을 읽어 소스 bytes와 일치함을 검증했다.
+  브라우저에서 v0.4.1 표시와 최신 다중 폴더 선택 화면·목록에 추가 버튼,
+  이미지 로딩·가로 넘침을 확인했다. 확인 화면은 `/private/tmp/research-agent-v0.4.1-public-guide.png`이다.
+
+원격 실행 로그: `/private/tmp/research-agent-0.4.1-tag-run-37411107572.log`.
+공개 파일 검증: `/private/tmp/published-research-agent-0.4.1-dltcspx1/verification.json`.
+공개 웹 검증: `/private/tmp/research-agent-0.4.1-pages-verification.json`.
+기존 설치본의 자동 업데이트나 개인 자료의 갱신은 수행하지 않았다.
