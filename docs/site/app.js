@@ -272,7 +272,28 @@ const pages={
         "result": "“검토 중”이라는 답변을 받았다면 대화를 계속해도 돼요. 이후 “방금 요청한 추가 검토 결과를 알려줘”라고 물어보세요. 결과에서 어느 문서의 몇 쪽이 확인됐는지 살펴보세요. 여전히 확인하기 어려운 부분은 이유와 함께 남을 수 있어요. 그 내용이나 수치를 검증 완료로 받아들이지 말고, 안내된 원본 페이지를 확인하세요. 이미 저장한 PDF와 확인이 끝난 내용은 그대로 사용할 수 있어요.",
         "capture": "추가 검토를 요청한 뒤 받은 실제 답변이에요. BERT 15쪽과 Auto-Encoding Variational Bayes 14쪽을 다시 확인해 저장했고, 남은 검토나 실패는 없다고 안내해요.",
         "captureAlt": "추가 검토가 필요한 페이지만 다시 확인해 저장해 달라는 요청과, BERT 15쪽·Auto-Encoding Variational Bayes 14쪽의 검토와 저장 완료, 대기·미해결·실패 각 0쪽이라는 Codex 응답",
-        "key": "organize-review"
+        "key": "organize-review",
+        "followUps": [
+          {
+            "key": "albert-page10-review",
+            "title": "ALBERT 10쪽을 다시 확인한 예시",
+            "explanation": "앞선 상태 화면에서 추가 확인이 남았던 ALBERT 10쪽을 지정한 예시예요. 아래 문서 이름과 페이지를 내 자료에 맞게 바꾸세요. 페이지 번호는 PDF의 첫 장부터 센 번호예요.",
+            "prompt": "@Research Agent 저장된 ALBERT PDF의 10쪽을 확인해줘. 페이지 번호는 PDF 첫 장부터 센 번호야. 추가 확인이 남아 있으면 그 페이지만 다시 시각 검토하고 결과를 저장해줘. Table 10의 열 정렬, UPM 행의 RACE 열 표기, evaluation benchmark의 OCR 인식을 원본과 대조해줘. 완료 여부와 수정 내용, 여전히 확인하지 못한 부분의 이유를 간단히 알려줘. 이미 검증됐다면 저장된 결과를 보여줘.",
+            "result": "답변에서 요청한 페이지의 검증 완료와 결과 저장을 함께 확인하세요. 이 예시는 교정 내용을 시각 검토 노트에 기록하고 기본 추출 본문과 기존 검토 결과를 유지했다고 안내해요. 완료 범위는 요청한 ALBERT 10쪽이에요.",
+            "captures": [
+              {
+                "key": "albert-page10-review-request",
+                "caption": "1. 저장된 ALBERT의 PDF 10쪽만 지정해 표의 열 정렬·UPM 행 RACE 열 표기·OCR를 원본과 대조하고 결과를 저장해 달라고 요청해요.",
+                "alt": "ALBERT PDF의 첫 장부터 센 10쪽을 지정해 추가 확인이 남으면 그 페이지만 재검토하고 저장하며, Table 10 열 정렬과 UPM 행 RACE 열 표기, evaluation benchmark OCR를 원본과 대조해 완료 여부·수정 내용·미확인 이유를 알려 달라는 한국어 요청. 이미 검증됐다면 저장된 결과를 요청함"
+              },
+              {
+                "key": "albert-page10-review-result",
+                "caption": "2. 10쪽만 재검토해 검증 완료로 저장했다고 안내해요. Table 10의 열 순서와 UPM 행을 확인하고, 추출문에서 누락된 RACE 열의 대시와 OCR 표기 교정을 시각 검토 노트에 기록했어요. 이 페이지의 미확인 부분은 없으며 기본 추출 본문과 기존 검토 결과는 유지됐다고 보고해요.",
+                "alt": "한국어 결과: ALBERT PDF 10쪽만 재검토해 검증 완료로 저장하고 기존 검토 결과 유지. Table 10의 모델, SQuAD1.1 dev, SQuAD2.0 dev, SQuAD2.0 test, RACE test 열 순서와 Ensembles UPM 행의 대시·대시·90.7/88.2·대시를 원본 대조. 추출문에서 누락된 마지막 RACE 열 대시와 evaluation benchmark OCR 교정을 저장된 시각 검토 노트에 기록. 이 페이지의 미확인 부분 없음, 기본 추출 본문 유지"
+              }
+            ]
+          }
+        ]
       }
     ]
   },
@@ -465,6 +486,8 @@ const featureCaptures={
   'attach-review':{src:'assets/screenshots/pdf-attachments-review-result.png',width:1588,height:1066},
   organize:{src:'assets/screenshots/folder-pdf-status.png',width:1614,height:648},
   'organize-review':{src:'assets/screenshots/folder-pdf-review-result.png',width:1622,height:712},
+  'albert-page10-review-request':{src:'assets/screenshots/albert-page10-review-request.svg',width:1150,height:310,fullSize:true},
+  'albert-page10-review-result':{src:'assets/screenshots/albert-page10-review-result.svg',width:1640,height:375,fullSize:true},
   'organize-refresh-request':{src:'assets/screenshots/folder-pdf-refresh-request.svg',width:1048,height:194,fullSize:true},
   'organize-refresh-result':{src:'assets/screenshots/folder-pdf-refresh-result.svg',width:1490,height:370,fullSize:true},
   'review-control-store-request':{src:'assets/screenshots/review-control-store-request.svg',width:1048,height:511,fullSize:true},

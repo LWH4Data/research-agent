@@ -271,6 +271,27 @@ window.RESEARCH_GUIDE_EN = {
       },
       {
         key: 'organize-review',
+        followUps: [
+          {
+            "key": "albert-page10-review",
+            "title": "Example: recheck ALBERT page 10",
+            "explanation": "This example targets ALBERT page 10, which needed further attention in the earlier status screenshot. Replace the document name and page with your own. Page numbers count from the first page of the PDF.",
+            "prompt": "@Research Agent Check page 10 of the saved ALBERT PDF, counting from the first PDF page. If further attention is still needed, visually review only that page again and save the result. Compare Table 10 column alignment, the UPM row RACE entry, and OCR of evaluation benchmark against the original. Briefly report completion, corrections, and reasons for anything still unconfirmed. If the page is already verified, show the saved result.",
+            "result": "Check both page verification and result storage in the reply. This example reports corrections recorded in the visual review notes, with the base extracted text and existing review results retained. Completion applies to the requested ALBERT page 10.",
+            "captures": [
+              {
+                "key": "albert-page10-review-request",
+                "caption": "1. An actual Korean request targets only ALBERT PDF page 10, asking to compare table columns, the UPM row RACE entry, and OCR against the original and save the result.",
+                "alt": "A Korean request to check ALBERT page 10 counted from the first PDF page, re-review only that page if needed and save the result, compare Table 10 column alignment, the UPM row RACE entry, and evaluation benchmark OCR with the original, and report completion, corrections, and unresolved reasons. If already verified, show the saved result"
+              },
+              {
+                "key": "albert-page10-review-result",
+                "caption": "2. The Korean reply reports only page 10 re-reviewed, verified, and saved. Table 10 column order and the UPM row were checked; the RACE dash missing from extracted text and the OCR correction were recorded in visual review notes. Nothing remains unconfirmed on this page, and base extracted text and existing review results were retained.",
+                "alt": "A Korean result reporting only ALBERT PDF page 10 re-reviewed, verified, and saved, with existing review results retained. Table 10 columns model, SQuAD1.1 dev, SQuAD2.0 dev, SQuAD2.0 test, and RACE test and the Ensembles UPM row dash, dash, 90.7/88.2, dash were compared with the original. The final RACE dash missing from extracted text and evaluation benchmark OCR correction were recorded in saved visual review notes. No unconfirmed details on this page; base extracted text retained"
+              }
+            ]
+          }
+        ],
         title: 'What if further review is needed?',
         explanation: 'The PDF is saved, but some details in figures, equations, or tables could not be confirmed. Waiting alone does not trigger repeated reviews. Ask Codex to check only the pages that still need attention.',
         prompt: '@Research Agent Identify the documents and pages needing further review, review only those pages again, and save the results. When finished, report completion by document and page, and explain anything that remains unconfirmed.',
