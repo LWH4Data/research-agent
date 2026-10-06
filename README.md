@@ -83,7 +83,7 @@
 ### 이런 때 사용합니다
 
 Research Agent를 처음 사용할 때 한 번만 설치합니다.
-아래 명령은 **v0.4.1 사전 출시 버전**의 사용자용 배포본을 설치합니다.
+아래 명령은 **v0.4.2 사전 출시 버전**의 사용자용 배포본을 설치합니다.
 GitHub의 **Code → Download ZIP**은 개발 소스이므로, 처음 사용할 때는
 아래 설치 명령을 이용하세요. Git이나 별도 Python 설치는 필요하지 않습니다.
 
@@ -103,9 +103,9 @@ GitHub의 **Code → Download ZIP**은 개발 소스이므로, 처음 사용할 
   installer=$(mktemp) &&
   trap 'rm -f "$installer"' EXIT &&
   curl -q --proto '=https' --proto-redir '=https' --tlsv1.2 -fLsS \
-    https://github.com/LWH4Data/research-agent/releases/download/v0.4.1/install-release.sh \
+    https://github.com/LWH4Data/research-agent/releases/download/v0.4.2/install-release.sh \
     -o "$installer" &&
-  bash "$installer" --version 0.4.1
+  bash "$installer" --version 0.4.2
 )
 ```
 
@@ -129,9 +129,10 @@ GitHub의 **Code → Download ZIP**은 개발 소스이므로, 처음 사용할 
 요청하면 됩니다. 다시 설치하거나 터미널 명령을 입력할 필요는 없습니다.
 자동 실행처럼 입력을 받지 않는 설치에서는 안내창을 띄우지 않습니다.
 
-현재 공개 v0.4.1의 안내창 문구는 한국어입니다. 개발 소스에는 macOS 언어에 맞춘
-한영 안내창과 “영어로 PDF 폴더 연결창을 열어줘” 요청 지원을 추가했습니다.
-공개 설치본 적용 여부는 [안내창 언어 개발 기록](docs/technical/ko/experiments/dialog-language-2026-10-06.md)을 확인하세요.
+v0.4.2부터 설치 후 안내창과 폴더 연결창은 macOS 언어 설정에 따라
+한국어 또는 영어로 표시됩니다. 영어 화면을 원하면 Codex에서 “영어로 PDF 폴더
+연결창을 열어줘”라고 요청하세요. 설치 터미널 출력은 주로 한국어이며,
+macOS가 제공하는 사이드바·검색 등은 시스템 언어를 따릅니다.
 
 설치 중 Codex 실행 파일을 찾지 못하면 폴더 연결은 유지하고, PDF 저장과
 검토는 아직 시작하지 않았다고 안내합니다. 저장 처리가 실패한 경우에도
@@ -548,7 +549,7 @@ bash "$HOME/research-agent/demo-progress.sh"
 
 ## 업데이트
 
-**v0.4.1은 새 설치만 지원합니다.** 기존 저장 자료를 유지하며
+**v0.4.2는 새 설치만 지원합니다.** 기존 저장 자료를 유지하며
 새 버전으로 교체하는 업데이트 절차와 자동 업데이트는 아직 제공하지 않습니다.
 설치 명령을 다시 실행해도 기존 폴더를 덮어쓰지 않습니다.
 

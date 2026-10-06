@@ -87,10 +87,9 @@ GUI errors, or registration errors do not turn the completed installation into
 a failure. Automated runs skip the dialog and print instructions for adding
 folders later.
 
-Public v0.4.1 supports the review list and reopening from Codex described below,
-with app-owned text in Korean. **Korean/English dialog support was added to the
-2026-10-06 development source; it has not been published or applied to existing
-personal installations.**
+Fresh v0.4.2 installations support the review list, reopening from Codex, and
+Korean/English app-owned dialog text described below. Existing personal
+installations are not updated automatically.
 
 JXA's ObjC bridge displays a review list in an AppKit `NSAlert`.
 **폴더 추가하기 / 폴더 더 추가하기** (Add folders / Add more folders) opens an
@@ -117,10 +116,12 @@ source protection stay in the existing CLI; no permission or allow rule is added
 The manager still handles exact-path registration and removal. Post-installation
 onboarding and terminal launches use the same review list.
 
-### Dialog Language — Development Source
+### Dialog Language — v0.4.2
 
-Each invocation accepts `--language auto|ko|en`. The default `auto` uses the first
-Korean or English entry in macOS preferred languages. Unsupported preferences or
+The registered `source-add` launcher and host helpers accept
+`--language auto|ko|en` per invocation. The installation bootstrap shell does not
+accept this option; first-installation onboarding runs with `auto`. The default
+`auto` uses the first Korean or English entry in macOS preferred languages. Unsupported preferences or
 detection errors fall back to English. macOS preferences take priority over the
 installer shell's `LC_ALL=C`. Explicit `ko` and `en` skip detection. System
 language preferences are never changed.

@@ -23,7 +23,7 @@ window.RESEARCH_GUIDE_EN = {
       {
         label: 'Install',
         question: 'What do I enter in Terminal?',
-        answer: 'The command below installs the v0.4.1 prerelease. Run it once for a fresh installation.',
+        answer: 'The command below installs the v0.4.2 prerelease. Run it once for a fresh installation.',
         steps: ['Click “Copy” below, then paste into Terminal with ⌘ + V.', 'Press Enter and wait for “research-agent 설치가 완료되었습니다.” — the Korean installation-complete message.'],
         captures: [{key: 'install-complete', caption: 'The installation-complete message in Terminal'}],
         noteLabel: 'Already installed, or seeing an error?',
@@ -33,11 +33,12 @@ window.RESEARCH_GUIDE_EN = {
       {
         label: 'Choose folders',
         question: 'How do I connect my PDF folders?',
-        answer: 'Choose your folders, check the list, then click “연결하고 PDF 저장하기” (Connect and save PDFs). Saving starts for those folders, followed by checks of figures, equations, and tables. Your original files stay unchanged.',
+        answer: 'Choose your folders, check the list, then click “Connect and save PDFs.” Saving starts for those folders, followed by checks of figures, equations, and tables. Your original files stay unchanged.',
+        notice: 'Setup and folder dialogs follow your macOS language preferences. The screenshots below show actual Korean dialogs; the instructions name their English buttons. Changing this website’s language does not change the dialogs.',
         flow: [
           {
             title: 'Open the folder picker',
-            body: 'Click “폴더 추가하기” (Add folders).',
+            body: 'Click “Add folders” in the “Folders to connect” window.',
             capture: {
               key: 'folder-draft-empty',
               caption: 'An empty draft for choosing folders to add this time. Click “폴더 추가하기” (Add folders). The black outline is a guide annotation.',
@@ -46,7 +47,7 @@ window.RESEARCH_GUIDE_EN = {
           },
           {
             title: 'Choose folders',
-            body: 'Click the picker window once, then hold ⌘ Command beside the spacebar and click each folder name once. Then click “목록에 추가” (Add to list).',
+            body: 'Click the picker window once, then hold ⌘ Command beside the spacebar and click each folder name once. Then click “Add to list.”',
             capture: {
               key: 'folder-selection',
               caption: 'Three folders selected together in an actual Korean picker. Click “목록에 추가” (Add to list) at the bottom right when ready. The black outline is a guide annotation.',
@@ -55,10 +56,10 @@ window.RESEARCH_GUIDE_EN = {
           },
           {
             title: 'Check the list and start saving',
-            body: 'Check the list, then click “연결하고 PDF 저장하기” (Connect and save PDFs). To add another location first, click “폴더 더 추가하기” (Add more folders). Saved text is searchable while visual review continues.',
+            body: 'Check the list, then click “Connect and save PDFs.” To add another location first, click “Add more folders.” Saved text is searchable while visual review continues.',
             capture: {
               key: 'folder-draft-confirmation',
-              caption: 'The confirmation screen with three folders selected. The black outline marks “연결하고 PDF 저장하기” (Connect and save PDFs) for this guide.',
+              caption: 'An actual Korean confirmation screen with three folders selected. The black outline marks “연결하고 PDF 저장하기” (Connect and save PDFs) for this guide.',
               alt: 'The confirmation list with three folders checked and the “연결하고 PDF 저장하기” (Connect and save PDFs) button'
             }
           }
@@ -67,7 +68,7 @@ window.RESEARCH_GUIDE_EN = {
         help: [
           {
             question: 'No PDFs ready yet?',
-            answer: 'Click “취소” (Cancel). Canceling folder selection does not undo installation. You can connect folders later or attach PDFs directly in Codex.'
+            answer: 'Click “Cancel.” Canceling folder selection does not undo installation. You can connect folders later or attach PDFs directly in Codex.'
           },
           {
             question: 'Selected the wrong folder?',
@@ -86,8 +87,12 @@ window.RESEARCH_GUIDE_EN = {
             answer: 'A connection is not proof of completed storage. If the Codex executable is unavailable, the connection stays saved and storage is deferred. Ask Codex to check and continue storage. If text is saved but visual review could not start, ask to check and resume review instead. A library-wide pause requires an explicit request to resume all visual reviews.'
           },
           {
+            question: 'Can I open the folder window in English?',
+            answer: 'Ask “@Research Agent Open the PDF folder connection window in English.” Research Agent’s instructions and buttons will use English. System controls such as the sidebar and search field follow macOS.'
+          },
+          {
             question: 'Why does my window look different?',
-            answer: 'An earlier installation may have different buttons or steps. Share the screen or message with Codex. The installation command is for fresh installations and does not overwrite an existing one. Do not delete your research library to update.'
+            answer: 'The actual screenshots in this guide are Korean, while dialogs follow your macOS language preferences. An earlier installation may also have different buttons or steps. Share the screen or message with Codex. This command is for fresh installations and does not overwrite an existing one. Do not delete your research library to update.'
           }
         ]
       },
@@ -110,7 +115,7 @@ window.RESEARCH_GUIDE_EN = {
   connect: {
     title: 'Connect PDF folders',
     question: 'Can my PDFs stay in different folders?',
-    answer: 'Yes. Ask Codex to open the connection window, then collect the folders in its list. Confirm with “연결하고 PDF 저장하기” (Connect and save PDFs) to start saving PDFs from the selected folders, followed by visual review.',
+    answer: 'Yes. Ask Codex to open the connection window, then collect the folders in its list. Confirm with “Connect and save PDFs” to start saving PDFs from the selected folders, followed by visual review.',
     captures: [
       {key: 'folder-draft-empty', caption: 'An empty draft for choosing folders to add this time. Click “폴더 추가하기” (Add folders). The black outline is a guide annotation.', alt: 'A Korean connection window with no folders selected for this draft, the Add folders button, and the disabled Connect and save PDFs button'},
       {key: 'folder-selection', caption: 'Three folders selected together in an actual Korean picker. Click “목록에 추가” (Add to list) at the bottom right to add them to the confirmation list. The black outline is a guide annotation.', alt: 'A macOS picker with three Desktop folders selected together, the 3 items and 3 folders counts, a Command multi-selection instruction, and the Add to list button at the bottom right'},
@@ -118,12 +123,12 @@ window.RESEARCH_GUIDE_EN = {
     ],
     steps: [
       'Select Research Agent in Codex and use the prompt below to connect your folders.',
-      'In the connection window, click “폴더 추가하기” (Add folders).',
-      'Click the picker window once, then hold ⌘ Command and click each folder name once. Click “목록에 추가” (Add to list).',
-      'Uncheck any unwanted folders in the confirmation list. Use “폴더 더 추가하기” (Add more folders) for another location.',
-      'Click “연결하고 PDF 저장하기” (Connect and save PDFs), then check the storage results and review status in the Codex reply.'
+      'In the “Folders to connect” window, click “Add folders.”',
+      'Click the picker window once, then hold ⌘ Command and click each folder name once. Click “Add to list.”',
+      'Uncheck any unwanted folders in the confirmation list. Use “Add more folders” for another location.',
+      'Click “Connect and save PDFs,” then check the storage results and review status in the Codex reply.'
     ],
-    note: 'Folders connected during installation do not need connecting again. Your original folders and PDFs stay unchanged. Canceling the inner picker keeps the checked list; canceling the whole confirmation window discards this draft. If you closed it, ask “@Research Agent Reopen the PDF folder connection window” and choose again in a new list.',
+    note: 'Dialogs follow your macOS language preferences; changing this website’s language does not change them. For an English window, ask “@Research Agent Open the PDF folder connection window in English.” System controls such as the sidebar and search field follow macOS. These screenshots show actual Korean dialogs. Folders connected during installation do not need connecting again. Your original folders and PDFs stay unchanged. Canceling the inner picker keeps the checked list; canceling the whole confirmation window discards this draft. If you closed it, ask “@Research Agent Reopen the PDF folder connection window” and choose again in a new list.',
     prompt: '@Research Agent Connect the folders containing my PDFs.',
     prev: 'start',
     next: 'organize'

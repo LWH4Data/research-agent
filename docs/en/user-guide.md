@@ -13,7 +13,7 @@ separate API key. Original PDFs stay in their existing locations.
 2. Type **Terminal** and open the Terminal app.
 3. Copy the entire command below, paste it with **Command (⌘) + V**, and press
    **Enter**.
-4. Wait for installation to finish. It downloads and verifies the **v0.4.1
+4. Wait for installation to finish. It downloads and verifies the **v0.4.2
    prerelease** automatically; you do not need to install Git or Python or
    extract an archive yourself.
 
@@ -22,9 +22,9 @@ separate API key. Original PDFs stay in their existing locations.
   installer=$(mktemp) &&
   trap 'rm -f "$installer"' EXIT &&
   curl -q --proto '=https' --proto-redir '=https' --tlsv1.2 -fLsS \
-    https://github.com/LWH4Data/research-agent/releases/download/v0.4.1/install-release.sh \
+    https://github.com/LWH4Data/research-agent/releases/download/v0.4.2/install-release.sh \
     -o "$installer" &&
-  bash "$installer" --version 0.4.1
+  bash "$installer" --version 0.4.2
 )
 ```
 
@@ -33,17 +33,16 @@ location already exists, installation stops without overwriting it. Keep the
 existing folder and share the message with Codex. Normal installation does not
 ask for your Mac administrator password.
 
-After installation, a dialog offers **폴더 선택하기** (Select folders) and
-**나중에 하기** (Later). These buttons currently appear in Korean. Select folders
-opens the **연결할 폴더** (Folders to connect) window described below. Later,
+After installation, a dialog offers **Choose folders** and **Later**.
+Choose folders opens the **Folders to connect** window described below. Later,
 closing the dialog, or canceling folder selection keeps the completed
 installation. Automated installations do not open the dialog.
 
-The public v0.4.1 dialog text is Korean. Development source adds Korean/English
-dialogs based on macOS language preferences and supports requests such as “Open
-the PDF folder connection window in English.” See the
-[dialog language development record](../technical/ko/experiments/dialog-language-2026-10-06.md)
-for implementation and release status.
+From v0.4.2, setup and folder connection dialogs use Korean or English based on
+macOS language preferences. To open the folder window in English, ask Research
+Agent: “Open the PDF folder connection window in English.” The installer’s
+Terminal output remains mostly Korean. System-owned controls such as the
+sidebar and search field follow the macOS language setting.
 
 Fully quit and reopen the Codex app, VS Code, or CLI after installation.
 If no dialog appeared, ask Research Agent in Codex to open the folder connection
@@ -83,16 +82,16 @@ Ask Research Agent:
 > Open the PDF folder connection window.
 
 The window opens from your current Codex conversation. You do not need to
-reinstall or enter a Terminal command. Its controls currently appear in Korean.
+reinstall or enter a Terminal command. These are the English button labels;
+Korean appears when selected by the macOS language preferences or requested.
 
-1. In **연결할 폴더** (Folders to connect), click **폴더 추가하기** (Add folders).
+1. In **Folders to connect**, click **Add folders**.
 2. Click the folder picker once to focus it, then hold the **⌘ Command** key
    beside the spacebar and click each folder name **once** to select several folders.
-3. Check your selection and click **목록에 추가** (Add to list) at the bottom right.
+3. Check your selection and click **Add to list** at the bottom right.
 4. Back in the list, check the folder names and paths. Uncheck folders to exclude
-   them. Use **폴더 더 추가하기** (Add more folders) to collect folders from other
-   locations.
-5. Click **연결하고 PDF 저장하기** (Connect and save PDFs) to confirm.
+   them. Use **Add more folders** to collect folders from other locations.
+5. Click **Connect and save PDFs** to confirm.
 
 Research Agent connects only the checked folders, saves their PDF text, and
 submits the pages that need visual review. Other connected folders are outside
@@ -244,7 +243,7 @@ records cannot currently be restored.
 
 ## Updates
 
-Version **0.4.1 supports fresh installations only**. Automatic updates and an
+Version **0.4.2 supports fresh installations only**. Automatic updates and an
 update procedure that preserves existing library data are not yet available.
 Running the installation command again stops if the destination exists.
 
