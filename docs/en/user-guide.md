@@ -39,6 +39,12 @@ opens the **연결할 폴더** (Folders to connect) window described below. Late
 closing the dialog, or canceling folder selection keeps the completed
 installation. Automated installations do not open the dialog.
 
+The public v0.4.1 dialog text is Korean. Development source adds Korean/English
+dialogs based on macOS language preferences and supports requests such as “Open
+the PDF folder connection window in English.” See the
+[dialog language development record](../technical/ko/experiments/dialog-language-2026-10-06.md)
+for implementation and release status.
+
 Fully quit and reopen the Codex app, VS Code, or CLI after installation.
 If no dialog appeared, ask Research Agent in Codex to open the folder connection
 window. You do not need to reinstall or enter another Terminal command.

@@ -20,7 +20,7 @@ def _absolute(value: str) -> str:
     return value
 
 
-def choose_confirmed_sources(root: Path) -> list[Path]:
+def choose_confirmed_sources(root: Path, language: str = "auto") -> list[Path]:
     # -I -S intentionally excludes site packages and the caller's working path.
     # Load only the stdlib-only picker from the validated installation.
     spec = importlib.util.spec_from_file_location(
@@ -30,7 +30,7 @@ def choose_confirmed_sources(root: Path) -> list[Path]:
         raise RuntimeError("폴더 연결 화면을 불러올 수 없습니다.")
     picker = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(picker)
-    return picker.choose_sources()
+    return picker.choose_sources(language=language)
 
 
 def connect_sources(root: Path, paths: list[Path], **options) -> tuple[dict, int]:
@@ -50,6 +50,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", required=True, type=_absolute)
     parser.add_argument("--sandbox-home", required=True, type=_absolute)
     parser.add_argument("--installation", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--language", choices=("auto", "ko", "en"), default="auto",
+                        help="Native dialog language (auto follows the operating system)")
     parser.add_argument("--registration-only", action="store_true",
                         help="지정한 경로를 연결만 하고 PDF 저장은 시작하지 않습니다")
     parser.add_argument("paths", nargs="*", type=_absolute)
@@ -59,7 +61,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.registration_only and not args.paths:
         parser.error("연결만 할 때는 정확한 원본 경로를 지정하세요")
     try:
-        paths = list(map(Path, args.paths)) if args.paths else choose_confirmed_sources(Path(args.root))
+        paths = (list(map(Path, args.paths)) if args.paths else
+                 choose_confirmed_sources(Path(args.root), language=args.language))
         if not isinstance(paths, list) or any(
             not isinstance(path, Path) or not path.is_absolute() or "\0" in str(path)
             for path in paths

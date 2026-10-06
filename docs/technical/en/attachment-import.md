@@ -82,21 +82,24 @@ path or folder connection. It never requests write access to the original.
 ## Installation Onboarding
 
 After a successful first interactive macOS installation, a native dialog offers
-**Later / Choose folders** (currently displayed in Korean). The latter starts
-folder selection. Cancellation, GUI errors, or registration errors do not turn
-the completed installation into a failure. Automated runs
-skip the dialog and print instructions for adding folders later.
+**Later / Choose folders**. The latter starts folder selection. Cancellation,
+GUI errors, or registration errors do not turn the completed installation into
+a failure. Automated runs skip the dialog and print instructions for adding
+folders later.
 
-**The review list and reopening from Codex described below are development-only
-changes. Published v0.3.0 and existing installations do not include them.**
+Public v0.4.1 supports the review list and reopening from Codex described below,
+with app-owned text in Korean. **Korean/English dialog support was added to the
+2026-10-06 development source; it has not been published or applied to existing
+personal installations.**
 
-The development picker uses JXA's ObjC bridge to display a review list in an
-AppKit `NSAlert`. **폴더 추가하기 / 폴더 더 추가하기** (Add folders / Add more folders)
-opens an `NSOpenPanel` and collects the selected folders in that list. Unchecked
-rows are excluded; only **이 폴더들 연결하기** (Connect these folders) returns the
-checked paths. Canceling the inner panel retains the list, while canceling the
-review list returns an empty list. The draft exists only in memory, and canceling
-the whole flow does not register folders or write configuration.
+JXA's ObjC bridge displays a review list in an AppKit `NSAlert`.
+**폴더 추가하기 / 폴더 더 추가하기** (Add folders / Add more folders) opens an
+`NSOpenPanel` and collects the selected folders in that list. Unchecked rows are
+excluded; only **연결하고 PDF 저장하기** (Connect and save PDFs) returns checked
+paths. **목록에 추가** (Add to list) in the inner panel only adds to the draft.
+Canceling that panel retains the list, while canceling the review list returns
+an empty list. The draft exists only in memory; canceling the whole flow does
+not register folders or write configuration.
 
 The host keeps an existing `regular` or `accessory` policy. Otherwise it requests
 `accessory` and checks the resulting policy, rather than the setter's Boolean:
@@ -106,24 +109,38 @@ modal handling allows multiple directories but disables file selection and
 new-folder creation. No clicks are simulated; aborted presentation remains an error.
 
 To reopen the picker from Codex, the primary session directly invokes the
-registered skill launcher with only `source-add`. Its `select_sources.py` helper
-opens the host picker without changing the store, then passes confirmed absolute
-paths as individual arguments after `--` to the existing constrained `source-add`.
+registered skill launcher with `source-add`. Its `select_sources.py` helper opens
+the host picker without changing the store, then passes confirmed absolute paths
+as individual arguments after `--` to the existing constrained `source-add`.
 Cancellation does not launch that command. Registration, duplicate handling, and
 source protection stay in the existing CLI; no permission or allow rule is added.
 The manager still handles exact-path registration and removal. Post-installation
 onboarding and terminal launches use the same review list.
 
-On macOS 14 and later, activation is a request rather than a guarantee. On
-2026-09-26, the user confirmed that the `NSOpenPanel` preview before the review
-list was added accepted Command-click selection from the first folder without
-clicking the window first.
-That preview did not register folders; it verifies the behavior on that Mac,
-not the new review flow, reopening from Codex, the post-install launch, or every
-other Mac. Published v0.3.0 retains `chooseFolder`; its guide describes the
-user-confirmed workaround of clicking
-the top of the picker once before Command-clicking folders.
-[Apple's activation policy notes](https://developer.apple.com/documentation/macos-release-notes/appkit-release-notes-for-macos-14)
+### Dialog Language — Development Source
+
+Each invocation accepts `--language auto|ko|en`. The default `auto` uses the first
+Korean or English entry in macOS preferred languages. Unsupported preferences or
+detection errors fall back to English. macOS preferences take priority over the
+installer shell's `LC_ALL=C`. Explicit `ko` and `en` skip detection. System
+language preferences are never changed.
+
+The first installation dialog and subsequent folder picker/review list use the
+same resolved language. English controls read **Later / Choose folders**,
+**Add folders / Add more folders**, **Add to list**, and
+**Connect and save PDFs / Cancel**. Empty states, selection counts, errors, and
+post-installation processing messages use that language too. System-owned UI
+such as Finder locations, sidebar labels, and search continues to follow macOS
+language settings. Translation of all installer shell output is outside this change.
+
+A request such as “Open the PDF folder connection window in English” directs the
+skill to check `source-add --help` on the registered launcher and directly invoke
+`source-add --language en` when supported. It does not change execution rules with
+environment assignments or shell wrappers. Unsupported older launchers report the
+limitation rather than automatically patching a personal installation. Language
+is host presentation data; registration and storage receive only confirmed paths.
+
+[Design and validation record](../ko/experiments/dialog-language-2026-10-06.md).
 
 ## Current Scope and Validation
 

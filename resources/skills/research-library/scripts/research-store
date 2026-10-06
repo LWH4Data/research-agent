@@ -94,21 +94,74 @@ fi
 # The helper registers through the root primitive, then submits exact sources.
 if [ "${1-}" = "source-add" ]; then
     shift
-    # User arguments are paths, never overrides for the host helper's trusted
-    # root, executable, profile, or installation-only registration fallback.
-    case "${1-}" in
-        --help|-h)
-            exec "$ROOT/.venv/bin/python" -I -S -B "$ROOT/scripts/select_sources.py" --help ;;
-        --registration-only)
-            shift
-            [ "${1-}" != "--" ] || shift
-            exec "$ROOT/.venv/bin/python" -I -S -B "$ROOT/scripts/select_sources.py" \
-                --codex "$CODEX" --root "$ROOT" --sandbox-home "$SANDBOX_HOME" \
-                --registration-only -- "$@" ;;
-    esac
-    [ "${1-}" != "--" ] || shift
+    # The only host options available to callers are language and registration
+    # mode. Trusted root, executable, profile, and installation controls never
+    # come from the caller. After -- every argument stays literal path data.
+    if [ "$#" -eq 1 ] && { [ "$1" = "--help" ] || [ "$1" = "-h" ]; }; then
+        exec "$ROOT/.venv/bin/python" -I -S -B "$ROOT/scripts/select_sources.py" --help
+    fi
+    SOURCE_LANGUAGE=auto
+    SOURCE_LANGUAGE_SET=false
+    SOURCE_REGISTRATION_ONLY=false
+    SOURCE_LITERAL_PATHS=false
+    SOURCE_REMAINING=$#
+    # Rotate retained paths behind the unprocessed arguments; the original
+    # argument count keeps appended paths from being parsed a second time.
+    while [ "$SOURCE_REMAINING" -gt 0 ]; do
+        SOURCE_ARGUMENT=$1
+        shift
+        SOURCE_REMAINING=$((SOURCE_REMAINING - 1))
+        if [ "$SOURCE_LITERAL_PATHS" = true ]; then
+            set -- "$@" "$SOURCE_ARGUMENT"
+            continue
+        fi
+        case "$SOURCE_ARGUMENT" in
+            --)
+                SOURCE_LITERAL_PATHS=true ;;
+            --language|--language=*)
+                if [ "$SOURCE_LANGUAGE_SET" = true ]; then
+                    echo "Error: source-add accepts --language only once." >&2
+                    exit 2
+                fi
+                SOURCE_LANGUAGE_SET=true
+                if [ "$SOURCE_ARGUMENT" = "--language" ]; then
+                    if [ "$SOURCE_REMAINING" -eq 0 ]; then
+                        echo "Error: --language requires auto, ko, or en." >&2
+                        exit 2
+                    fi
+                    SOURCE_LANGUAGE=$1
+                    shift
+                    SOURCE_REMAINING=$((SOURCE_REMAINING - 1))
+                else
+                    SOURCE_LANGUAGE=${SOURCE_ARGUMENT#--language=}
+                fi
+                case "$SOURCE_LANGUAGE" in
+                    auto|ko|en) ;;
+                    *)
+                        echo "Error: --language must be auto, ko, or en." >&2
+                        exit 2 ;;
+                esac ;;
+            --registration-only)
+                if [ "$SOURCE_REGISTRATION_ONLY" = true ]; then
+                    echo "Error: source-add accepts --registration-only only once." >&2
+                    exit 2
+                fi
+                SOURCE_REGISTRATION_ONLY=true ;;
+            -*)
+                echo "Error: unsupported source-add option: $SOURCE_ARGUMENT" >&2
+                exit 2 ;;
+            *)
+                set -- "$@" "$SOURCE_ARGUMENT" ;;
+        esac
+    done
+    if [ "$SOURCE_REGISTRATION_ONLY" = true ]; then
+        exec "$ROOT/.venv/bin/python" -I -S -B "$ROOT/scripts/select_sources.py" \
+            --codex "$CODEX" --root "$ROOT" --sandbox-home "$SANDBOX_HOME" \
+            --language "$SOURCE_LANGUAGE" --registration-only -- "$@"
+    fi
     exec "$ROOT/.venv/bin/python" -I -S -B "$ROOT/scripts/select_sources.py" \
-        --codex "$CODEX" --root "$ROOT" --sandbox-home "$SANDBOX_HOME" -- "$@"
+        --codex "$CODEX" --root "$ROOT" --sandbox-home "$SANDBOX_HOME" \
+        --language "$SOURCE_LANGUAGE" -- "$@"
 fi
 
 exec env CODEX_HOME="$SANDBOX_HOME" "$CODEX" sandbox \

@@ -10,11 +10,13 @@ import unittest
 from unittest import mock
 
 from research_store.picker import (
+    _MACOS_LANGUAGE_SCRIPT,
     choose_sources,
     macos_onboarding_script,
     macos_picker_script,
     macos_selection_script,
     offer_source_selection,
+    resolve_ui_language,
 )
 
 
@@ -27,7 +29,7 @@ class InstallDialogTests(unittest.TestCase):
                 "research_store.picker.subprocess.run",
                 return_value=subprocess.CompletedProcess([], 0, json.dumps(selected), ""),
             ):
-                self.assertIs(offer_source_selection(), selected)
+                self.assertIs(offer_source_selection("ko"), selected)
 
     def test_malformed_dialog_result_is_not_a_choice(self) -> None:
         for value in ("", "null", "1", '"true"', "[]", "{}"):
@@ -38,7 +40,7 @@ class InstallDialogTests(unittest.TestCase):
                 return_value=subprocess.CompletedProcess([], 0, value, ""),
             ):
                 with self.assertRaisesRegex(RuntimeError, "응답"):
-                    offer_source_selection()
+                    offer_source_selection("ko")
 
     def test_launch_failures_are_optional_onboarding_errors(self) -> None:
         for error in (OSError("no UI"), subprocess.CalledProcessError(1, ["osascript"])):
@@ -46,25 +48,27 @@ class InstallDialogTests(unittest.TestCase):
                 "research_store.picker.sys.platform", "darwin"
             ), mock.patch("research_store.picker.subprocess.run", side_effect=error):
                 with self.assertRaisesRegex(RuntimeError, "안내창을 열 수 없습니다"):
-                    offer_source_selection()
+                    offer_source_selection("ko")
 
     def test_non_macos_never_opens_dialog(self) -> None:
         with mock.patch("research_store.picker.sys.platform", "linux"), mock.patch(
             "research_store.picker.subprocess.run"
         ) as run:
-            self.assertFalse(offer_source_selection())
+            self.assertFalse(offer_source_selection("ko"))
             run.assert_not_called()
 
     @unittest.skipUnless(sys.platform == "darwin", "macOS-only dialog compiler")
     def test_macos_onboarding_script_compiles_without_opening_ui(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            result = subprocess.run(
-                ["osacompile", "-l", "JavaScript", "-e", macos_onboarding_script(),
-                 "-o", str(Path(directory) / "Onboarding.scpt")],
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(result.returncode, 0, result.stderr)
+            for language in ("ko", "en"):
+                with self.subTest(language=language):
+                    result = subprocess.run(
+                        ["osacompile", "-l", "JavaScript", "-e", macos_onboarding_script(language),
+                         "-o", str(Path(directory) / f"Onboarding-{language}.scpt")],
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertEqual(result.returncode, 0, result.stderr)
 
 
 class FolderPickerTests(unittest.TestCase):
@@ -73,7 +77,7 @@ class FolderPickerTests(unittest.TestCase):
             "research_store.picker.subprocess.run",
             return_value=subprocess.CompletedProcess([], 0, stdout, ""),
         ) as run:
-            selected = choose_sources()
+            selected = choose_sources("ko")
         self.assertEqual(run.call_args.args[0][:3], ["osascript", "-l", "JavaScript"])
         self.assertTrue(run.call_args.kwargs["check"])
         self.assertEqual(run.call_args.args[0][4], macos_selection_script())
@@ -141,7 +145,7 @@ class FolderPickerTests(unittest.TestCase):
                 "research_store.picker.sys.platform", "darwin"
             ), mock.patch("research_store.picker.subprocess.run", side_effect=error):
                 with self.assertRaisesRegex(RuntimeError, "macOS 폴더 선택창을 열 수 없습니다"):
-                    choose_sources()
+                    choose_sources("ko")
 
     def test_macos_script_error_tracebacks_do_not_echo_generated_script(self) -> None:
         script = macos_selection_script()
@@ -153,7 +157,7 @@ class FolderPickerTests(unittest.TestCase):
                 "research_store.picker.sys.platform", "darwin"
             ), mock.patch("research_store.picker.subprocess.run", side_effect=error):
                 try:
-                    choose_sources()
+                    choose_sources("ko")
                 except RuntimeError as raised:
                     rendered = "".join(traceback.format_exception(raised))
                     self.assertIn("macOS 폴더 선택창을 열 수 없습니다", str(raised))
@@ -174,7 +178,7 @@ class FolderPickerTests(unittest.TestCase):
             "research_store.picker.subprocess.run",
             return_value=subprocess.CompletedProcess([], 0, path + "\n", ""),
         ):
-            self.assertEqual(choose_sources(), [Path(path)])
+            self.assertEqual(choose_sources("ko"), [Path(path)])
 
     def test_linux_cancel_is_an_empty_list(self) -> None:
         with mock.patch("research_store.picker.sys.platform", "linux"), mock.patch(
@@ -183,15 +187,17 @@ class FolderPickerTests(unittest.TestCase):
             "research_store.picker.subprocess.run",
             return_value=subprocess.CompletedProcess([], 1, "", ""),
         ):
-            self.assertEqual(choose_sources(), [])
+            self.assertEqual(choose_sources("ko"), [])
 
     @unittest.skipUnless(sys.platform == "darwin", "macOS-only picker compiler")
     def test_macos_picker_script_compiles_without_opening_ui(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            for name, script in (
-                ("Picker", macos_picker_script()),
-                ("Selection", macos_selection_script()),
-            ):
+            scripts = (
+                (f"{name}-{language}", builder(language))
+                for language in ("ko", "en")
+                for name, builder in (("Picker", macos_picker_script), ("Selection", macos_selection_script))
+            )
+            for name, script in scripts:
                 with self.subTest(script=name):
                     output = Path(directory) / f"{name}.scpt"
                     result = subprocess.run(
@@ -201,6 +207,167 @@ class FolderPickerTests(unittest.TestCase):
                         text=True,
                     )
                     self.assertEqual(result.returncode, 0, result.stderr)
+
+
+class DialogLanguageTests(unittest.TestCase):
+    def test_explicit_override_does_not_detect_or_launch_any_process(self) -> None:
+        for language in ("ko", "en"):
+            with self.subTest(language=language), mock.patch(
+                "research_store.picker.sys.platform", "darwin"
+            ), mock.patch("research_store.picker.subprocess.run") as run:
+                self.assertEqual(resolve_ui_language(language), language)
+                run.assert_not_called()
+
+    def test_invalid_language_fails_before_detection_or_ui(self) -> None:
+        for language in ("", "fr", "KO", "ko-KR", None, [], 1):
+            for operation in (resolve_ui_language, choose_sources, offer_source_selection):
+                with self.subTest(language=language, operation=operation.__name__), mock.patch(
+                    "research_store.picker.subprocess.run"
+                ) as run:
+                    with self.assertRaises(ValueError):
+                        operation(language)
+                    run.assert_not_called()
+        for builder in (macos_onboarding_script, macos_picker_script, macos_selection_script):
+            with self.subTest(builder=builder.__name__), self.assertRaises(ValueError):
+                builder("auto")
+
+    def test_macos_preference_order_region_tags_and_c_locale(self) -> None:
+        for preferred, expected in (
+            (["ko-KR", "en-US"], "ko"),
+            (["en-US", "ko-KR"], "en"),
+            (["fr-FR", "ko_KR", "en"], "ko"),
+            (["ja", "EN_us"], "en"),
+            (["ko"], "ko"),
+            (["en"], "en"),
+            (["ja", "fr"], "en"),
+            ([], "en"),
+        ):
+            with self.subTest(preferred=preferred), mock.patch(
+                "research_store.picker.sys.platform", "darwin"
+            ), mock.patch.dict("os.environ", {"LC_ALL": "C", "LANG": "en_US.UTF-8"}), mock.patch(
+                "research_store.picker.subprocess.run",
+                return_value=subprocess.CompletedProcess([], 0, json.dumps(preferred), ""),
+            ) as run:
+                self.assertEqual(resolve_ui_language(), expected)
+                run.assert_called_once()
+                self.assertEqual(run.call_args.kwargs["timeout"], 5)
+                script = run.call_args.args[0][4]
+                self.assertIn('ObjC.import("Foundation")', script)
+                self.assertIn("NSLocale.preferredLanguages", script)
+                self.assertNotIn("Application", script)
+                self.assertNotIn("AppKit", script)
+
+    def test_macos_bad_detection_is_a_bounded_english_fallback(self) -> None:
+        for stdout in ("", "[", '"ko"', '{"language": "ko"}', '["ko", null]', '[1]', "null"):
+            with self.subTest(stdout=stdout), mock.patch(
+                "research_store.picker.sys.platform", "darwin"
+            ), mock.patch(
+                "research_store.picker.subprocess.run",
+                return_value=subprocess.CompletedProcess([], 0, stdout, ""),
+            ):
+                self.assertEqual(resolve_ui_language(), "en")
+        for error in (
+            OSError("no interpreter"),
+            subprocess.CalledProcessError(1, ["osascript"]),
+            subprocess.TimeoutExpired(["osascript"], 5),
+            UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid UTF-8"),
+        ):
+            with self.subTest(error=type(error).__name__), mock.patch(
+                "research_store.picker.sys.platform", "darwin"
+            ), mock.patch("research_store.picker.subprocess.run", side_effect=error):
+                self.assertEqual(resolve_ui_language(), "en")
+
+    def test_non_macos_uses_only_standard_process_locale_variables(self) -> None:
+        for environment, expected in (
+            ({"LANG": "ko_KR.UTF-8"}, "ko"),
+            ({"LC_MESSAGES": "en_US.UTF-8", "LANG": "ko_KR.UTF-8"}, "en"),
+            ({"LC_ALL": "C", "LANG": "ko_KR.UTF-8"}, "en"),
+            ({"LANG": "ja_JP.UTF-8"}, "en"),
+            ({}, "en"),
+        ):
+            with self.subTest(environment=environment), mock.patch(
+                "research_store.picker.sys.platform", "linux"
+            ), mock.patch.dict("os.environ", environment, clear=True), mock.patch(
+                "research_store.picker.subprocess.run"
+            ) as run:
+                self.assertEqual(resolve_ui_language(), expected)
+                run.assert_not_called()
+
+    def test_resolved_language_is_used_once_for_selection_and_onboarding(self) -> None:
+        for operation, stdout, expected, marker in (
+            (choose_sources, '["/tmp/Papers"]', [Path("/tmp/Papers")], "Folders to connect"),
+            (offer_source_selection, "true", True, "Research Agent is installed."),
+        ):
+            with self.subTest(operation=operation.__name__), mock.patch(
+                "research_store.picker.sys.platform", "darwin"
+            ), mock.patch("research_store.picker.subprocess.run", side_effect=[
+                subprocess.CompletedProcess([], 0, '["en-US", "ko-KR"]', ""),
+                subprocess.CompletedProcess([], 0, stdout, ""),
+            ]) as run:
+                self.assertEqual(operation(), expected)
+                self.assertEqual(run.call_count, 2)
+                self.assertIn(marker, run.call_args.args[0][4])
+        for operation, stdout in ((choose_sources, "[]"), (offer_source_selection, "false")):
+            with self.subTest(explicit=operation.__name__), mock.patch(
+                "research_store.picker.sys.platform", "darwin"
+            ), mock.patch(
+                "research_store.picker.subprocess.run",
+                return_value=subprocess.CompletedProcess([], 0, stdout, ""),
+            ) as run:
+                operation("en")
+                run.assert_called_once()
+
+    def test_english_selection_dialog_errors_are_localized(self) -> None:
+        cases = (
+            ("[", "invalid selection result"),
+            ('["relative"]', "invalid folder path list"),
+            (subprocess.CalledProcessError(1, ["osascript"], stderr=""), "folder chooser stopped"),
+            (OSError("no launcher"), "Could not start the folder chooser launcher"),
+        )
+        for response, expected in cases:
+            with self.subTest(response=response), mock.patch(
+                "research_store.picker.sys.platform", "darwin"
+            ), mock.patch("research_store.picker.subprocess.run", **(
+                {"side_effect": response} if isinstance(response, Exception) else
+                {"return_value": subprocess.CompletedProcess([], 0, response, "")}
+            )):
+                with self.assertRaisesRegex(RuntimeError, expected):
+                    choose_sources("en")
+        for response, expected in (("null", "dialog response"), (OSError("no UI"), "connection dialog")):
+            with self.subTest(onboarding=response), mock.patch(
+                "research_store.picker.sys.platform", "darwin"
+            ), mock.patch("research_store.picker.subprocess.run", **(
+                {"side_effect": response} if isinstance(response, Exception) else
+                {"return_value": subprocess.CompletedProcess([], 0, response, "")}
+            )):
+                with self.assertRaisesRegex(RuntimeError, expected):
+                    offer_source_selection("en")
+
+    def test_linux_english_title_does_not_change_path_or_cancel_result(self) -> None:
+        for returncode in (0, 1):
+            with self.subTest(returncode=returncode), mock.patch(
+                "research_store.picker.sys.platform", "linux"
+            ), mock.patch("research_store.picker.shutil.which", return_value="/usr/bin/zenity"), mock.patch(
+                "research_store.picker.subprocess.run",
+                return_value=subprocess.CompletedProcess([], returncode, "/tmp/한글 folder\n", ""),
+            ) as run:
+                self.assertEqual(choose_sources("en"), [Path("/tmp/한글 folder")] if returncode == 0 else [])
+                self.assertIn("--title=Choose a folder containing PDFs", run.call_args.args[0])
+
+    @unittest.skipUnless(sys.platform == "darwin", "macOS-only Foundation locale query")
+    def test_real_macos_language_query_returns_preference_list_without_ui(self) -> None:
+        completed = subprocess.run(
+            ["osascript", "-l", "JavaScript", "-e", _MACOS_LANGUAGE_SCRIPT],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        preferred = json.loads(completed.stdout)
+        self.assertIsInstance(preferred, list)
+        self.assertTrue(all(isinstance(value, str) for value in preferred))
+        with mock.patch("research_store.picker.subprocess.run", return_value=completed):
+            self.assertIn(resolve_ui_language(), ("ko", "en"))
 
 
 @unittest.skipUnless(sys.platform == "darwin", "macOS-only mocked JavaScript runtime")
@@ -281,7 +448,8 @@ class MacOSScriptBehaviorTests(unittest.TestCase):
         return invoke("runModal", {
           files: this.canChooseFiles, directories: this.canChooseDirectories,
           multiple: this.allowsMultipleSelection, create: this.canCreateDirectories,
-          packages: this.treatsFilePackagesAsDirectories
+          packages: this.treatsFilePackagesAsDirectories,
+          message: this.message, prompt: this.prompt
         }, pick.response === undefined ? "1" : pick.response);
       },
       get URLs() {
@@ -332,6 +500,7 @@ class MacOSScriptBehaviorTests(unittest.TestCase):
           boxes[index].target.methods[boxes[index].action].implementation(boxes[index]);
         });
         return invoke("review", {
+          title: this.messageText, message: this.informativeText,
           initialEnabled,
           buttons: this.buttons,
           rows: boxes.map(box => ({title: box.title, path: box.toolTip,
@@ -402,7 +571,12 @@ class MacOSScriptBehaviorTests(unittest.TestCase):
         self.assertEqual(
             outcome["calls"][3]["options"],
             {"files": False, "directories": True, "multiple": True,
-             "create": False, "packages": False},
+             "create": False, "packages": False,
+             "message": (
+                 "목록에 추가할 폴더를 선택하세요.\n"
+                 "⌘ Command 키를 누른 채 클릭하면 여러 폴더를 고를 수 있습니다.\n"
+                 "선택한 뒤 목록에서 확인하면 PDF 저장과 시각 검토를 시작합니다."
+             ), "prompt": "목록에 추가"},
         )
 
     def review_calls(self, outcome: dict) -> list[dict]:
@@ -629,6 +803,83 @@ class MacOSScriptBehaviorTests(unittest.TestCase):
                 outcome = self.run_script(script, [], fail_at=fail_at, error_number=-1743)
                 self.assertEqual(outcome["errorNumber"], -1743)
                 self.assertNotIn("result", outcome)
+
+    def test_bilingual_draft_cancel_batch_dedup_and_exclusion_semantics(self) -> None:
+        cases = (
+            ([{"action": "cancel"}], [], []),
+            ([{"action": "add"}, {"action": "connect"}],
+             [{"paths": ["/tmp/한글 folder", "/tmp/newline\n"]}], ["/tmp/한글 folder", "/tmp/newline\n"]),
+            ([{"action": "add"}, {"action": "add"}, {"action": "connect", "unchecked": [1]}],
+             [{"paths": ["/tmp/one", "/tmp/exclude"]},
+              {"paths": ["/tmp/one", "/tmp/three", "/tmp/three"]}], ["/tmp/one", "/tmp/three"]),
+            ([{"action": "add"}, {"action": "add"}, {"action": "connect"}],
+             [{"paths": ["/tmp/keep"]}, {"paths": ["/tmp/not-confirmed"], "response": "0"}], ["/tmp/keep"]),
+            ([{"action": "add"}, {"action": "cancel"}],
+             [{"paths": ["/tmp/not-confirmed"], "response": "0"}], []),
+            ([{"action": "add"}, {"action": "close"}], [{"paths": ["/tmp/discard"]}], []),
+            ([{"action": "add"}, {"action": "connect", "unchecked": [0]}, {"action": "cancel"}],
+             [{"paths": ["/tmp/exclude"]}], []),
+            ([{"action": "add"}, {"action": "connect", "unchecked": [0], "rechecked": [0]}],
+             [{"paths": ["/tmp/keep"]}], ["/tmp/keep"]),
+        )
+        for language in ("ko", "en"):
+            for reviews, picks, expected in cases:
+                with self.subTest(language=language, reviews=reviews):
+                    outcome = self.run_script(macos_selection_script(language), [], reviews=reviews, picks=picks)
+                    self.assertEqual(outcome["result"], expected)
+                    first = self.review_calls(outcome)[0]
+                    self.assertEqual(first["title"], "연결할 폴더" if language == "ko" else "Folders to connect")
+                    self.assertEqual(first["buttons"][1]["title"], "폴더 추가하기" if language == "ko" else "Add folders")
+                    self.assertEqual(first["buttons"][2]["title"], "취소" if language == "ko" else "Cancel")
+                    self.assertFalse(first["buttons"][0]["enabled"])
+                    panels = [call["options"] for call in outcome["calls"] if call["method"] == "runModal"]
+                    for panel in panels:
+                        self.assertEqual(panel["prompt"], "목록에 추가" if language == "ko" else "Add to list")
+                        self.assertIn("⌘ Command", panel["message"])
+
+    def test_english_folder_count_has_correct_singular_plural_and_zero(self) -> None:
+        for paths, unchecked, expected in (
+            (["/tmp/one"], [], "1 folder selected"),
+            (["/tmp/one", "/tmp/two"], [], "2 folders selected"),
+            (["/tmp/one"], [0], "0 folders selected"),
+        ):
+            with self.subTest(expected=expected):
+                outcome = self.run_script(macos_selection_script("en"), [],
+                    reviews=[{"action": "add"}, {"action": "cancel", "unchecked": unchecked}],
+                    picks=[{"paths": paths}])
+                reviews = self.review_calls(outcome)
+                self.assertIn(expected, [label["text"] for label in reviews[1]["labels"]])
+                self.assertEqual(reviews[1]["buttons"][1]["title"], "Add more folders")
+                self.assertEqual(reviews[1]["buttons"][0]["title"], "Connect and save PDFs")
+                self.assertIn("Uncheck a folder", reviews[1]["labels"][1]["text"])
+
+    def test_english_onboarding_accept_cancel_and_native_errors(self) -> None:
+        for choice, expected in (("Choose folders", True), ("Later", False)):
+            outcome = self.run_script(macos_onboarding_script("en"), {"buttonReturned": choice})
+            self.assertIs(outcome["result"], expected)
+            self.assertEqual(outcome["calls"][0]["options"]["buttons"], ["Later", "Choose folders"])
+        outcome = self.run_script(macos_onboarding_script("en"), {}, fail_at="displayDialog", error_number=-128)
+        self.assertIs(outcome["result"], False)
+        outcome = self.run_script(macos_onboarding_script("en"), {}, fail_at="displayDialog", error_number=-1743)
+        self.assertEqual(outcome["errorNumber"], -1743)
+        self.assertNotIn("result", outcome)
+
+    def test_english_native_picker_and_draft_errors_fail_without_partial_selection(self) -> None:
+        cases = (
+            (macos_picker_script("en"), {"modal_response": "-1001"}, "did not complete"),
+            (macos_picker_script("en"), {"local_urls": False}, "Only local folders"),
+            (macos_picker_script("en"), {"activation_allowed": False}, "Could not activate"),
+            (macos_selection_script("en"), {"reviews": [{"action": "-1001"}]}, "did not complete"),
+            (macos_selection_script("en"), {
+                "reviews": [{"action": "add"}, {"action": "add"}],
+                "picks": [{"paths": ["/tmp/keep"]}, {"paths": [], "response": "-1001"}]
+             }, "did not complete"),
+        )
+        for script, options, expected in cases:
+            with self.subTest(options=options):
+                outcome = self.run_script(script, ["/tmp/test"], **options)
+                self.assertNotIn("result", outcome)
+                self.assertIn(expected, outcome["errorMessage"])
 
 
 if __name__ == "__main__":

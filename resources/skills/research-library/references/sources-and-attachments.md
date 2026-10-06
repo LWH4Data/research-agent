@@ -11,7 +11,8 @@ supplying paths, the primary session checks only whether
 `STORE_ROOT/scripts/select_sources.py` exists in the resolved installed store:
 
 - If the helper exists, invoke the absolute registered skill launcher with
-  exactly `source-add` and no extra arguments. Use the direct launcher path,
+  `source-add` without paths. Its default window language follows macOS preferences.
+  Use the direct launcher path,
   without a shell wrapper, pipeline, or preceding `cd`; the user need not type a
   terminal command.
 - If the helper is absent, this installation uses the legacy picker. Ask the
@@ -28,6 +29,22 @@ exists, both exact paths and confirmed picker paths use the managed handoff belo
 Older installations only register locations; they need a separate save request.
 Do not add the new helper to an older installation during a library operation.
 
+### Window language
+
+For an explicit request to open the window in Korean or English, check the same
+registered launcher's `source-add --help` once for `--language` support, then call
+it directly with `source-add --language ko` or `source-add --language en`.
+`auto` follows the first supported macOS preferred language; unsupported or
+unavailable language detection falls back to English. The window language does
+not change the user's macOS settings, library data, or the language of the reply.
+Do not prepend environment assignments or wrappers. If an older installed
+launcher does not support the option, report that limitation; do not patch the
+installation or bypass its launcher to force another language.
+
+The same language is used for installation onboarding and the following folder
+selection flow. Only confirmed folder paths reach registration and storage;
+language selection is host-side presentation data, not part of the intake spec.
+
 With the helper present, the host-side window keeps a temporary selection list:
 add folders, uncheck items to exclude them, then explicitly connect the checked
 folders. Closing the inner picker preserves the remaining checked folders.
@@ -40,7 +57,7 @@ do not broaden permissions or claim that the window opened. An exact path suppli
 by the user remains an alternative. The source-list command can identify already
 connected folders; do not imply the temporary list manages existing connections.
 
-In the managed folder flow, the final **연결하고 PDF 저장하기** confirmation registers
+In the managed folder flow, the final **연결하고 PDF 저장하기 / Connect and save PDFs** confirmation registers
 exactly the checked locations and immediately submits their PDFs for text storage
 and visual review. The same rule applies when the user supplies exact paths and
 asks to connect them. `selected` is the processing scope, including previously
