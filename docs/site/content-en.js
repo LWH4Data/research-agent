@@ -23,7 +23,7 @@ window.RESEARCH_GUIDE_EN = {
       {
         label: 'Install',
         question: 'What do I enter in Terminal?',
-        answer: 'The command below installs the v0.4.0 prerelease. Run it once for a fresh installation.',
+        answer: 'The command below installs the v0.4.1 prerelease. Run it once for a fresh installation.',
         steps: ['Click “Copy” below, then paste into Terminal with ⌘ + V.', 'Press Enter and wait for “research-agent 설치가 완료되었습니다.” — the Korean installation-complete message.'],
         captures: [{key: 'install-complete', caption: 'The installation-complete message in Terminal'}],
         noteLabel: 'Already installed, or seeing an error?',
@@ -40,8 +40,8 @@ window.RESEARCH_GUIDE_EN = {
             body: 'Click “폴더 추가하기” (Add folders).',
             capture: {
               key: 'folder-draft-empty',
-              caption: 'Click “폴더 추가하기” (Add folders). The black outline is a guide annotation. The disabled connection button in this earlier screenshot uses an older label.',
-              alt: 'The empty folder list and “폴더 추가하기” (Add folders) button'
+              caption: 'An empty draft for choosing folders to add this time. Click “폴더 추가하기” (Add folders). The black outline is a guide annotation.',
+              alt: 'A Korean connection window with no folders selected for this draft, the Add folders button, and the disabled Connect and save PDFs button'
             }
           },
           {
@@ -49,8 +49,8 @@ window.RESEARCH_GUIDE_EN = {
             body: 'Click the picker window once, then hold ⌘ Command beside the spacebar and click each folder name once. Then click “목록에 추가” (Add to list).',
             capture: {
               key: 'folder-selection',
-              caption: 'Three selected folders, cropped from an earlier screenshot. The current “목록에 추가” (Add to list) button is not shown in this earlier crop.',
-              alt: 'Three folder names selected and highlighted together'
+              caption: 'Three folders selected together in an actual Korean picker. Click “목록에 추가” (Add to list) at the bottom right when ready. The black outline is a guide annotation.',
+              alt: 'A macOS picker with three Desktop folders selected together, the 3 items and 3 folders counts, a Command multi-selection instruction, and the Add to list button at the bottom right'
             }
           },
           {
@@ -112,8 +112,8 @@ window.RESEARCH_GUIDE_EN = {
     question: 'Can my PDFs stay in different folders?',
     answer: 'Yes. Ask Codex to open the connection window, then collect the folders in its list. Confirm with “연결하고 PDF 저장하기” (Connect and save PDFs) to start saving PDFs from the selected folders, followed by visual review.',
     captures: [
-      {key: 'folder-draft-empty', caption: 'Click “폴더 추가하기” (Add folders). The black outline is a guide annotation. The disabled connection button uses an older label in this screenshot.', alt: 'The empty folder list and Add folders button'},
-      {key: 'folder-selection', caption: 'Three folders selected together. The current Add to list button is not shown in this earlier crop.', alt: 'Three folder names selected and highlighted together'},
+      {key: 'folder-draft-empty', caption: 'An empty draft for choosing folders to add this time. Click “폴더 추가하기” (Add folders). The black outline is a guide annotation.', alt: 'A Korean connection window with no folders selected for this draft, the Add folders button, and the disabled Connect and save PDFs button'},
+      {key: 'folder-selection', caption: 'Three folders selected together in an actual Korean picker. Click “목록에 추가” (Add to list) at the bottom right to add them to the confirmation list. The black outline is a guide annotation.', alt: 'A macOS picker with three Desktop folders selected together, the 3 items and 3 folders counts, a Command multi-selection instruction, and the Add to list button at the bottom right'},
       {key: 'folder-draft-confirmation', caption: 'Check the list and click “연결하고 PDF 저장하기” (Connect and save PDFs). The black outline is a guide annotation.', alt: 'Three checked folders and the Connect and save PDFs button'}
     ],
     steps: [
@@ -170,9 +170,104 @@ window.RESEARCH_GUIDE_EN = {
         key: 'organize-refresh',
         title: 'Added or changed PDFs in a connected folder?',
         explanation: 'Folders are not continuously watched for changes. After adding or editing PDFs, use this prompt to process new and changed documents in connected locations.',
-        prompt: '@Research Agent Organize only new or changed PDFs in my connected folders, then tell me the storage results and visual review status.',
-        result: 'You do not need to reconnect existing folders. Connect a new folder first. Check the reply for newly processed documents, failures, and pending work.',
-        captures: []
+        prompt: '@Research Agent Organize only new or changed PDFs in my connected folders, then tell me the storage results and visual review status. Briefly list newly saved documents and the number of documents kept unchanged.',
+        result: 'You do not need to reconnect existing folders. Connect a new folder first. Check the reply for newly saved documents, existing documents kept unchanged, failures, and review status. Also check the stated scope of visual review page counts.',
+        captures: [
+          {
+            key: 'organize-refresh-request',
+            caption: '1. An actual Korean request to process only new or changed PDFs in connected folders and report newly saved document names and the number kept unchanged.',
+            alt: 'A Korean Research Agent request to process only new or changed PDFs in connected folders and report storage results, visual review status, newly saved document names, and the unchanged document count'
+          },
+          {
+            key: 'organize-refresh-result',
+            caption: '2. The Korean reply reports three PDFs newly saved: FastBERT, BERT-of-Theseus, and SqueezeBERT; nine existing documents kept unchanged; and no storage failures or missing originals. Within the current request scope, 109 pages are verified and eight are in progress or waiting, with background review continuing.',
+            alt: 'A Korean reply reporting FastBERT, BERT-of-Theseus, and SqueezeBERT newly saved, nine existing documents unchanged, no storage failures or missing originals, and within the current request scope 109 pages verified, eight in progress or waiting, no pages currently needing further attention, and background review continuing'
+          }
+        ]
+      },
+      {
+        "key": "organize-review-controls",
+        "title": "Pause visual review and continue later",
+        "explanation": "If review takes too long or usage is a concern, name the documents and ask to pause their review. Your saved text remains available. The same controls work for PDFs saved from folders or attached in a conversation. Replace the example document names with your own.",
+        "result": "If you paused the whole library, resuming individual documents does not clear that hold. Ask to resume visual review for the whole library when ready. Time and page thresholds only give guidance; you decide whether to pause.",
+        "followUps": [
+          {
+            "key": "review-control-store",
+            "title": "1. Check storage and review startup",
+            "explanation": "This example starts by attaching three new PDFs. For PDFs already saved, check their review status without attaching or saving them again.",
+            "prompt": "@Research Agent Save the attached ALBERT, ELECTRA, and DeBERTa PDFs to my research library. Briefly tell me the text storage results and whether visual review has started.",
+            "result": "Check text storage and review startup separately. Send the pause request below while visual review is in progress.",
+            "captures": [
+              {
+                "key": "review-control-store-request",
+                "caption": "An actual Korean request with three attached PDFs: ALBERT, ELECTRA, and DeBERTa. It asks for storage results and whether visual review has started.",
+                "alt": "A Korean request with three ALBERT, ELECTRA, and DeBERTa PDF attachments, asking to save them and report text storage results and visual review startup"
+              },
+              {
+                "key": "review-control-store-result",
+                "caption": "The Korean reply reports text saved for all three documents without failures, with visual review started and running in the background.",
+                "alt": "A Korean reply reporting all three ALBERT, ELECTRA, and DeBERTa PDFs saved, text extraction and storage complete, no failed files, and background visual review started and still in progress"
+              }
+            ]
+          },
+          {
+            "key": "review-control-pause",
+            "title": "2. Pause review for specific documents",
+            "explanation": "Name the documents to pause and the results to retain. Check that the reply confirms an actual stop. A stopping status is not a completed pause.",
+            "prompt": "@Research Agent Pause visual review only for ALBERT, ELECTRA, and DeBERTa. Keep the saved text and completed review results, and tell me whether review has actually stopped and what remains.",
+            "result": "This example pauses only the three named documents. Saved text and verified results remain available; review can continue from the remaining work later.",
+            "captures": [
+              {
+                "key": "review-control-pause-request",
+                "caption": "The Korean request pauses review only for the three documents while retaining saved text and completed review results.",
+                "alt": "A Korean request to pause visual review only for ALBERT, ELECTRA, and DeBERTa, keep saved text and completed results, and report the actual stop and remaining work"
+              },
+              {
+                "key": "review-control-pause-result",
+                "caption": "The Korean reply confirms the execution process has exited. ALBERT has four pages reviewed and six remaining; ELECTRA has 13 remaining and DeBERTa has 16. Saved content is retained, and other documents are unaffected.",
+                "alt": "A Korean reply confirming the three document reviews paused and the execution process exited, with saved text and completed results retained. ALBERT has four reviewed and six remaining pages; ELECTRA zero reviewed and 13 remaining; DeBERTa zero reviewed and 16 remaining. No failed or further-attention pages at that time; other document reviews are unaffected"
+              }
+            ]
+          },
+          {
+            "key": "review-control-resume",
+            "title": "3. Continue the remaining review",
+            "explanation": "Name the paused documents and ask to continue the remaining review. Keep completed review results.",
+            "prompt": "@Research Agent Continue the remaining visual review for ALBERT, ELECTRA, and DeBERTa. Keep completed review results and briefly tell me whether review has resumed.",
+            "result": "Resuming is separate from completing the review. You can keep asking questions using saved text while background review continues.",
+            "captures": [
+              {
+                "key": "review-control-resume-request",
+                "caption": "The Korean request continues only the remaining visual review for the same documents while keeping completed results.",
+                "alt": "A Korean request to continue remaining visual review for ALBERT, ELECTRA, and DeBERTa, preserve completed results, and report whether review resumed"
+              },
+              {
+                "key": "review-control-resume-result",
+                "caption": "The Korean reply reports that remaining review resumed in the background, with saved text and existing results retained and no current failures.",
+                "alt": "A Korean reply reporting remaining visual review for ALBERT, ELECTRA, and DeBERTa resumed in the background, saved text and existing results retained, and review in progress without current failures"
+              }
+            ]
+          },
+          {
+            "key": "review-control-status",
+            "title": "4. Check current status and remaining work",
+            "explanation": "Ask for status later and distinguish work in progress or waiting from pages needing further attention. This screenshot does not show all review completed.",
+            "prompt": "@Research Agent Tell me the visual review results for ALBERT, ELECTRA, and DeBERTa. If any work is still in progress or needs further attention, give the document names, pages, and reasons.",
+            "result": "The denominator counts selected visual review pages, not every page in the PDF. For pages needing further attention, such as ALBERT page 10, follow the further-review guide below. Work in progress or waiting is not a confirmed error.",
+            "captures": [
+              {
+                "key": "review-control-status-request",
+                "caption": "The Korean request asks for current review results and the documents, pages, and reasons for remaining work.",
+                "alt": "A Korean request for visual review results of ALBERT, ELECTRA, and DeBERTa and document names, pages, and reasons for work still in progress or needing further attention"
+              },
+              {
+                "key": "review-control-status-result",
+                "caption": "For selected review pages, the Korean reply reports ALBERT 9/10 verified with page 10 needing further attention, ELECTRA 8/13 verified, and DeBERTa 8/16 verified. Other work is in progress or waiting; ALBERT page 10 needs further checks for table column alignment and OCR.",
+                "alt": "A Korean status reply for selected visual review pages: ALBERT 9/10 verified with page 10 needing further attention, ELECTRA 8/13 verified with pages 14–18 waiting or in progress, and DeBERTa 8/16 verified with pages 16–23 waiting or in progress. On ALBERT page 10, the extracted text omits the dash from Table 10’s UPM row RACE column, and an OCR issue with evaluation benchmark also requires further checking. Saved text and completed results remain; no execution failure is reported. Review is not fully complete"
+              }
+            ]
+          }
+        ]
       },
       {
         key: 'organize-review',

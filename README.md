@@ -83,7 +83,7 @@
 ### 이런 때 사용합니다
 
 Research Agent를 처음 사용할 때 한 번만 설치합니다.
-아래 명령은 **v0.4.0 사전 출시 버전**의 사용자용 배포본을 설치합니다.
+아래 명령은 **v0.4.1 사전 출시 버전**의 사용자용 배포본을 설치합니다.
 GitHub의 **Code → Download ZIP**은 개발 소스이므로, 처음 사용할 때는
 아래 설치 명령을 이용하세요. Git이나 별도 Python 설치는 필요하지 않습니다.
 
@@ -103,9 +103,9 @@ GitHub의 **Code → Download ZIP**은 개발 소스이므로, 처음 사용할 
   installer=$(mktemp) &&
   trap 'rm -f "$installer"' EXIT &&
   curl -q --proto '=https' --proto-redir '=https' --tlsv1.2 -fLsS \
-    https://github.com/LWH4Data/research-agent/releases/download/v0.4.0/install-release.sh \
+    https://github.com/LWH4Data/research-agent/releases/download/v0.4.1/install-release.sh \
     -o "$installer" &&
-  bash "$installer" --version 0.4.0
+  bash "$installer" --version 0.4.1
 )
 ```
 
@@ -544,7 +544,7 @@ bash "$HOME/research-agent/demo-progress.sh"
 
 ## 업데이트
 
-**v0.4.0은 새 설치만 지원합니다.** 기존 저장 자료를 유지하며
+**v0.4.1은 새 설치만 지원합니다.** 기존 저장 자료를 유지하며
 새 버전으로 교체하는 업데이트 절차와 자동 업데이트는 아직 제공하지 않습니다.
 설치 명령을 다시 실행해도 기존 폴더를 덮어쓰지 않습니다.
 

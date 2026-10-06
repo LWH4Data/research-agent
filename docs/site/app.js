@@ -23,7 +23,7 @@ const pages={
       {
         "label": "설치하기",
         "question": "터미널에 무엇을 입력하나요?",
-        "answer": "아래 명령으로 v0.4.0 사전 출시 버전을 설치해요. 처음 설치할 때 한 번만 실행하세요.",
+        "answer": "아래 명령으로 v0.4.1 사전 출시 버전을 설치해요. 처음 설치할 때 한 번만 실행하세요.",
         "steps": ["아래 “복사”를 누르고, 터미널 창에서 ⌘ + V로 붙여 넣으세요.", "Enter를 누르고 “research-agent 설치가 완료되었습니다.”라는 안내가 나올 때까지 기다리세요."],
         "captures": [{"key": "install-complete", "caption": "터미널에 설치 완료 안내가 표시된 화면"}],
         "noteLabel": "기존 설치가 있거나 오류가 나타났나요?",
@@ -38,12 +38,12 @@ const pages={
           {
             "title": "1. 폴더 추가하기",
             "body": "‘연결할 폴더’ 창에서 “폴더 추가하기”를 누르세요.",
-            "capture": {"key": "folder-draft-empty", "caption": "“폴더 추가하기”를 누르세요. 검은 테두리는 가이드용 표시예요. 이 캡처의 비활성 연결 버튼에는 이전 문구가 남아 있어요.", "alt": "연결할 폴더 창의 폴더 추가하기 버튼"}
+            "capture": {"key": "folder-draft-empty", "caption": "이번에 추가할 폴더를 고르는 빈 목록이에요. “폴더 추가하기”를 누르세요. 검은 테두리는 가이드용 표시예요.", "alt": "이번에 추가할 폴더가 아직 없는 연결할 폴더 창과 폴더 추가하기 버튼, 비활성 연결하고 PDF 저장하기 버튼"}
           },
           {
             "title": "2. 원하는 폴더 고르기",
             "body": "선택창을 한 번 클릭한 뒤, 스페이스바 옆 ⌘ Command 키를 누른 채 폴더 이름을 한 번씩 클릭하세요. 원하는 폴더들이 선택되면 키에서 손을 떼고 “목록에 추가”를 누르세요.",
-            "capture": {"key": "folder-selection", "caption": "세 폴더를 함께 선택한 예시예요. 이전 캡처에서 목록만 잘라 “목록에 추가” 버튼은 보이지 않아요.", "alt": "research-agent-test1, test2, test3 폴더가 함께 선택된 목록"}
+            "capture": {"key": "folder-selection", "caption": "폴더 3개를 함께 선택한 예시예요. 선택을 마쳤으면 오른쪽 아래 “목록에 추가”를 누르세요. 검은 테두리는 가이드용 표시예요.", "alt": "바탕화면의 폴더 3개가 함께 선택된 macOS 폴더 선택창. 3 items와 3 folders 표시, Command 다중 선택 안내와 오른쪽 아래 목록에 추가 버튼이 보임"}
           },
           {
             "title": "3. 확인하고 PDF 저장 시작하기",
@@ -84,13 +84,13 @@ const pages={
     "captures": [
       {
         "key": "folder-draft-empty",
-        "caption": "먼저 “폴더 추가하기”를 누르세요. 검은 테두리는 가이드용 표시예요. 비활성 연결 버튼은 이전 문구가 남아 있는 캡처예요.",
-        "alt": "빈 연결할 폴더 목록과 폴더 추가하기 버튼"
+        "caption": "이번에 추가할 폴더를 고르는 빈 목록이에요. 먼저 “폴더 추가하기”를 누르세요. 검은 테두리는 가이드용 표시예요.",
+        "alt": "이번에 추가할 폴더가 아직 없는 연결할 폴더 목록과 폴더 추가하기 버튼, 비활성 연결하고 PDF 저장하기 버튼"
       },
       {
         "key": "folder-selection",
-        "caption": "세 폴더를 함께 선택한 목록 예시예요. “목록에 추가” 버튼은 이 목록 캡처에 보이지 않아요.",
-        "alt": "research-agent-test1, test2, test3 폴더가 함께 선택된 목록"
+        "caption": "폴더 3개를 함께 선택한 예시예요. 오른쪽 아래 “목록에 추가”로 확인 목록에 넣어요. 검은 테두리는 가이드용 표시예요.",
+        "alt": "바탕화면의 폴더 3개가 함께 선택된 macOS 폴더 선택창. 3 items와 3 folders 표시, Command 다중 선택 안내와 오른쪽 아래 목록에 추가 버튼이 보임"
       },
       {
         "key": "folder-draft-confirmation",
@@ -166,9 +166,104 @@ const pages={
         "key": "organize-refresh",
         "title": "폴더에 PDF를 추가하거나 바꿨다면",
         "explanation": "폴더를 계속 감시해 자동으로 갱신하지는 않아요. PDF를 새로 넣거나 수정한 뒤에는 아래 문장으로 갱신을 요청하세요. 연결한 위치에서 새로 추가되거나 바뀐 문서를 처리해요.",
-        "prompt": "@Research Agent 연결한 폴더에서 새로 추가되거나 변경된 PDF만 정리하고, 저장 결과와 시각 검토 상태를 알려줘.",
-        "result": "이미 연결한 폴더는 다시 고를 필요 없어요. 새 폴더라면 먼저 연결하세요. 새로 처리한 문서와 실패·대기 중인 부분을 답변에서 확인하세요.",
-        "captures": []
+        "prompt": "@Research Agent 연결한 폴더에서 새로 추가되거나 변경된 PDF만 정리하고, 저장 결과와 시각 검토 상태를 알려줘. 새로 저장한 문서 이름과 변경 없이 유지한 문서 수도 간단히 알려줘.",
+        "result": "이미 연결한 폴더는 다시 고를 필요 없어요. 새 폴더라면 먼저 연결하세요. 답변에서 새로 저장한 문서와 기존 문서 유지 여부, 실패·검토 상태를 확인하세요. 시각 검토의 페이지 수는 답변에 표시된 범위도 함께 확인하세요.",
+        "captures": [
+          {
+            "key": "organize-refresh-request",
+            "caption": "1. 연결한 폴더에서 새·변경 PDF만 정리하고, 새로 저장한 문서 이름과 기존 문서 유지 수도 알려 달라고 요청해요.",
+            "alt": "Research Agent에 연결한 폴더의 새로 추가되거나 변경된 PDF만 정리하고, 저장 결과·시각 검토 상태·새로 저장한 문서 이름·변경 없이 유지한 문서 수를 알려 달라고 요청한 한국어 화면"
+          },
+          {
+            "key": "organize-refresh-result",
+            "caption": "2. FastBERT·BERT-of-Theseus·SqueezeBERT 3개를 새로 저장하고 기존 9개를 유지했다고 안내해요. 저장 실패·원본 누락은 없고, 현재 요청 범위에서 시각 검토 109쪽 완료·8쪽 진행/대기이며 백그라운드 검토가 계속된다고 보고해요.",
+            "alt": "PDF 3개 새 저장 응답: FastBERT, BERT-of-Theseus, SqueezeBERT. 기존 9개 변경 없이 유지, 저장 실패와 원본 누락 없음. 현재 요청 범위에서 109쪽 검증 완료, 8쪽 진행·대기, 추가 확인이 필요한 페이지는 없으며 백그라운드 검토가 계속된다는 한국어 안내"
+          }
+        ]
+      },
+      {
+        "key": "organize-review-controls",
+        "title": "시각 검토를 잠시 멈추고 이어서 하려면",
+        "explanation": "시간이 오래 걸리거나 사용량이 부담되면 검토할 문서를 지정해 잠시 멈춰 달라고 요청하세요. 저장한 본문은 계속 사용할 수 있어요. 폴더에서 저장한 PDF와 대화에 첨부한 PDF 모두 같은 방식으로 요청해요. 아래 문서 이름은 내 PDF에 맞게 바꾸세요.",
+        "result": "전체 자료실의 검토를 멈춘 경우에는 개별 문서를 재개해도 전체 보류가 해제되지 않아요. 계속하려면 “자료실 전체의 시각 검토를 재개해줘”라고 요청하세요. 시간·페이지 안내 기준에 도달해도 자동으로 멈추지 않으며, 중단은 직접 결정해요.",
+        "followUps": [
+          {
+            "key": "review-control-store",
+            "title": "1. 저장과 검토 시작 확인",
+            "explanation": "아래는 새 PDF 3개를 대화에 첨부한 예시예요. 이미 저장한 PDF라면 다시 첨부하거나 저장할 필요 없이 검토 상태부터 확인하세요.",
+            "prompt": "@Research Agent 첨부한 ALBERT, ELECTRA, DeBERTa PDF 3개를 연구 자료실에 저장해줘. 텍스트 저장 결과와 시각 검토가 시작됐는지를 간단히 알려줘.",
+            "result": "본문 저장과 검토 시작을 따로 확인해요. 다음 일시 정지 요청은 시각 검토가 진행 중일 때 보내세요.",
+            "captures": [
+              {
+                "key": "review-control-store-request",
+                "caption": "ALBERT·ELECTRA·DeBERTa PDF 3개를 첨부하고 저장 결과와 시각 검토 시작 여부를 요청해요.",
+                "alt": "ALBERT, ELECTRA, DeBERTa PDF 첨부 3개와 연구 자료실 저장·텍스트 저장 결과·시각 검토 시작 여부를 요청한 한국어 화면"
+              },
+              {
+                "key": "review-control-store-result",
+                "caption": "세 문서의 본문 저장 완료·실패 없음과 백그라운드 시각 검토 시작·진행 중을 안내해요.",
+                "alt": "ALBERT, ELECTRA, DeBERTa PDF 3개 저장과 텍스트 추출·저장 완료, 실패한 파일 없음, 백그라운드 시각 검토가 시작되어 진행 중이라는 한국어 응답"
+              }
+            ]
+          },
+          {
+            "key": "review-control-pause",
+            "title": "2. 지정한 문서의 검토 잠시 멈추기",
+            "explanation": "멈출 문서와 유지할 내용을 알려 주세요. 답변에서 실제로 멈췄는지 확인해요. “중단 중”은 아직 중단 완료가 아니에요.",
+            "prompt": "@Research Agent ALBERT, ELECTRA, DeBERTa 세 문서의 시각 검토만 잠시 멈춰줘. 저장된 본문과 완료된 검토 결과는 유지하고, 실제로 멈췄는지와 남은 검토 상태를 알려줘.",
+            "result": "이 예시는 세 문서만 멈춘 경우예요. 저장한 본문과 이미 확인한 내용은 유지하고, 나머지 검토는 재개할 때 이어가요.",
+            "captures": [
+              {
+                "key": "review-control-pause-request",
+                "caption": "세 문서의 시각 검토만 멈추고, 저장된 본문·완료된 검토 결과를 유지해 달라고 요청해요.",
+                "alt": "ALBERT, ELECTRA, DeBERTa 세 문서의 시각 검토만 잠시 멈추고 저장된 본문과 완료된 검토 결과를 유지하며 실제 중단 여부와 남은 상태를 알려 달라는 한국어 요청"
+              },
+              {
+                "key": "review-control-pause-result",
+                "caption": "실행 프로세스 종료까지 확인했다고 안내해요. ALBERT는 4쪽 확인·6쪽 남음, ELECTRA는 13쪽, DeBERTa는 16쪽이 남았어요. 저장된 내용은 유지됐고 다른 문서의 검토에는 영향을 주지 않았다고 보고해요.",
+                "alt": "세 문서 시각 검토 일시 정지와 실행 프로세스 실제 종료 확인, 저장된 본문·완료된 검토 결과 유지. ALBERT 4쪽 검토 완료·6쪽 남음, ELECTRA 0쪽 완료·13쪽 남음, DeBERTa 0쪽 완료·16쪽 남음. 당시 실패나 추가 확인 페이지 없음, 다른 문서 검토에 영향 없음이라는 한국어 응답"
+              }
+            ]
+          },
+          {
+            "key": "review-control-resume",
+            "title": "3. 남은 시각 검토 이어가기",
+            "explanation": "멈췄던 문서의 이름을 말하고 남은 검토를 이어서 해 달라고 요청해요. 완료된 검토 결과는 유지해요.",
+            "prompt": "@Research Agent ALBERT, ELECTRA, DeBERTa 세 문서의 남은 시각 검토를 이어서 해줘. 완료된 검토 결과는 유지하고, 재개 여부를 간단히 알려줘.",
+            "result": "재개는 전체 완료와 다른 상태예요. 백그라운드 검토가 이어지는 동안 저장한 본문으로 질문을 계속할 수 있어요.",
+            "captures": [
+              {
+                "key": "review-control-resume-request",
+                "caption": "같은 세 문서의 완료된 결과를 유지하고 남은 시각 검토만 이어서 해 달라고 요청해요.",
+                "alt": "ALBERT, ELECTRA, DeBERTa 세 문서의 남은 시각 검토를 이어서 하고 완료된 결과를 유지하며 재개 여부를 알려 달라는 한국어 요청"
+              },
+              {
+                "key": "review-control-resume-result",
+                "caption": "남은 검토가 백그라운드에서 재개됐고, 본문·기존 결과를 유지하며 실패 없이 진행 중이라고 안내해요.",
+                "alt": "ALBERT, ELECTRA, DeBERTa 남은 시각 검토 백그라운드 재개, 저장된 본문과 기존 검토 결과 유지, 현재 실패 없이 진행 중이라는 한국어 응답"
+              }
+            ]
+          },
+          {
+            "key": "review-control-status",
+            "title": "4. 현재 상태와 남은 부분 확인",
+            "explanation": "나중에 검토 상태를 물어보고 진행·대기 중인 부분과 추가 확인이 필요한 부분을 구분하세요. 아래 화면은 아직 모두 완료된 상태가 아니에요.",
+            "prompt": "@Research Agent ALBERT, ELECTRA, DeBERTa 세 문서의 시각 검토 결과를 알려줘. 아직 진행 중이거나 추가 확인이 필요한 부분이 있다면 문서 이름과 페이지, 이유도 알려줘.",
+            "result": "완료 수의 분모는 시각 검토 대상으로 선정된 페이지 수이며 PDF 전체 쪽수와 달라요. ALBERT 10쪽처럼 추가 확인이 필요한 페이지는 아래 “추가 검토가 필요하다고 나오면?”에 따라 다시 확인을 요청하세요. 진행·대기는 오류가 확정됐다는 뜻이 아니에요.",
+            "captures": [
+              {
+                "key": "review-control-status-request",
+                "caption": "세 문서의 현재 검토 결과와 남은 문서·페이지·이유를 요청해요.",
+                "alt": "ALBERT, ELECTRA, DeBERTa 세 문서의 시각 검토 결과와 아직 진행 중이거나 추가 확인이 필요한 문서 이름·페이지·이유를 알려 달라는 한국어 요청"
+              },
+              {
+                "key": "review-control-status-result",
+                "caption": "검토 대상으로 선정된 페이지 기준으로 ALBERT는 9/10쪽 확인·10쪽 추가 확인, ELECTRA는 8/13쪽, DeBERTa는 8/16쪽 확인 상태예요. 나머지는 진행·대기 중이며, ALBERT 10쪽의 표 열 정렬과 OCR 문제에 추가 확인이 필요하다고 안내해요.",
+                "alt": "현재 검토 상태 한국어 응답. 선정된 시각 검토 대상 기준 ALBERT 9/10쪽 확인·10쪽 추가 확인 필요, ELECTRA 8/13쪽 확인·14–18쪽 대기 또는 진행, DeBERTa 8/16쪽 확인·16–23쪽 대기 또는 진행. ALBERT 10쪽 Table 10의 UPM 행 RACE 열의 대시가 추출문에서 누락된 문제와 evaluation benchmark OCR 인식 문제는 추가 확인 사유. 본문·완료 결과 유지, 실행 실패는 보고되지 않음. 모든 검토 완료 화면은 아님"
+              }
+            ]
+          }
+        ]
       },
       {
         "title": "추가 검토가 필요하다고 나오면?",
@@ -357,9 +452,10 @@ const installationCaptures={
   spotlight:{src:'assets/screenshots/spotlight-terminal-crop.png?v=20260926-unselected',width:1282,height:326},
   terminal:{src:'assets/screenshots/terminal-ready-crop.png',width:1282,height:220},
   'install-complete':{src:'assets/screenshots/install-complete-crop.png',width:840,height:140},
-  'folder-selection':{src:'assets/screenshots/folder-selection-crop.png',width:442,height:145},
-  'folder-draft-empty':{src:'assets/screenshots/folder-draft-empty-crop.png',width:1224,height:834,
-    highlight:{x:378,y:673,width:468,height:68}},
+  'folder-selection':{src:'assets/screenshots/folder-selection-20261006.png',width:1738,height:942,fullSize:true,
+    highlight:{x:1488,y:830,width:196,height:61}},
+  'folder-draft-empty':{src:'assets/screenshots/folder-draft-empty-20261006.png',width:1282,height:918,
+    highlight:{x:406,y:702,width:468,height:68}},
   'folder-draft-confirmation':{src:'assets/screenshots/folder-draft-confirmation-crop.png?v=20260928-auto-save',width:1280,height:1248,
     highlight:{x:398,y:1000,width:468,height:68}},
   'codex-invocation':{src:'assets/screenshots/codex-introduction.png?v=20260928-introduction',width:1584,height:722}
@@ -369,6 +465,16 @@ const featureCaptures={
   'attach-review':{src:'assets/screenshots/pdf-attachments-review-result.png',width:1588,height:1066},
   organize:{src:'assets/screenshots/folder-pdf-status.png',width:1614,height:648},
   'organize-review':{src:'assets/screenshots/folder-pdf-review-result.png',width:1622,height:712},
+  'organize-refresh-request':{src:'assets/screenshots/folder-pdf-refresh-request.svg',width:1048,height:194,fullSize:true},
+  'organize-refresh-result':{src:'assets/screenshots/folder-pdf-refresh-result.svg',width:1490,height:370,fullSize:true},
+  'review-control-store-request':{src:'assets/screenshots/review-control-store-request.svg',width:1048,height:511,fullSize:true},
+  'review-control-store-result':{src:'assets/screenshots/review-control-store-result.svg',width:1478,height:118,fullSize:true},
+  'review-control-pause-request':{src:'assets/screenshots/review-control-pause-request.svg',width:1047,height:193,fullSize:true},
+  'review-control-pause-result':{src:'assets/screenshots/review-control-pause-result.svg',width:1488,height:503,fullSize:true},
+  'review-control-resume-request':{src:'assets/screenshots/review-control-resume-request.svg',width:1047,height:147,fullSize:true},
+  'review-control-resume-result':{src:'assets/screenshots/review-control-resume-result.svg',width:1464,height:90,fullSize:true},
+  'review-control-status-request':{src:'assets/screenshots/review-control-status-request.svg',width:1047,height:193,fullSize:true},
+  'review-control-status-result':{src:'assets/screenshots/review-control-status-result.svg',width:1488,height:853,fullSize:true},
   'compare-request':{src:'assets/screenshots/pdf-compare-request.png?v=20260929-crop2',width:1080,height:578,fullSize:true},
   'compare-result':{src:'assets/screenshots/pdf-compare-result.png',width:1610,height:1556,fullSize:true},
   'search-request':{src:'assets/screenshots/pdf-search-request.png',width:1052,height:160,fullSize:true},
@@ -385,7 +491,7 @@ const featureCaptures={
   'memory-search-plan':{src:'assets/screenshots/memory-search-plan.png',width:1498,height:1292,fullSize:true}
 };
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const ui={ko:{guide:'사용 가이드',overview:'가이드 둘러보기',menu:'메뉴',skip:'본문으로 이동',nav:'가이드 메뉴',first:'처음이라면',features:'기능',me:'나',assistant:'Research Agent 안내',howto:'사용 방법',note:'알아두세요',previous:'이전',next:'다음',related:'관련 가이드',blank:'실제 캡처를 넣을 빈 영역',capturePending:'캡처 준비 중',copy:'복사',copied:'복사됨',manualCopy:'직접 복사',copiedNotice:'복사했어요.',failedCopy:'복사할 문장을 선택했어요. ⌘ + C 또는 Ctrl + C로 직접 복사하세요.',prompt:'Codex에서 사용할 문장',invocationLabel:'VS Code·CLI에서 사용하려면',invocationNote:'문장 앞의 @Research Agent를 $research-library로 바꾸세요. 또는 /skills에서 research-library를 선택한 뒤 요청을 입력하세요.',install:'터미널에서 실행할 설치 명령',paste:'복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.',installNote:'명령을 복사해도 설치가 실행되지는 않아요. 터미널에서 직접 실행하세요.',sideNote:'사용 가이드 · v0.4.0\n실제 작업은 Codex에서 진행해요.',overviewQuestion:'Research Agent로 무엇을 할 수 있나요?',overviewAnswer:'흩어진 PDF와 중요한 연구 대화를 정리하고, 필요할 때 다시 찾아볼 수 있어요. 궁금한 기능을 선택해 보세요.',featureDescriptions:{attach:'PDF를 대화에 첨부해 바로 저장하고 질문해요.',organize:'연결한 폴더의 PDF를 변환해 검색할 수 있도록 저장해요.',compare:'새 PDF를 저장하고 기존 자료와 함께 정리해요.',search:'여러 PDF와 저장한 대화에서 관련 내용을 찾아요.',save:'연구 아이디어와 실험 설계를 선택해서 보관해요.',manage:'저장한 대화 목록을 보고 제목·태그를 수정하거나 기록을 삭제해요.'},startLink:'처음이라면 설치부터 시작하세요.',overviewEnd:'현재 지원 환경은 macOS의 Codex예요. 이 웹은 사용 방법을 안내합니다.',},en:{guide:'User guide',overview:'Explore the guide',menu:'Menu',skip:'Skip to content',nav:'Guide navigation',first:'Getting started',features:'Features',me:'You',assistant:'Research Agent guide',howto:'How to use it',note:'Good to know',previous:'Previous',next:'Next',related:'Related guides',blank:'Empty frame reserved for a real screenshot',capturePending:'Screenshot coming soon',copy:'Copy',copied:'Copied',manualCopy:'Copy manually',copiedNotice:'Copied to clipboard.',failedCopy:'The text is selected. Press ⌘ + C or Ctrl + C to copy it.',prompt:'Prompt to use in Codex',invocationLabel:'Using VS Code or the CLI?',invocationNote:'Replace @Research Agent at the start of the prompt with $research-library. Or choose research-library from /skills, then enter your request.',install:'Installation command for Terminal',paste:'Paste this into your usual Codex conversation.',installNote:'Copying does not install anything. Run the command yourself in Terminal.',sideNote:'User guide · v0.4.0\nActual work takes place in Codex.',overviewQuestion:'What can I do with Research Agent?',overviewAnswer:'Organize scattered PDFs and important research conversations, then find them again when you need them. Choose a feature to learn more.',featureDescriptions:{attach:'Attach PDFs in Codex to save them and ask questions.',organize:'Convert and save PDFs from your connected folders.',compare:'Save new PDFs and summarize them with existing materials.',search:'Find related information across PDFs and saved conversations.',save:'Keep selected research ideas and experiment plans.',manage:'View saved conversations, edit their titles and tags, or delete a saved record.'},startLink:'New here? Start with installation.',overviewEnd:'The supported environment is Codex on macOS. This website explains how to use it.',}};
+const ui={ko:{guide:'사용 가이드',overview:'가이드 둘러보기',menu:'메뉴',skip:'본문으로 이동',nav:'가이드 메뉴',first:'처음이라면',features:'기능',me:'나',assistant:'Research Agent 안내',howto:'사용 방법',note:'알아두세요',previous:'이전',next:'다음',related:'관련 가이드',blank:'실제 캡처를 넣을 빈 영역',capturePending:'캡처 준비 중',copy:'복사',copied:'복사됨',manualCopy:'직접 복사',copiedNotice:'복사했어요.',failedCopy:'복사할 문장을 선택했어요. ⌘ + C 또는 Ctrl + C로 직접 복사하세요.',prompt:'Codex에서 사용할 문장',invocationLabel:'VS Code·CLI에서 사용하려면',invocationNote:'문장 앞의 @Research Agent를 $research-library로 바꾸세요. 또는 /skills에서 research-library를 선택한 뒤 요청을 입력하세요.',install:'터미널에서 실행할 설치 명령',paste:'복사한 문장을 평소 사용하던 Codex 대화에 붙여 넣으세요.',installNote:'명령을 복사해도 설치가 실행되지는 않아요. 터미널에서 직접 실행하세요.',sideNote:'사용 가이드 · v0.4.1\n실제 작업은 Codex에서 진행해요.',overviewQuestion:'Research Agent로 무엇을 할 수 있나요?',overviewAnswer:'흩어진 PDF와 중요한 연구 대화를 정리하고, 필요할 때 다시 찾아볼 수 있어요. 궁금한 기능을 선택해 보세요.',featureDescriptions:{attach:'PDF를 대화에 첨부해 바로 저장하고 질문해요.',organize:'연결한 폴더의 PDF를 변환해 검색할 수 있도록 저장해요.',compare:'새 PDF를 저장하고 기존 자료와 함께 정리해요.',search:'여러 PDF와 저장한 대화에서 관련 내용을 찾아요.',save:'연구 아이디어와 실험 설계를 선택해서 보관해요.',manage:'저장한 대화 목록을 보고 제목·태그를 수정하거나 기록을 삭제해요.'},startLink:'처음이라면 설치부터 시작하세요.',overviewEnd:'현재 지원 환경은 macOS의 Codex예요. 이 웹은 사용 방법을 안내합니다.',},en:{guide:'User guide',overview:'Explore the guide',menu:'Menu',skip:'Skip to content',nav:'Guide navigation',first:'Getting started',features:'Features',me:'You',assistant:'Research Agent guide',howto:'How to use it',note:'Good to know',previous:'Previous',next:'Next',related:'Related guides',blank:'Empty frame reserved for a real screenshot',capturePending:'Screenshot coming soon',copy:'Copy',copied:'Copied',manualCopy:'Copy manually',copiedNotice:'Copied to clipboard.',failedCopy:'The text is selected. Press ⌘ + C or Ctrl + C to copy it.',prompt:'Prompt to use in Codex',invocationLabel:'Using VS Code or the CLI?',invocationNote:'Replace @Research Agent at the start of the prompt with $research-library. Or choose research-library from /skills, then enter your request.',install:'Installation command for Terminal',paste:'Paste this into your usual Codex conversation.',installNote:'Copying does not install anything. Run the command yourself in Terminal.',sideNote:'User guide · v0.4.1\nActual work takes place in Codex.',overviewQuestion:'What can I do with Research Agent?',overviewAnswer:'Organize scattered PDFs and important research conversations, then find them again when you need them. Choose a feature to learn more.',featureDescriptions:{attach:'Attach PDFs in Codex to save them and ask questions.',organize:'Convert and save PDFs from your connected folders.',compare:'Save new PDFs and summarize them with existing materials.',search:'Find related information across PDFs and saved conversations.',save:'Keep selected research ideas and experiment plans.',manage:'View saved conversations, edit their titles and tags, or delete a saved record.'},startLink:'New here? Start with installation.',overviewEnd:'The supported environment is Codex on macOS. This website explains how to use it.',}};
 const preferences={language:'ko'};
 try{
   const stored=JSON.parse(localStorage.getItem('research-guide-preferences')||'{}');
@@ -459,8 +565,11 @@ function renderInstallation(page, t, language){
 function renderFollowUp(followUp,route,t,language){
   if(!followUp)return '';
   const key=followUp.key||`${route}-review`;
-  const captures=(followUp.captures||[{key,caption:followUp.capture,alt:followUp.captureAlt}]).map(c=>renderCapture(c,key,language)).join('');
-  return `<details class="howto"${followUp.open?' open':''}><summary>${escapeHTML(followUp.title)}</summary><p class="note">${escapeHTML(followUp.explanation)}</p>${renderGuideCopy({composer:'prompt',prompt:followUp.prompt},t,key)}<p class="note">${escapeHTML(followUp.result)}</p>${captures}</details>`;
+  const captures=(followUp.captures||(followUp.capture?[{key,caption:followUp.capture,alt:followUp.captureAlt}]:[])).map(c=>renderCapture(c,key,language)).join('');
+  const prompt=followUp.prompt?renderGuideCopy({composer:'prompt',prompt:followUp.prompt},t,key):'';
+  const result=followUp.result?`<p class="note">${escapeHTML(followUp.result)}</p>`:'';
+  const steps=(followUp.followUps||[]).map(item=>renderFollowUp(item,key,t,language)).join('');
+  return `<details class="howto" data-follow-up-key="${escapeHTML(key)}"${followUp.open?' open':''}><summary>${escapeHTML(followUp.title)}</summary><p class="note">${escapeHTML(followUp.explanation)}</p>${prompt}${result}${captures}${steps}</details>`;
 }
 function render(){
   const {language}=preferences;const t=ui[language];const route=currentRoute();const translated=language==='en'?window.RESEARCH_GUIDE_EN:pages;

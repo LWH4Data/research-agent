@@ -13,7 +13,7 @@ separate API key. Original PDFs stay in their existing locations.
 2. Type **Terminal** and open the Terminal app.
 3. Copy the entire command below, paste it with **Command (⌘) + V**, and press
    **Enter**.
-4. Wait for installation to finish. It downloads and verifies the **v0.4.0
+4. Wait for installation to finish. It downloads and verifies the **v0.4.1
    prerelease** automatically; you do not need to install Git or Python or
    extract an archive yourself.
 
@@ -22,9 +22,9 @@ separate API key. Original PDFs stay in their existing locations.
   installer=$(mktemp) &&
   trap 'rm -f "$installer"' EXIT &&
   curl -q --proto '=https' --proto-redir '=https' --tlsv1.2 -fLsS \
-    https://github.com/LWH4Data/research-agent/releases/download/v0.4.0/install-release.sh \
+    https://github.com/LWH4Data/research-agent/releases/download/v0.4.1/install-release.sh \
     -o "$installer" &&
-  bash "$installer" --version 0.4.0
+  bash "$installer" --version 0.4.1
 )
 ```
 
@@ -238,7 +238,7 @@ records cannot currently be restored.
 
 ## Updates
 
-Version **0.4.0 supports fresh installations only**. Automatic updates and an
+Version **0.4.1 supports fresh installations only**. Automatic updates and an
 update procedure that preserves existing library data are not yet available.
 Running the installation command again stops if the destination exists.
 

@@ -1,6 +1,6 @@
 [project]
 name = "research-store"
-version = "0.4.0"
+version = "0.4.1"
 description = "Incremental read-only PDF and conversation research library for Codex"
 readme = "README.md"
 requires-python = ">=3.11"

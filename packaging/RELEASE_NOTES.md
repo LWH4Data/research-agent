@@ -1,66 +1,63 @@
-Research Agent v0.4.0은 폴더 선택과 PDF 저장을 하나의 흐름으로 연결합니다.
-Codex에서 연결창을 열거나 다시 열고, 여러 위치의 폴더를 목록에 모아 확인하면
-선택한 폴더의 텍스트 저장과 필요한 페이지의 시각 검토가 이어집니다.
+Research Agent v0.4.1은 웹 사용 가이드의 설명과 실제 화면을 보완한 패치 릴리스입니다.
+제품 실행 동작은 v0.4.0과 같으며, 폴더 갱신과 시각 검토 일시 정지·재개는
+이미 제공하던 기능입니다.
 
 ## 설치
 
-[v0.4.0 README의 설치 안내](https://github.com/LWH4Data/research-agent/tree/v0.4.0#readme)를
-따라 터미널에서 설치 명령을 실행하세요. 설치 뒤에는 Codex에 연결창 열기를
-요청할 수 있으며, 다시 설치하거나 터미널 명령을 재입력할 필요가 없습니다.
+[v0.4.1 README의 설치 안내](https://github.com/LWH4Data/research-agent/tree/v0.4.1#readme)를
+따라 터미널에서 설치 명령을 실행하세요. 이 버전은 사전 출시 버전이며,
+현재 사용자 지원 대상은 macOS입니다.
 
-기존 설치 폴더가 있으면 덮어쓰지 않고 중단합니다. 이 버전은 새 설치만
-지원하며, 자동 업데이트와 기존 자료를 보존하는 업데이트 절차는 아직
-제공하지 않습니다. 새 버전을 설치하려고 기존 설치본이나 연구 자료를
-삭제하지 마세요.
+기존 설치 폴더가 있으면 덮어쓰지 않고 중단합니다. 새 설치만 지원하며,
+자동 업데이트와 기존 자료를 보존하는 업데이트 절차는 아직 제공하지
+않습니다. 새 버전을 설치하려고 기존 설치본이나 연구 자료를 삭제하지 마세요.
 
 ## 이번 버전의 변경
 
-- **연결할 폴더** 창에서 **폴더 추가하기**, ⌘ 다중 선택, **목록에 추가**,
-  체크 확인과 **폴더 더 추가하기**, **연결하고 PDF 저장하기** 순서로 연결합니다.
-- 최종 확인한 폴더나 직접 지정한 경로만 연결하고 PDF 텍스트를 저장합니다.
-  이미 연결된 위치를 다시 선택해도 이번 범위에 포함하며, 관련 없는 위치는
-  함께 처리하지 않습니다.
-- 텍스트 저장 후 필요한 페이지의 시각 검토를 접수합니다. 본문은 검토 중에도
-  검색할 수 있으며, 저장·검토 진행·실패 결과를 구분해 안내합니다.
-- PDF별 또는 자료실 전체 시각 검토를 일시 정지하고 재개할 수 있습니다.
-  전체 일시 정지는 이후 저장과 재실행에도 유지합니다. 시간·페이지 안내는
-  자동 중단 없이 알리며, 중단 여부는 사용자가 결정합니다.
-- 폴더 선택 취소는 설치와 기존 연결을 유지합니다. 연결 후 저장이 실패하거나
-  설치 중 Codex 실행 파일을 찾지 못하면 완료된 연결을 유지하고 이어서
-  저장하는 방법을 안내합니다.
-- 새 흐름과 최신 캡처를 반영한 한국어·영어 사용자 안내를 제공합니다.
+- **시작하기 → 폴더 선택**에 최신 빈 목록 화면과 여러 폴더 선택 화면을
+  반영했습니다. **목록에 추가** 버튼까지 보이는 전체 화면으로 절차를
+  확인할 수 있습니다.
+- 연결한 폴더에서 새로 추가되거나 변경된 PDF만 정리하는 요청과 실제
+  저장 결과를 가이드에 추가했습니다. 새로 저장한 문서, 변경 없이 유지한
+  문서와 시각 검토 진행 상태를 구분해 설명합니다.
+- PDF 저장·검토 시작, 특정 문서의 일시 정지, 남은 검토 재개와 결과 확인을
+  실제 요청·결과 화면으로 안내합니다. 완료된 본문과 검토 결과를 유지한
+  상태에서 처리하는 흐름을 확인할 수 있습니다.
+- 시각 검토는 선정된 페이지를 대상으로 하며, 진행·대기와 추가 확인 필요를
+  구분합니다. 일부 페이지의 검토 완료를 문서 전체 확인으로 설명하지
+  않도록 한국어·영어 문구를 보완했습니다.
 
-여러 위치의 PDF와 대화 첨부 PDF 저장, PDF·저장 대화 통합 검색,
-대화 기록 저장·조회·수정·삭제를 계속 지원합니다. 원본 PDF는 수정·이동·삭제하지
-않으며, 연결한 위치의 후속 갱신은 새로 추가되거나 변경된 PDF만 처리합니다.
-시각 검토는 필요한 페이지를 대상으로 하며 모든 PDF 페이지를 확인하는 것은
-아닙니다. macOS 알림은 Codex 대화에 새 메시지를 자동으로 추가하지 않습니다.
+[웹 사용 가이드](https://lwh4data.github.io/research-agent/?lang=ko)는
+제품 배포본과 별도로 GitHub Pages에 게시합니다. 배포본에는 README와 영문
+사용자 안내를 포함하며 웹 화면과 캡처는 웹 가이드에서 확인합니다.
+
+자료실 전체의 시각 검토 일시 정지는 이후 저장과 재실행에도 유지하며,
+전체 재개 요청으로 해제합니다. 시간·페이지 안내는 자동으로 검토를
+중단하지 않습니다. 원본 PDF는 수정·이동·삭제하지 않습니다.
 
 ## 배포 파일
 
-- `research-agent-0.4.0.tar.gz`: 개발 하니스·테스트·개인 자료를 제외한 제품 묶음
+- `research-agent-0.4.1.tar.gz`: 개발 하니스·테스트·개인 자료를 제외한 제품 묶음
 - `install-release.sh`: 내려받기와 새 설치를 진행하는 실행 파일
 - `SHA256SUMS`: 다운로드 파일 무결성 확인 값
 
 GitHub가 별도로 제공하는 **Source code**는 개발 소스입니다. 일반 사용자는
 README의 설치 명령을 사용하세요.
 
-현재 사용자 지원 대상은 macOS입니다. 실제 Codex 권한과 알림, 모델 호출은
-사용자 환경에 따라 달라질 수 있습니다. 자동 검사는 모델을 호출하지 않으며
-PDF 시각 해석의 정확도 전체를 보증하지 않습니다.
+자동 검사는 모델을 호출하지 않으며, 실제 Codex 권한·알림·모델 호출은
+사용자 환경에 따라 달라질 수 있습니다. 가이드의 예시는 해당 요청에서
+확인한 결과이며 모든 PDF의 시각 해석 정확도를 보증하지 않습니다.
 
 ---
 
-Research Agent v0.4.0 connects folder selection and PDF storage in one workflow.
-Open or reopen the connection window from Codex, collect folders from several
-locations, and confirm the list to save their text and review the pages that
-need image inspection.
+Research Agent v0.4.1 is a patch release that improves the web guide's
+instructions and actual screenshots. Product runtime behavior is unchanged
+from v0.4.0; folder updates and visual review pause/resume were already available.
 
 ## Installation
 
-Follow the [v0.4.0 README installation instructions](https://github.com/LWH4Data/research-agent/tree/v0.4.0#readme).
-After installation, ask Codex to open the connection window; you do not need
-to reinstall or enter another Terminal command.
+Follow the [v0.4.1 README installation instructions](https://github.com/LWH4Data/research-agent/tree/v0.4.1#readme).
+This is a prerelease, and macOS is the supported user platform.
 
 This release supports fresh installation only and refuses to overwrite an
 existing destination. Automatic updates and an update procedure that preserves
@@ -69,33 +66,31 @@ research data to install the new release.
 
 ## Changes in this version
 
-- Use **연결할 폴더** (Folders to connect), **폴더 추가하기** (Add folders),
-  Command-click multi-selection, **목록에 추가** (Add to list), checkboxes and
-  **폴더 더 추가하기** (Add more folders), then **연결하고 PDF 저장하기**
-  (Connect and save PDFs).
-- Connect and save PDF text only from confirmed folders or directly supplied
-  paths. Reselecting a connected location includes it in this request without
-  processing unrelated locations.
-- Text storage hands off to visual review of the pages that need it. Text is
-  searchable while review continues, with storage, review progress, and failures
-  reported separately.
-- Pause and resume visual review for a PDF or the whole library. A library-wide
-  pause persists across later saves and restarts. Time and page guidance warns
-  without stopping automatically; the user decides when to stop.
-- Canceling folder selection keeps the installation and existing connections.
-  Storage failure, or a missing Codex executable during installation, keeps
-  completed connections and explains how to continue saving.
-- Korean and English guides cover the new workflow with updated screenshots.
+- Updated **Getting started → Select folders** with the latest empty draft and
+  multiple-folder selection screenshots. The full picker includes the
+  **목록에 추가** (Add to list) button.
+- Added the actual request and result for processing new or changed PDFs in a
+  connected folder. The guide distinguishes newly saved documents, unchanged
+  documents, and visual review progress.
+- Added actual request/result screenshots for saving PDFs and starting review,
+  pausing selected documents, resuming remaining review, and checking results.
+  The walkthrough shows that stored text and completed review results are kept.
+- Clarified Korean and English explanations of selected review pages,
+  progress/waiting, and pages that require further checking. Completion of
+  selected pages is not described as verification of the entire document.
 
-Read-only folder sources, PDF attachment imports, combined PDF/conversation
-retrieval, and saved conversation management remain available. Original PDFs
-are not modified, moved, or deleted. Later update requests process new or changed
-PDFs. Visual review does not inspect every PDF page, and macOS notifications do
-not automatically post new messages to Codex conversations.
+The [web guide](https://lwh4data.github.io/research-agent/?lang=en) is published
+separately on GitHub Pages. The product bundle includes the README and English
+user guide; web pages and screenshots are available on the web guide.
+
+A library-wide visual review pause persists across later saves and restarts,
+and requires an explicit request to resume all library review. Time and page
+guidance does not automatically stop review. Original PDFs are not modified,
+moved, or deleted.
 
 ## Release assets
 
-- `research-agent-0.4.0.tar.gz`: product bundle without development harnesses,
+- `research-agent-0.4.1.tar.gz`: product bundle without development harnesses,
   tests, or personal research data
 - `install-release.sh`: downloads and installs a fresh copy
 - `SHA256SUMS`: integrity checks for the downloadable files
@@ -103,6 +98,7 @@ not automatically post new messages to Codex conversations.
 GitHub's separate **Source code** download is the development source. Use the
 README installation command for the product release.
 
-macOS is the supported user platform. Actual Codex permissions, notifications,
-and model calls depend on the environment. Automated checks do not call
-subscription models or establish the accuracy of all PDF visual interpretation.
+Automated checks do not call subscription models. Actual Codex permissions,
+notifications, and model calls depend on the environment. Guide examples reflect
+the results checked for those requests and do not establish the accuracy of all
+PDF visual interpretation.
